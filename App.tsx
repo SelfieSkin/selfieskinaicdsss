@@ -145,7 +145,13 @@ const App: React.FC = () => {
     }
   };
 
-  const handleLoadSample = () => {
+  const handleLoadSample = async () => {
+    // Reset state
+    setResult(null);
+    setTreatmentMapImageUrl(null);
+    setError(null);
+    setVideoFile(null);
+
     const isF = selectedGender === PatientGender.FEMALE;
     setPatientId(`DEMO-${isF ? 'F' : 'M'}-${Math.floor(Math.random() * 899) + 100}`);
     const sample = isF ? SAMPLE_ANALYSIS_FEMALE : SAMPLE_ANALYSIS_MALE;
@@ -154,10 +160,26 @@ const App: React.FC = () => {
     const freshSample = JSON.parse(JSON.stringify(sample));
     freshSample.gender = selectedGender;
     
+    // Set text-based results first
     setResult(freshSample);
-    setError(null);
-    setTreatmentMapImageUrl(null); // Clear map for demo data
     window.scrollTo({ top: 350, behavior: 'smooth' });
+    
+    // Now generate the visual map
+    setIsGeneratingMap(true);
+    setLoadingStage("Generating Demo Visual Treatment Map...");
+
+    try {
+        const hasKey = await (window as any).aistudio.hasSelectedApiKey();
+        if (!hasKey) {
+          await (window as any).aistudio.openSelectKey();
+        }
+        const imageUrl = await generateTreatmentMapVisual(freshSample);
+        setTreatmentMapImageUrl(imageUrl);
+    } catch (err: any) {
+        setError("Failed to generate demo visual map. Please check your API key or try a live analysis. Error: " + err.message);
+    } finally {
+        setIsGeneratingMap(false);
+    }
   };
 
   const handleAnalyze = async () => {

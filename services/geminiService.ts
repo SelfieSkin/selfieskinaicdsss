@@ -64,6 +64,13 @@ export const generateTreatmentMapVisual = async (
   Use a clean, white background. The style should be photorealistic with anatomical accuracy.
   Labeling must be clear, legible, and unobtrusive, using a modern sans-serif font.
   
+  **Aesthetic Goal:**
+  ${
+    analysis.gender === PatientGender.MALE
+      ? "For this male patient, the primary goal is to reduce deep rhytids while preserving a strong, masculine facial structure. Key considerations: Maintain a relatively flat, lower brow line. Aggressively treating the frontalis to create a high arch is clinically inappropriate and must be avoided. The final image should reflect a natural reduction in lines without feminizing the features."
+      : "For this female patient, the primary goal is to soften dynamic rhytids to create a relaxed and refreshed appearance. Key considerations: Aim to create a gentle, aesthetically pleasing arch to the brow. The treatment should open up the periorbital area while preserving natural expression. The final image should reflect softened lines and a subtle brow lift."
+  }
+  
   **Patient Presentation:**
   - Glabellar Pattern: ${analysis.step2.glabellarPattern}
   - Resting Tone observations: ${analysis.step2.restingTone}
@@ -90,7 +97,7 @@ export const generateTreatmentMapVisual = async (
     });
   }
   
-  prompt += `\nEnsure the final image is a clear, high-fidelity clinical guide suitable for a medical professional.`;
+  prompt += `\nEnsure the final image is a clear, high-fidelity clinical guide suitable for a medical professional, strictly adhering to the gender-specific aesthetic goals.`;
 
   const response = await ai.models.generateContent({
     model: 'gemini-3-pro-image-preview',

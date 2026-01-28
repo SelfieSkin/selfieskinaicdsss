@@ -17,8 +17,6 @@ export interface InjectionSite {
   region: string;
   muscle: string;
   muscleFunction?: string;
-  x: number;
-  y: number;
   doseOna: number;
   actualDoseOna?: number;
   label: string;
@@ -28,9 +26,6 @@ export interface InjectionSite {
 export interface DangerZone {
   id: string;
   region: string;
-  x: number;
-  y: number;
-  radius: number;
   risk: string;
 }
 
