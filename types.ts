@@ -21,6 +21,8 @@ export interface InjectionSite {
   actualDoseOna?: number;
   label: string;
   rationale: string;
+  x?: number;
+  y?: number;
 }
 
 export interface DangerZone {
