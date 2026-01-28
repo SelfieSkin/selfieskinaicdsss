@@ -1,0 +1,476 @@
+
+import React, { useState, useRef, useEffect } from 'react';
+import Header from './components/Header';
+import AnatomicalMap from './components/AnatomicalMap';
+import DosageTable from './components/DosageTable';
+import ComparativeDosing from './components/ComparativeDosing';
+import KnowledgeBase from './components/KnowledgeBase';
+import TreatmentHistory from './components/TreatmentHistory';
+import UserGuideModal from './components/UserGuideModal';
+import ClinicalReportModal from './components/ClinicalReportModal';
+import FeedbackModal from './components/FeedbackModal';
+import { analyzePatientVideo, generateAestheticVisual } from './services/geminiService';
+import { AnalysisResult, ToxinBrand, TreatmentSession, InjectionSite, DangerZone, PatientGender, ImageSize, FeedbackData } from './types';
+import { SAMPLE_ANALYSIS_FEMALE, SAMPLE_ANALYSIS_MALE } from './constants';
+
+type Tab = 'assessment' | 'visualizer' | 'knowledge' | 'history';
+
+const App: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<Tab>('assessment');
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [loadingStage, setLoadingStage] = useState('');
+  const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Step 1 Intake State
+  const [selectedBrand, setSelectedBrand] = useState<ToxinBrand>(ToxinBrand.BOTOX);
+  const [selectedGender, setSelectedGender] = useState<PatientGender>(PatientGender.FEMALE);
+  const [patientId, setPatientId] = useState('');
+  const [offLabelConsent, setOffLabelConsent] = useState(false);
+
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  
+  // Visualizer States
+  const [visualPrompt, setVisualPrompt] = useState('');
+  const [visualSize, setVisualSize] = useState<ImageSize>('1K');
+  const [visualResult, setVisualResult] = useState<string | null>(null);
+  const [visualLoading, setVisualLoading] = useState(false);
+
+  const [history, setHistory] = useState<TreatmentSession[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('selfieskin-history');
+    if (saved) {
+      try { setHistory(JSON.parse(saved)); } catch (e) { console.error(e); }
+    }
+  }, []);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setVideoFile(file);
+      setResult(null);
+      setError(null);
+    }
+  };
+
+  const handleLoadSample = () => {
+    const isF = selectedGender === PatientGender.FEMALE;
+    setPatientId(`DEMO-${isF ? 'F' : 'M'}-${Math.floor(Math.random() * 899) + 100}`);
+    const sample = isF ? SAMPLE_ANALYSIS_FEMALE : SAMPLE_ANALYSIS_MALE;
+    
+    // Deep clone to ensure demo data remains fresh and mutable for this session
+    const freshSample = JSON.parse(JSON.stringify(sample));
+    
+    // CRITICAL: Ensure the result object's gender matches the UI selection
+    freshSample.gender = selectedGender;
+    
+    setResult(freshSample);
+    setError(null);
+    window.scrollTo({ top: 350, behavior: 'smooth' });
+  };
+
+  const handleAnalyze = async () => {
+    if (!videoFile || !patientId) return;
+    setLoading(true);
+    setError(null);
+    // Visualizing the 6-step workflow in loading stages
+    const stages = [
+      "Step 1: Validating Intake & Consents...",
+      "Step 2: Video Dynamics (Anatomy Only)...",
+      "Step 3: Generating Injection Map & Safety Rules...",
+      "Step 4: Calculating Comparative Dosing Matrix...",
+      "Step 5: Compiling Clinical Report..."
+    ];
+    let stageIdx = 0;
+    const stageInterval = setInterval(() => {
+      setLoadingStage(stages[stageIdx % stages.length]);
+      stageIdx++;
+    }, 1200);
+
+    try {
+      const reader = new FileReader();
+      reader.readAsDataURL(videoFile);
+      reader.onload = async () => {
+        const base64 = (reader.result as string).split(',')[1];
+        try {
+          const analysis = await analyzePatientVideo(
+            base64, 
+            videoFile.type, 
+            selectedGender,
+            selectedBrand,
+            offLabelConsent
+          );
+          
+          analysis.sites = (analysis.sites || []).map((s, i) => ({ 
+            ...s, id: `site-${i}`, actualDoseOna: s.doseOna, 
+            muscleFunction: s.muscleFunction || "Analyzing..." 
+          }));
+          analysis.dangerZones = (analysis.dangerZones || []).map((z, i) => ({ ...z, id: `danger-${i}` }));
+          setResult(analysis);
+        } catch (err: any) { setError(err.message); } finally {
+          clearInterval(stageInterval);
+          setLoading(false);
+        }
+      };
+    } catch (err: any) {
+      clearInterval(stageInterval);
+      setLoading(false);
+      setError(err.message);
+    }
+  };
+
+  const handleGenerateVisual = async () => {
+    if (!visualPrompt) return;
+    
+    const hasKey = await (window as any).aistudio.hasSelectedApiKey();
+    if (!hasKey) {
+      await (window as any).aistudio.openSelectKey();
+    }
+
+    setVisualLoading(true);
+    setError(null);
+    try {
+      const url = await generateAestheticVisual(visualPrompt, visualSize);
+      setVisualResult(url);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setVisualLoading(false);
+    }
+  };
+
+  const updateSites = (newSites: InjectionSite[]) => {
+    if (!result) return;
+    setResult({ ...result, sites: newSites });
+  };
+
+  const updateDangerZones = (newZones: DangerZone[]) => {
+    if (!result) return;
+    setResult({ ...result, dangerZones: newZones });
+  };
+
+  const updateSiteDose = (siteId: string, doseInOna: number) => {
+    if (!result) return;
+    const newSites = result.sites.map(s => 
+      s.id === siteId ? { ...s, actualDoseOna: doseInOna } : s
+    );
+    setResult({ ...result, sites: newSites });
+  };
+
+  const initiateArchive = () => {
+    if (!result || !patientId) return;
+    setIsFeedbackOpen(true);
+  };
+
+  const handleFeedbackSubmit = (feedback: FeedbackData) => {
+    if (!result || !patientId) return;
+    
+    const session: TreatmentSession = {
+      id: Date.now().toString(),
+      patientId, 
+      gender: selectedGender, 
+      date: new Date().toISOString(), 
+      brand: selectedBrand,
+      analysis: JSON.parse(JSON.stringify(result)), // Deep copy state
+      feedback: feedback
+    };
+    
+    const newHistory = [session, ...history];
+    setHistory(newHistory);
+    localStorage.setItem('selfieskin-history', JSON.stringify(newHistory));
+    
+    setIsFeedbackOpen(false);
+    alert("Treatment record archived securely.");
+  };
+
+  return (
+    <div className="min-h-screen bg-[#fcfcf9] pb-40">
+      <Header onOpenGuide={() => setIsGuideOpen(true)} />
+      <main className="max-w-7xl mx-auto px-6 md:px-10">
+        <nav className="flex gap-16 border-b border-gray-100 mb-12 overflow-x-auto no-print">
+          {['assessment', 'visualizer', 'knowledge', 'history'].map((t) => (
+            <button key={t} onClick={() => setActiveTab(t as Tab)} 
+                    className={`pb-6 text-[10px] md:text-[11px] font-black uppercase tracking-[0.3em] border-b-[3px] transition-all duration-300 whitespace-nowrap ${activeTab === t ? 'border-[#cc7e6d] text-gray-900' : 'border-transparent text-gray-300 hover:text-gray-500'}`}>
+              {t === 'visualizer' ? 'Visualizer' : t.charAt(0).toUpperCase() + t.slice(1)}
+            </button>
+          ))}
+        </nav>
+
+        {activeTab === 'assessment' && (
+          <div className="space-y-12 animate-in fade-in duration-700">
+            {/* WORKSTATION SETUP (Step 1) */}
+            <div className="bg-white p-10 md:p-14 rounded-[3rem] shadow-2xl border border-gray-50 flex flex-col xl:flex-row gap-14 items-center justify-between no-print">
+              <div className="flex-1 space-y-10 w-full">
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                   <div>
+                     <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Step 1: Intake</span>
+                     <h2 className="text-2xl font-black text-gray-800 uppercase tracking-tight">Anatomical Intake</h2>
+                   </div>
+                   <button onClick={handleLoadSample} className="text-[10px] font-black text-[#cc7e6d] border border-[#cc7e6d]/40 px-6 py-2.5 rounded-full hover:bg-[#cc7e6d] hover:text-white transition-all tracking-widest uppercase shadow-sm">
+                     Load Demo Case
+                   </button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Patient ID</label>
+                    <input type="text" placeholder="PX-000-000" value={patientId} onChange={(e) => setPatientId(e.target.value)} className="w-full border-gray-100 bg-gray-50 rounded-2xl px-6 py-4 text-sm font-bold focus:ring-4 focus:ring-[#cc7e6d]/10 outline-none transition-all"/>
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Formula</label>
+                    <select value={selectedBrand} onChange={(e) => setSelectedBrand(e.target.value as ToxinBrand)} className="w-full border-gray-100 bg-gray-50 rounded-2xl px-6 py-4 text-sm font-black text-gray-700 outline-none focus:ring-4 focus:ring-[#cc7e6d]/10 cursor-pointer">
+                      {Object.values(ToxinBrand).map(brand => <option key={brand} value={brand}>{brand.split(' ')[0]}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Morphology</label>
+                    <div className="flex p-1.5 bg-gray-50 rounded-2xl border border-gray-100">
+                      <button onClick={() => setSelectedGender(PatientGender.FEMALE)} className={`flex-1 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${selectedGender === PatientGender.FEMALE ? 'bg-white shadow-lg text-gray-900 ring-1 ring-black/5' : 'text-gray-400 hover:text-gray-600'}`}>Female</button>
+                      <button onClick={() => setSelectedGender(PatientGender.MALE)} className={`flex-1 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${selectedGender === PatientGender.MALE ? 'bg-white shadow-lg text-gray-900 ring-1 ring-black/5' : 'text-gray-400 hover:text-gray-600'}`}>Male</button>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Scope of Practice</label>
+                    <div 
+                      onClick={() => setOffLabelConsent(!offLabelConsent)}
+                      className={`cursor-pointer w-full border border-gray-100 rounded-2xl px-6 py-3.5 flex items-center justify-between transition-all ${offLabelConsent ? 'bg-blue-50/50' : 'bg-gray-50'}`}
+                    >
+                      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Include Off-Label Lower Face?</span>
+                      <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${offLabelConsent ? 'bg-blue-500 text-white shadow-md' : 'bg-gray-200 text-gray-400'}`}>
+                        {offLabelConsent ? 'YES' : 'NO'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-col gap-4 w-full xl:w-auto min-w-[300px]">
+                <button onClick={() => fileInputRef.current?.click()} className="w-full px-8 py-5 rounded-2xl border-2 border-dashed border-gray-200 font-black text-[10px] uppercase tracking-[0.2em] text-gray-400 bg-white hover:border-[#cc7e6d]/50 hover:text-[#cc7e6d] transition-all">
+                  {videoFile ? 'Replace Capture' : 'Upload Dynamic Scan'}
+                </button>
+                <input type="file" ref={fileInputRef} className="hidden" accept="video/*" onChange={handleFileChange} />
+                <button disabled={!videoFile || loading || !patientId} onClick={handleAnalyze} className={`w-full px-10 py-5 rounded-2xl font-black uppercase text-[11px] tracking-widest text-white transition-all shadow-xl transform active:scale-95 ${loading || !videoFile || !patientId ? 'bg-gray-200 cursor-not-allowed shadow-none' : 'bg-[#cc7e6d] hover:bg-[#b86d5e]'}`}>
+                  {loading ? 'Processing Steps 1-5...' : 'Run Clinical Analysis'}
+                </button>
+              </div>
+            </div>
+
+            {loading && <div className="flex flex-col items-center justify-center py-32 bg-white rounded-[4rem] border border-gray-50 animate-pulse"><div className="w-20 h-20 border-[6px] border-gray-100 border-t-[#cc7e6d] rounded-full animate-spin mb-8"></div><p className="text-xs font-black text-[#cc7e6d] uppercase tracking-[0.4em]">{loadingStage}</p></div>}
+            
+            {(result || error) && (
+              <div className="bg-white rounded-[4rem] p-10 md:p-20 shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-700">
+                {error && <div className="mb-12 p-8 bg-red-50 border border-red-100 rounded-3xl text-red-600 font-bold text-center text-sm">{error}</div>}
+                
+                {result && (
+                  <>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 lg:gap-32">
+                      {/* Left Column: Map & Sites (Step 3 Visualization) */}
+                      <div className="space-y-16">
+                        <AnatomicalMap 
+                          gender={selectedGender} 
+                          sites={result.sites} 
+                          dangerZones={result.dangerZones} 
+                          onUpdateSites={updateSites} 
+                          onUpdateDangerZones={updateDangerZones} 
+                        />
+                        {/* Step 3: Injection Strategy (Sites Detail) */}
+                        <div className="space-y-8">
+                          <h3 className="text-[12px] font-black text-gray-400 uppercase tracking-[0.4em] border-b border-gray-50 pb-4">Step 3B: Plan Visualization</h3>
+                          <div className="grid grid-cols-1 gap-6">
+                            {result.sites.map((site) => (
+                              <div key={site.id} className="bg-gray-50/30 p-8 rounded-[2.5rem] border border-gray-100 flex justify-between items-start group hover:bg-white hover:shadow-xl hover:border-gray-200 transition-all duration-500">
+                                <div className="space-y-3">
+                                  <div className="flex items-center gap-3">
+                                    <span className="bg-[#cc7e6d]/10 text-[#cc7e6d] text-[10px] font-black px-3 py-1 rounded-lg uppercase tracking-widest">{site.label}</span>
+                                    <h4 className="text-sm font-black text-gray-800 uppercase tracking-tight">{site.muscle}</h4>
+                                  </div>
+                                  <p className="text-xs text-gray-500 font-medium leading-relaxed max-w-xs italic">"{site.rationale}"</p>
+                                </div>
+                                <div className="text-[#22c55e] font-black text-xl">{site.actualDoseOna ?? site.doseOna}U</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right Column: Analysis Steps 2, 3, 4 */}
+                      <div className="space-y-20">
+                        {/* STEP 2: VIDEO DYNAMICS UI */}
+                        <div className="space-y-10">
+                          <h3 className="text-[12px] font-black text-gray-400 uppercase tracking-[0.4em]">Step 2: Video Dynamics</h3>
+                          
+                          <div className="p-10 bg-gray-50/50 rounded-[3rem] border-l-[8px] border-[#cc7e6d] shadow-sm">
+                            <h4 className="text-[10px] font-black text-gray-400 mb-3 uppercase tracking-widest">Glabellar Classification</h4>
+                            <p className="text-3xl font-black text-gray-900 tracking-tighter leading-tight">
+                              {result.step2?.glabellarPattern || "Unclassified"} Pattern
+                            </p>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
+                               <h5 className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Resting Tone</h5>
+                               <p className="text-xs font-bold text-gray-700 leading-snug">{result.step2?.restingTone}</p>
+                            </div>
+                            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
+                               <h5 className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Max Contraction</h5>
+                               <ul className="space-y-2">
+                                  <li className="text-[10px] text-gray-600"><strong className="text-gray-900">Frontalis:</strong> {result.step2?.maxContraction?.frontalis}</li>
+                                  <li className="text-[10px] text-gray-600"><strong className="text-gray-900">Glabella:</strong> {result.step2?.maxContraction?.glabella}</li>
+                               </ul>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* STEP 3: STRATEGIC PLANNING UI */}
+                        <div className="space-y-10">
+                           <h3 className="text-[12px] font-black text-gray-400 uppercase tracking-[0.4em]">Step 3: Strategic Planning</h3>
+                           
+                           {/* Plan Overview */}
+                           <div className="bg-white rounded-[3rem] border border-gray-100 shadow-md p-8">
+                             <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6">Regional Strategy</h4>
+                             <div className="space-y-6">
+                               {result.step3?.regionalPlans.map((plan, i) => (
+                                 <div key={i} className="flex gap-6 items-start">
+                                    <div className="flex-shrink-0 w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-lg font-black text-[#cc7e6d]">
+                                      {plan.points}
+                                    </div>
+                                    <div>
+                                      <h5 className="text-xs font-black text-gray-800 uppercase tracking-wide">{plan.region} ({plan.muscle})</h5>
+                                      <p className="text-[10px] text-gray-500 leading-relaxed mt-1">{plan.reasoning}</p>
+                                    </div>
+                                 </div>
+                               ))}
+                             </div>
+                           </div>
+
+                           {/* Safety Flags & Adjustments */}
+                           <div className="bg-red-50/40 border border-red-100 rounded-[3rem] p-10">
+                              <h4 className="text-[10px] font-black text-red-400 uppercase tracking-widest mb-4">Patient-Specific Safety Flags</h4>
+                              <ul className="space-y-3 mb-6">
+                                {result.step3?.safetyFlags.map((flag, i) => (
+                                  <li key={i} className="flex gap-3 text-xs font-bold text-gray-700 items-center">
+                                    <span className="w-1.5 h-1.5 bg-red-400 rounded-full flex-shrink-0"></span>
+                                    {flag}
+                                  </li>
+                                ))}
+                              </ul>
+                              {result.step3?.conservativeAdjustments && (
+                                <div className="bg-white/60 p-4 rounded-2xl border border-red-100">
+                                   <span className="text-[9px] font-black text-red-300 uppercase tracking-widest block mb-1">Conservative Adjustment</span>
+                                   <p className="text-[10px] font-medium text-gray-600 italic">"{result.step3.conservativeAdjustments}"</p>
+                                </div>
+                              )}
+                           </div>
+                        </div>
+                        
+                        {/* STEP 4: DOSING ENGINE */}
+                        <div>
+                          <h3 className="text-[12px] font-black text-gray-400 uppercase tracking-[0.4em] mb-6">Step 4: Dosing Engine</h3>
+                          {result.step4 && <ComparativeDosing data={result.step4} />}
+                        </div>
+
+                        <div>
+                           <h3 className="text-[12px] font-black text-gray-400 uppercase tracking-[0.4em] mb-6 mt-12">Step 4B: Protocol Execution ({selectedBrand.split(' ')[0]})</h3>
+                           <DosageTable result={result} selectedBrand={selectedBrand} onUpdateSiteDose={updateSiteDose} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-24 pt-20 border-t border-gray-100 flex justify-center gap-8 no-print">
+                      <button 
+                        onClick={() => setIsReportOpen(true)}
+                        className="bg-[#2a3038] text-white px-12 py-5 rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] shadow-xl hover:bg-black transition-all transform active:scale-95"
+                      >
+                        View Full Clinical Report (Step 5)
+                      </button>
+                      <button onClick={initiateArchive} className="bg-[#97a98c] text-white px-12 py-5 rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] shadow-xl hover:bg-[#86987a] transition-all transform active:scale-95">Archive Record</button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'visualizer' && (
+          <div className="space-y-12 animate-in fade-in duration-700">
+            <div className="bg-white p-14 rounded-[4rem] shadow-2xl border border-gray-50">
+              <div className="max-w-3xl mx-auto space-y-12">
+                <div className="text-center space-y-4">
+                  <h2 className="text-3xl font-black text-gray-900 uppercase tracking-tighter">Clinical Visualizer</h2>
+                  <p className="text-gray-400 font-bold uppercase text-[11px] tracking-[0.4em]">Powered by Gemini 3 Image Pro</p>
+                </div>
+
+                <div className="space-y-8">
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Anatomical Query</label>
+                    <textarea 
+                      value={visualPrompt}
+                      onChange={(e) => setVisualPrompt(e.target.value)}
+                      placeholder="e.g., Detail of the angular artery path relative to the nasolabial fold..."
+                      className="w-full h-32 border-gray-100 bg-gray-50 rounded-[2.5rem] px-10 py-8 text-sm font-bold focus:ring-4 focus:ring-[#cc7e6d]/10 outline-none resize-none transition-all"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-8">
+                    <div className="space-y-3">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Fidelity</label>
+                      <select 
+                        value={visualSize}
+                        onChange={(e) => setVisualSize(e.target.value as ImageSize)}
+                        className="w-full border-gray-100 bg-gray-50 rounded-2xl px-7 py-5 text-sm font-black text-gray-700 outline-none focus:ring-4 focus:ring-[#cc7e6d]/10"
+                      >
+                        <option value="1K">1K (Standard)</option>
+                        <option value="2K">2K (High-Res)</option>
+                        <option value="4K">4K (Ultra-Res)</option>
+                      </select>
+                    </div>
+                    <div className="flex items-end">
+                      <button 
+                        disabled={visualLoading || !visualPrompt}
+                        onClick={handleGenerateVisual}
+                        className={`w-full py-5 rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] text-white transition-all shadow-xl transform active:scale-95 ${visualLoading || !visualPrompt ? 'bg-gray-200 cursor-not-allowed' : 'bg-[#cc7e6d] hover:bg-[#b86d5e]'}`}
+                      >
+                        {visualLoading ? 'Rendering...' : 'Generate Visual'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {visualResult && (
+                  <div className="space-y-8 pt-12 animate-in fade-in zoom-in duration-700">
+                    <div className="relative group rounded-[3.5rem] overflow-hidden border-[12px] border-gray-50 shadow-2xl aspect-square bg-gray-100">
+                      <img src={visualResult} alt="Generated Medical Asset" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <a href={visualResult} download="clinical-visual.png" className="bg-white text-gray-900 px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl">Download Asset</a>
+                      </div>
+                    </div>
+                    <p className="text-center text-[10px] text-gray-400 font-bold uppercase tracking-widest">AI-Generated Reference Material</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'knowledge' && <KnowledgeBase />}
+        {activeTab === 'history' && <TreatmentHistory sessions={history} />}
+      </main>
+      <UserGuideModal isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
+      <ClinicalReportModal isOpen={isReportOpen} onClose={() => setIsReportOpen(false)} reportMarkdown={result?.clinicalReport || ""} />
+      {result && (
+        <FeedbackModal 
+          isOpen={isFeedbackOpen} 
+          onClose={() => setIsFeedbackOpen(false)} 
+          data={{ patientId, brand: selectedBrand, result }}
+          onSave={handleFeedbackSubmit}
+        />
+      )}
+    </div>
+  );
+};
+
+export default App;

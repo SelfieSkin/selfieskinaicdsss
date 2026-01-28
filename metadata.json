@@ -1,0 +1,7 @@
+{
+  "name": "SelfieSkin AI-CDSS for Aesthetic Medicine",
+  "description": "An expert AI Clinical Decision Support System for botulinum toxin injections, providing evidence-based maps and dosage recommendations for licensed providers.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
