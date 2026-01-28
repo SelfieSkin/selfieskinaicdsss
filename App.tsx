@@ -1,5 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
+import { toPng } from 'html-to-image';
 import Header from './components/Header';
 import AnatomicalMap from './components/AnatomicalMap';
 import DosageTable from './components/DosageTable';
@@ -14,6 +15,50 @@ import { AnalysisResult, ToxinBrand, TreatmentSession, InjectionSite, DangerZone
 import { SAMPLE_ANALYSIS_FEMALE, SAMPLE_ANALYSIS_MALE } from './constants';
 
 type Tab = 'assessment' | 'visualizer' | 'knowledge' | 'history';
+
+// --- VISUALIZER USE CASES ---
+const useCases = [
+  {
+    id: 'procerus',
+    name: "Procerus Isolation",
+    description: "Educate on the muscle causing horizontal nasal root lines ('bunny lines').",
+    icon: (props) => <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 8C10.8954 8 10 7.10457 10 6C10 4.89543 10.8954 4 12 4C13.1046 4 14 4.89543 14 6C14 7.10457 13.1046 8 12 8ZM12 12C10.8954 12 10 11.1046 10 10C10 8.89543 10.8954 8 12 8C13.1046 8 14 8.89543 14 10C14 11.1046 13.1046 12 12 12ZM12 16C10.8954 16 10 15.1046 10 14C10 12.8954 10.8954 12 12 12C13.1046 12 14 12.8954 14 14C14 15.1046 13.1046 16 12 16ZM12 20C10.8954 20 10 19.1046 10 18C10 16.8954 10.8954 16 12 16C13.1046 16 14 16.8954 14 18C14 19.1046 13.1046 20 12 20Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+    prePrompt: "Medical illustration of a hyperdynamic procerus muscle causing a deep horizontal rhytid at the nasal root. Show muscle contraction lines.",
+    postPrompt: "Medical illustration of a relaxed procerus muscle after botulinum toxin treatment. The overlying skin is smooth and the horizontal rhytid is softened."
+  },
+  {
+    id: 'glabellar',
+    name: "Glabellar Complex",
+    description: "Visualize the interaction between muscles that create vertical '11' lines.",
+    icon: (props) => <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 14L12 10L16 14M8 10L12 6L16 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+    prePrompt: "Anatomical view of a V-Pattern glabellar contraction, showing the downward pull of the procerus and the medial pull of the hypertrophic corrugator supercilii muscles, creating deep '11' lines.",
+    postPrompt: "Anatomical view of a relaxed glabellar complex post-treatment. The procerus and corrugator muscles are smooth, and the '11' lines are significantly reduced."
+  },
+  {
+    id: 'frontalis',
+    name: "Frontalis & Brow Ptosis",
+    description: "Demonstrate the frontalis' role in brow elevation and ptosis risk.",
+    icon: (props) => <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12H20M4 8H20M4 16H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+    prePrompt: "Illustration of the frontalis muscle contracting, creating deep horizontal forehead lines but also elevating low-set eyebrows. Highlight the lower third as a high-risk zone for ptosis.",
+    postPrompt: "Post-treatment illustration showing softened horizontal forehead lines with preserved eyebrow position. The injections were placed high in the frontalis, relaxing the upper muscle fibers while maintaining support for the brows."
+  },
+  {
+    id: 'vasculature',
+    name: "Periocular Vasculature",
+    description: "Map key arteries in the crow's feet area to minimize bruising risk.",
+    icon: (props) => <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 4V20M12 4C10 6 8 10 8 12C8 14 10 18 12 20M12 4C14 6 16 10 16 12C16 14 14 18 12 20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+    prePrompt: "Detailed view of the lateral canthal region showing dynamic crow's feet rhytids on skin contraction. Overlay the typical superficial course of the angular and zygomaticofacial arteries beneath the skin.",
+    postPrompt: "View of the lateral canthal region post-treatment. The crow's feet are smooth. Illustrate safe, superficial injection points that successfully avoided the underlying vasculature, preventing bruising."
+  },
+  {
+    id: 'nerve',
+    name: "Supraorbital Nerve",
+    description: "Visualize nerve pathways to correct issues like a 'Spock Brow'.",
+    icon: (props) => <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L12 6M12 18L12 22M6 12L2 12M22 12L18 12M18 18L20 20M4 4L6 6M18 6L20 4M4 20L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+    prePrompt: "Anatomy of a 'Spock Brow' or 'Mephisto Sign', showing over-treatment of the central frontalis, leading to unopposed action of the lateral frontalis fibers and a peaked eyebrow.",
+    postPrompt: "Corrected brow appearance after targeted microdroplet injections into the lateral frontalis. The brow has a natural, gentle arch. Show the supraorbital notch and nerve path to illustrate how precise injection placement resolved the issue."
+  }
+];
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('assessment');
@@ -32,15 +77,19 @@ const App: React.FC = () => {
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [mapImageDataUrl, setMapImageDataUrl] = useState<string | null>(null);
   
   // Visualizer States
   const [visualPrompt, setVisualPrompt] = useState('');
   const [visualSize, setVisualSize] = useState<ImageSize>('1K');
-  const [visualResult, setVisualResult] = useState<string | null>(null);
+  const [visualResult, setVisualResult] = useState<{pre: string | null, post: string | null} | null>(null);
   const [visualLoading, setVisualLoading] = useState(false);
+  const [activeUseCase, setActiveUseCase] = useState<string | null>(null);
 
   const [history, setHistory] = useState<TreatmentSession[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const mapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem('selfieskin-history');
@@ -126,6 +175,7 @@ const App: React.FC = () => {
 
   const handleGenerateVisual = async () => {
     if (!visualPrompt) return;
+    setActiveUseCase(null); // Clear use case selection
     
     const hasKey = await (window as any).aistudio.hasSelectedApiKey();
     if (!hasKey) {
@@ -133,14 +183,61 @@ const App: React.FC = () => {
     }
 
     setVisualLoading(true);
+    setVisualResult(null);
     setError(null);
     try {
       const url = await generateAestheticVisual(visualPrompt, visualSize);
-      setVisualResult(url);
+      setVisualResult({ pre: url, post: null });
     } catch (err: any) {
       setError(err.message);
     } finally {
       setVisualLoading(false);
+    }
+  };
+
+  const handleUseCaseClick = async (useCase: typeof useCases[0]) => {
+    setActiveUseCase(useCase.id);
+    setVisualPrompt(''); // Clear manual prompt
+    
+    const hasKey = await (window as any).aistudio.hasSelectedApiKey();
+    if (!hasKey) {
+      await (window as any).aistudio.openSelectKey();
+    }
+
+    setVisualLoading(true);
+    setVisualResult(null);
+    setError(null);
+
+    try {
+      const [preUrl, postUrl] = await Promise.all([
+        generateAestheticVisual(useCase.prePrompt, visualSize),
+        generateAestheticVisual(useCase.postPrompt, visualSize),
+      ]);
+      setVisualResult({ pre: preUrl, post: postUrl });
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setVisualLoading(false);
+    }
+  };
+
+  const handleOpenReport = async () => {
+    if (!mapRef.current) return;
+    setIsGeneratingReport(true);
+    try {
+      const dataUrl = await toPng(mapRef.current, { 
+        quality: 0.95,
+        backgroundColor: 'white',
+        // Hide panel for cleaner report image
+        filter: (node: HTMLElement) => !node.classList?.contains('no-print'),
+      });
+      setMapImageDataUrl(dataUrl);
+    } catch (error) {
+      console.error('Failed to generate map image:', error);
+      setMapImageDataUrl(null); // Proceed without image on error
+    } finally {
+      setIsGeneratingReport(false);
+      setIsReportOpen(true);
     }
   };
 
@@ -270,6 +367,7 @@ const App: React.FC = () => {
                       {/* Left Column: Map & Sites (Step 3 Visualization) */}
                       <div className="space-y-16">
                         <AnatomicalMap 
+                          ref={mapRef}
                           gender={selectedGender} 
                           sites={result.sites} 
                           dangerZones={result.dangerZones} 
@@ -381,10 +479,11 @@ const App: React.FC = () => {
 
                     <div className="mt-24 pt-20 border-t border-gray-100 flex justify-center gap-8 no-print">
                       <button 
-                        onClick={() => setIsReportOpen(true)}
-                        className="bg-[#2a3038] text-white px-12 py-5 rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] shadow-xl hover:bg-black transition-all transform active:scale-95"
+                        onClick={handleOpenReport}
+                        disabled={isGeneratingReport}
+                        className="bg-[#2a3038] text-white px-12 py-5 rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] shadow-xl hover:bg-black transition-all transform active:scale-95 disabled:bg-gray-300 disabled:cursor-wait"
                       >
-                        View Full Clinical Report (Step 5)
+                        {isGeneratingReport ? 'Generating...' : 'View Full Clinical Report (Step 5)'}
                       </button>
                       <button onClick={initiateArchive} className="bg-[#97a98c] text-white px-12 py-5 rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] shadow-xl hover:bg-[#86987a] transition-all transform active:scale-95">Archive Record</button>
                     </div>
@@ -398,18 +497,45 @@ const App: React.FC = () => {
         {activeTab === 'visualizer' && (
           <div className="space-y-12 animate-in fade-in duration-700">
             <div className="bg-white p-14 rounded-[4rem] shadow-2xl border border-gray-50">
-              <div className="max-w-3xl mx-auto space-y-12">
+              <div className="max-w-4xl mx-auto space-y-12">
                 <div className="text-center space-y-4">
                   <h2 className="text-3xl font-black text-gray-900 uppercase tracking-tighter">Clinical Visualizer</h2>
                   <p className="text-gray-400 font-bold uppercase text-[11px] tracking-[0.4em]">Powered by Gemini 3 Image Pro</p>
                 </div>
 
+                {/* --- USE CASE SELECTOR --- */}
+                <div className="space-y-6">
+                  <label className="text-center block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Select a Clinical Use Case</label>
+                  <div className="grid grid-cols-5 gap-4">
+                    {useCases.map((uc) => (
+                      <button 
+                        key={uc.id} 
+                        onClick={() => handleUseCaseClick(uc)}
+                        className={`p-6 rounded-3xl border text-center transition-all duration-300 group ${activeUseCase === uc.id ? 'bg-[#cc7e6d] text-white shadow-lg' : 'bg-gray-50 hover:bg-white hover:shadow-lg hover:border-gray-200'}`}
+                        title={uc.name}
+                      >
+                        <div className="flex justify-center items-center mb-4">
+                          <uc.icon className={`w-8 h-8 ${activeUseCase === uc.id ? 'text-white' : 'text-gray-400 group-hover:text-[#cc7e6d]'}`} />
+                        </div>
+                        <h4 className={`text-[10px] font-black uppercase tracking-widest ${activeUseCase === uc.id ? 'text-white/80' : 'text-gray-500 group-hover:text-gray-800'}`}>{uc.name}</h4>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <div className="flex-1 h-px bg-gray-100"></div>
+                  <span className="text-gray-300 text-[10px] font-black uppercase tracking-widest">OR</span>
+                  <div className="flex-1 h-px bg-gray-100"></div>
+                </div>
+
+                {/* --- MANUAL QUERY --- */}
                 <div className="space-y-8">
                   <div className="space-y-3">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Anatomical Query</label>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Manual Anatomical Query</label>
                     <textarea 
                       value={visualPrompt}
-                      onChange={(e) => setVisualPrompt(e.target.value)}
+                      onChange={(e) => { setVisualPrompt(e.target.value); setActiveUseCase(null); }}
                       placeholder="e.g., Detail of the angular artery path relative to the nasolabial fold..."
                       className="w-full h-32 border-gray-100 bg-gray-50 rounded-[2.5rem] px-10 py-8 text-sm font-bold focus:ring-4 focus:ring-[#cc7e6d]/10 outline-none resize-none transition-all"
                     />
@@ -430,25 +556,55 @@ const App: React.FC = () => {
                     </div>
                     <div className="flex items-end">
                       <button 
-                        disabled={visualLoading || !visualPrompt}
-                        onClick={handleGenerateVisual}
-                        className={`w-full py-5 rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] text-white transition-all shadow-xl transform active:scale-95 ${visualLoading || !visualPrompt ? 'bg-gray-200 cursor-not-allowed' : 'bg-[#cc7e6d] hover:bg-[#b86d5e]'}`}
+                        disabled={visualLoading || (!visualPrompt && !activeUseCase)}
+                        onClick={visualPrompt ? handleGenerateVisual : () => {
+                           const active = useCases.find(uc => uc.id === activeUseCase);
+                           if (active) handleUseCaseClick(active);
+                        }}
+                        className={`w-full py-5 rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] text-white transition-all shadow-xl transform active:scale-95 ${visualLoading || (!visualPrompt && !activeUseCase) ? 'bg-gray-200 cursor-not-allowed' : 'bg-[#cc7e6d] hover:bg-[#b86d5e]'}`}
                       >
                         {visualLoading ? 'Rendering...' : 'Generate Visual'}
                       </button>
                     </div>
                   </div>
                 </div>
+                
+                {error && <div className="p-8 bg-red-50 border border-red-100 rounded-3xl text-red-600 font-bold text-center text-sm">{error}</div>}
+
+                {visualLoading && (
+                  <div className="flex flex-col items-center justify-center py-20 bg-gray-50 rounded-[3rem] border border-gray-100 animate-pulse">
+                    <div className="w-12 h-12 border-4 border-gray-200 border-t-[#cc7e6d] rounded-full animate-spin mb-6"></div>
+                    <p className="text-xs font-black text-gray-400 uppercase tracking-[0.3em]">Generating High-Fidelity Visuals...</p>
+                  </div>
+                )}
 
                 {visualResult && (
                   <div className="space-y-8 pt-12 animate-in fade-in zoom-in duration-700">
-                    <div className="relative group rounded-[3.5rem] overflow-hidden border-[12px] border-gray-50 shadow-2xl aspect-square bg-gray-100">
-                      <img src={visualResult} alt="Generated Medical Asset" className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <a href={visualResult} download="clinical-visual.png" className="bg-white text-gray-900 px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl">Download Asset</a>
+                    <div className={`grid ${visualResult.post ? 'grid-cols-2 gap-8' : 'grid-cols-1'}`}>
+                      {/* Pre-Treatment Image */}
+                      <div className="space-y-4">
+                         <div className="relative group rounded-[3rem] overflow-hidden border-8 border-gray-50 shadow-xl aspect-square bg-gray-100">
+                            <img src={visualResult.pre} alt="Generated Medical Asset" className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <a href={visualResult.pre} download="clinical-visual-pre.png" className="bg-white text-gray-900 px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-2xl">Download</a>
+                            </div>
+                         </div>
+                         <p className="text-center text-[10px] text-gray-400 font-bold uppercase tracking-widest">{visualResult.post ? 'Pre-Treatment' : 'Generated Visual'}</p>
                       </div>
+
+                      {/* Post-Treatment Image */}
+                      {visualResult.post && (
+                        <div className="space-y-4">
+                           <div className="relative group rounded-[3rem] overflow-hidden border-8 border-green-100 shadow-xl aspect-square bg-green-50">
+                              <img src={visualResult.post} alt="Generated Medical Asset - Post Treatment" className="w-full h-full object-cover" />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <a href={visualResult.post} download="clinical-visual-post.png" className="bg-white text-gray-900 px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-2xl">Download</a>
+                              </div>
+                           </div>
+                           <p className="text-center text-[10px] text-green-500 font-bold uppercase tracking-widest">Post-Treatment</p>
+                        </div>
+                      )}
                     </div>
-                    <p className="text-center text-[10px] text-gray-400 font-bold uppercase tracking-widest">AI-Generated Reference Material</p>
                   </div>
                 )}
               </div>
@@ -460,7 +616,12 @@ const App: React.FC = () => {
         {activeTab === 'history' && <TreatmentHistory sessions={history} />}
       </main>
       <UserGuideModal isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
-      <ClinicalReportModal isOpen={isReportOpen} onClose={() => setIsReportOpen(false)} reportMarkdown={result?.clinicalReport || ""} />
+      <ClinicalReportModal 
+        isOpen={isReportOpen} 
+        onClose={() => setIsReportOpen(false)} 
+        reportMarkdown={result?.clinicalReport || ""}
+        mapImageDataUrl={mapImageDataUrl}
+      />
       {result && (
         <FeedbackModal 
           isOpen={isFeedbackOpen} 

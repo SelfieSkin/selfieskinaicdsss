@@ -6,9 +6,10 @@ interface ClinicalReportModalProps {
   isOpen: boolean;
   onClose: () => void;
   reportMarkdown: string;
+  mapImageDataUrl: string | null;
 }
 
-const ClinicalReportModal: React.FC<ClinicalReportModalProps> = ({ isOpen, onClose, reportMarkdown }) => {
+const ClinicalReportModal: React.FC<ClinicalReportModalProps> = ({ isOpen, onClose, reportMarkdown, mapImageDataUrl }) => {
   if (!isOpen) return null;
 
   // Markdown renderer respecting new branding (Sage headers, Cream background)
@@ -96,14 +97,19 @@ const ClinicalReportModal: React.FC<ClinicalReportModalProps> = ({ isOpen, onClo
         <div className="p-12 overflow-y-auto custom-scrollbar bg-[#F2E5CF] print:p-0 print:overflow-visible">
           <div className="bg-white p-12 shadow-sm rounded-3xl print:shadow-none print:p-0 print:rounded-none">
              {renderMarkdown(reportMarkdown)}
-          </div>
-          
-          <div className="mt-12 p-6 bg-white/50 rounded-2xl border border-[#B2AC88]/20 print:hidden">
-             <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Step 6: Feedback & Deviation Log</h4>
-             <textarea 
-               className="w-full bg-white border border-gray-200 rounded-xl p-4 text-xs font-medium focus:ring-2 focus:ring-[#E2725B]/20 outline-none h-24"
-               placeholder="Enter deviation rationale here..."
-             ></textarea>
+             {mapImageDataUrl && (
+              <div className="mt-8 pt-8 border-t-2 border-dashed border-gray-100 break-inside-avoid">
+                <h3 className="text-lg font-black text-[#B2AC88] mb-4 uppercase tracking-widest border-l-4 border-[#E2725B] pl-3">
+                  Visual Injection Map
+                </h3>
+                <div className="border-4 border-gray-50 rounded-3xl overflow-hidden shadow-md mt-4">
+                  <img src={mapImageDataUrl} alt="Visual injection map" className="w-full h-auto" />
+                </div>
+                <p className="text-center text-[9px] text-gray-400 mt-3 uppercase tracking-widest">
+                  Rendered from live session data for patient record
+                </p>
+              </div>
+             )}
           </div>
         </div>
 

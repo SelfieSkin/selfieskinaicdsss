@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, forwardRef } from 'react';
 import { InjectionSite, DangerZone, PatientGender } from '../types';
 
 interface Landmark {
@@ -17,13 +17,13 @@ interface AnatomicalMapProps {
   onUpdateDangerZones: (zones: DangerZone[]) => void;
 }
 
-const AnatomicalMap: React.FC<AnatomicalMapProps> = ({ 
+const AnatomicalMap = forwardRef<HTMLDivElement, AnatomicalMapProps>(({ 
   gender,
   sites, 
   dangerZones, 
   onUpdateSites, 
   onUpdateDangerZones 
-}) => {
+}, ref) => {
   const [siteOpacity, setSiteOpacity] = useState(1);
   const [dangerOpacity, setDangerOpacity] = useState(0.6);
   const [isPanelOpen, setIsPanelOpen] = useState(true);
@@ -103,7 +103,7 @@ const AnatomicalMap: React.FC<AnatomicalMapProps> = ({
   }, [dragging, sites, dangerZones, onUpdateSites, onUpdateDangerZones]);
 
   return (
-    <div className="relative w-full aspect-[3/4] bg-white rounded-[3rem] border border-gray-100 overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.12)] flex flex-col group select-none">
+    <div ref={ref} className="relative w-full aspect-[3/4] bg-white rounded-[3rem] border border-gray-100 overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.12)] flex flex-col group select-none">
       {/* Control Panel Toggle */}
       <div className="absolute top-6 right-6 z-40 no-print">
         <div className={`bg-white/95 backdrop-blur-md border border-gray-100 rounded-2xl shadow-lg transition-all duration-300 overflow-hidden ${isPanelOpen ? 'w-64 p-5' : 'w-auto'}`}>
@@ -231,6 +231,6 @@ const AnatomicalMap: React.FC<AnatomicalMapProps> = ({
       </div>
     </div>
   );
-};
+});
 
 export default AnatomicalMap;
