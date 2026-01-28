@@ -10,7 +10,7 @@ import TreatmentHistory from './components/TreatmentHistory';
 import UserGuideModal from './components/UserGuideModal';
 import ClinicalReportModal from './components/ClinicalReportModal';
 import FeedbackModal from './components/FeedbackModal';
-import { analyzePatientVideo, generateAestheticVisual } from './services/geminiService';
+import { analyzePatientVideo, generateAestheticVisual, generateTreatmentMapVisual } from './services/geminiService';
 import { AnalysisResult, ToxinBrand, TreatmentSession, InjectionSite, DangerZone, PatientGender, ImageSize, FeedbackData } from './types';
 import { SAMPLE_ANALYSIS_FEMALE, SAMPLE_ANALYSIS_MALE } from './constants';
 
@@ -98,7 +98,8 @@ const useCases = [
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('assessment');
   const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isGeneratingMap, setIsGeneratingMap] = useState(false);
   const [loadingStage, setLoadingStage] = useState('');
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -114,6 +115,7 @@ const App: React.FC = () => {
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [mapImageDataUrl, setMapImageDataUrl] = useState<string | null>(null);
+  const [treatmentMapImageUrl, setTreatmentMapImageUrl] = useState<string | null>(null);
   
   // Visualizer States
   const [visualPrompt, setVisualPrompt] = useState('');
@@ -139,6 +141,7 @@ const App: React.FC = () => {
       setVideoFile(file);
       setResult(null);
       setError(null);
+      setTreatmentMapImageUrl(null);
     }
   };
 
@@ -149,32 +152,21 @@ const App: React.FC = () => {
     
     // Deep clone to ensure demo data remains fresh and mutable for this session
     const freshSample = JSON.parse(JSON.stringify(sample));
-    
-    // CRITICAL: Ensure the result object's gender matches the UI selection
     freshSample.gender = selectedGender;
     
     setResult(freshSample);
     setError(null);
+    setTreatmentMapImageUrl(null); // Clear map for demo data
     window.scrollTo({ top: 350, behavior: 'smooth' });
   };
 
   const handleAnalyze = async () => {
     if (!videoFile || !patientId) return;
-    setLoading(true);
+    setResult(null);
+    setTreatmentMapImageUrl(null);
     setError(null);
-    // Visualizing the 6-step workflow in loading stages
-    const stages = [
-      "Step 1: Validating Intake & Consents...",
-      "Step 2: Video Dynamics (Anatomy Only)...",
-      "Step 3: Generating Injection Map & Safety Rules...",
-      "Step 4: Calculating Comparative Dosing Matrix...",
-      "Step 5: Compiling Clinical Report..."
-    ];
-    let stageIdx = 0;
-    const stageInterval = setInterval(() => {
-      setLoadingStage(stages[stageIdx % stages.length]);
-      stageIdx++;
-    }, 1200);
+    setIsAnalyzing(true);
+    setLoadingStage("Step 2: Analyzing Video Dynamics...");
 
     try {
       const reader = new FileReader();
@@ -182,6 +174,7 @@ const App: React.FC = () => {
       reader.onload = async () => {
         const base64 = (reader.result as string).split(',')[1];
         try {
+          // Step 1: Get JSON analysis
           const analysis = await analyzePatientVideo(
             base64, 
             videoFile.type, 
@@ -196,15 +189,28 @@ const App: React.FC = () => {
           }));
           analysis.dangerZones = (analysis.dangerZones || []).map((z, i) => ({ ...z, id: `danger-${i}` }));
           setResult(analysis);
-        } catch (err: any) { setError(err.message); } finally {
-          clearInterval(stageInterval);
-          setLoading(false);
+          setIsAnalyzing(false);
+
+          // Step 2: Generate Visual Map
+          setIsGeneratingMap(true);
+          setLoadingStage("Step 3B: Generating Visual Treatment Map...");
+          const imageUrl = await generateTreatmentMapVisual(analysis);
+          setTreatmentMapImageUrl(imageUrl);
+          setIsGeneratingMap(false);
+          
+        } catch (err: any) { 
+          setError(err.message); 
+          setIsAnalyzing(false);
+          setIsGeneratingMap(false);
         }
       };
+      reader.onerror = (error) => {
+          setError('Failed to read the video file.');
+          setIsAnalyzing(false);
+      };
     } catch (err: any) {
-      clearInterval(stageInterval);
-      setLoading(false);
       setError(err.message);
+      setIsAnalyzing(false);
     }
   };
 
@@ -277,16 +283,6 @@ const App: React.FC = () => {
     }
   };
 
-  const updateSites = (newSites: InjectionSite[]) => {
-    if (!result) return;
-    setResult({ ...result, sites: newSites });
-  };
-
-  const updateDangerZones = (newZones: DangerZone[]) => {
-    if (!result) return;
-    setResult({ ...result, dangerZones: newZones });
-  };
-
   const updateSiteDose = (siteId: string, doseInOna: number) => {
     if (!result) return;
     const newSites = result.sites.map(s => 
@@ -320,6 +316,8 @@ const App: React.FC = () => {
     setIsFeedbackOpen(false);
     alert("Treatment record archived securely.");
   };
+  
+  const isLoading = isAnalyzing || isGeneratingMap;
 
   return (
     <div className="min-h-screen bg-[#fcfcf9] pb-40">
@@ -385,15 +383,15 @@ const App: React.FC = () => {
                   {videoFile ? 'Replace Capture' : 'Upload Dynamic Scan'}
                 </button>
                 <input type="file" ref={fileInputRef} className="hidden" accept="video/*" onChange={handleFileChange} />
-                <button disabled={!videoFile || loading || !patientId} onClick={handleAnalyze} className={`w-full px-10 py-5 rounded-2xl font-black uppercase text-[11px] tracking-widest text-white transition-all shadow-xl transform active:scale-95 ${loading || !videoFile || !patientId ? 'bg-gray-200 cursor-not-allowed shadow-none' : 'bg-[#cc7e6d] hover:bg-[#b86d5e]'}`}>
-                  {loading ? 'Processing Steps 1-5...' : 'Run Clinical Analysis'}
+                <button disabled={isLoading || !videoFile || !patientId} onClick={handleAnalyze} className={`w-full px-10 py-5 rounded-2xl font-black uppercase text-[11px] tracking-widest text-white transition-all shadow-xl transform active:scale-95 ${isLoading || !videoFile || !patientId ? 'bg-gray-200 cursor-not-allowed shadow-none' : 'bg-[#cc7e6d] hover:bg-[#b86d5e]'}`}>
+                  {isLoading ? 'Processing...' : 'Run Clinical Analysis'}
                 </button>
               </div>
             </div>
 
-            {loading && <div className="flex flex-col items-center justify-center py-32 bg-white rounded-[4rem] border border-gray-50 animate-pulse"><div className="w-20 h-20 border-[6px] border-gray-100 border-t-[#cc7e6d] rounded-full animate-spin mb-8"></div><p className="text-xs font-black text-[#cc7e6d] uppercase tracking-[0.4em]">{loadingStage}</p></div>}
+            {isLoading && <div className="flex flex-col items-center justify-center py-32 bg-white rounded-[4rem] border border-gray-50 animate-pulse"><div className="w-20 h-20 border-[6px] border-gray-100 border-t-[#cc7e6d] rounded-full animate-spin mb-8"></div><p className="text-xs font-black text-[#cc7e6d] uppercase tracking-[0.4em]">{loadingStage}</p></div>}
             
-            {(result || error) && (
+            {(result || error) && !isLoading && (
               <div className="bg-white rounded-[4rem] p-10 md:p-20 shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-700">
                 {error && <div className="mb-12 p-8 bg-red-50 border border-red-100 rounded-3xl text-red-600 font-bold text-center text-sm">{error}</div>}
                 
@@ -404,11 +402,8 @@ const App: React.FC = () => {
                       <div className="space-y-16">
                         <AnatomicalMap 
                           ref={mapRef}
-                          gender={selectedGender} 
-                          sites={result.sites} 
-                          dangerZones={result.dangerZones} 
-                          onUpdateSites={updateSites} 
-                          onUpdateDangerZones={updateDangerZones} 
+                          isGenerating={isGeneratingMap}
+                          treatmentMapImageUrl={treatmentMapImageUrl}
                         />
                         {/* Step 3: Injection Strategy (Sites Detail) */}
                         <div className="space-y-8">
@@ -683,7 +678,7 @@ const App: React.FC = () => {
         isOpen={isReportOpen} 
         onClose={() => setIsReportOpen(false)} 
         reportMarkdown={result?.clinicalReport || ""}
-        mapImageDataUrl={mapImageDataUrl}
+        mapImageDataUrl={treatmentMapImageUrl || mapImageDataUrl}
       />
       {result && (
         <FeedbackModal 

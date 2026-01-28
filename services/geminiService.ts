@@ -49,6 +49,70 @@ export const analyzePatientVideo = async (
   }
 };
 
+export const generateTreatmentMapVisual = async (
+  analysis: AnalysisResult,
+  size: ImageSize = '1K'
+): Promise<string> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+  const upperFaceSites = analysis.sites.filter(s => ['Glabella', 'Forehead', 'Periocular'].includes(s.region));
+  const upperFaceZones = analysis.dangerZones.filter(z => ['Periocular', 'Supraorbital'].includes(z.region));
+
+  let prompt = `Create a professional, evidence-based medical illustration for an upper-face botulinum toxin treatment plan.
+  The patient is ${analysis.gender}. The overall facial structure should reflect this.
+  The view should be anterior (front-facing), focusing on the upper face from the nose up.
+  Use a clean, white background. The style should be photorealistic with anatomical accuracy.
+  Labeling must be clear, legible, and unobtrusive, using a modern sans-serif font.
+  
+  **Patient Presentation:**
+  - Glabellar Pattern: ${analysis.step2.glabellarPattern}
+  - Resting Tone observations: ${analysis.step2.restingTone}
+  - Contraction observations: Forehead: ${analysis.step2.maxContraction.frontalis}. Glabella: ${analysis.step2.maxContraction.glabella}.
+  
+  **Treatment Plan Overlay:**
+  `;
+
+  if (upperFaceSites.length > 0) {
+    prompt += `\n**Injection Sites (Green Dots):**
+    Overlay the following injection points as small, distinct green dots. Next to each dot, add a label with its ID and Ona-equivalent dose.
+    `;
+    upperFaceSites.forEach(site => {
+        prompt += `- Site ID: ${site.label}, Dose: ${site.doseOna}U. Location: ${site.muscle}. Rationale for placement: ${site.rationale}. Visually place this accurately based on the muscle and rationale.\n`;
+    });
+  }
+
+  if (upperFaceZones.length > 0) {
+    prompt += `\n**Danger Zones (Red Areas):**
+    Illustrate the following anatomical danger zones as transparent red-hashed circular areas to be avoided.
+    `;
+    upperFaceZones.forEach(zone => {
+        prompt += `- Zone: ${zone.region}. Risk: ${zone.risk}. Center this zone appropriately.\n`;
+    });
+  }
+  
+  prompt += `\nEnsure the final image is a clear, high-fidelity clinical guide suitable for a medical professional.`;
+
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-pro-image-preview',
+    contents: { parts: [{ text: prompt }] },
+    config: {
+      imageConfig: {
+        aspectRatio: "1:1",
+        imageSize: size
+      }
+    },
+  });
+
+  for (const part of response.candidates[0].content.parts) {
+    if (part.inlineData) {
+      return `data:image/png;base64,${part.inlineData.data}`;
+    }
+  }
+
+  throw new Error("No treatment map image was generated.");
+};
+
+
 export const generateAestheticVisual = async (
   prompt: string,
   size: ImageSize
