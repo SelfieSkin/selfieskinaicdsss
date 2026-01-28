@@ -21,42 +21,77 @@ const useCases = [
   {
     id: 'procerus',
     name: "Procerus Isolation",
-    description: "Educate on the muscle causing horizontal nasal root lines ('bunny lines').",
     icon: (props) => <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 8C10.8954 8 10 7.10457 10 6C10 4.89543 10.8954 4 12 4C13.1046 4 14 4.89543 14 6C14 7.10457 13.1046 8 12 8ZM12 12C10.8954 12 10 11.1046 10 10C10 8.89543 10.8954 8 12 8C13.1046 8 14 8.89543 14 10C14 11.1046 13.1046 12 12 12ZM12 16C10.8954 16 10 15.1046 10 14C10 12.8954 10.8954 12 12 12C13.1046 12 14 12.8954 14 14C14 15.1046 13.1046 16 12 16ZM12 20C10.8954 20 10 19.1046 10 18C10 16.8954 10.8954 16 12 16C13.1046 16 14 16.8954 14 18C14 19.1046 13.1046 20 12 20Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
     prePrompt: "Medical illustration of a hyperdynamic procerus muscle causing a deep horizontal rhytid at the nasal root. Show muscle contraction lines.",
-    postPrompt: "Medical illustration of a relaxed procerus muscle after botulinum toxin treatment. The overlying skin is smooth and the horizontal rhytid is softened."
+    treatmentPrompt: "Medical illustration of a single injection point in the belly of the procerus muscle. Label it 'G1' with a dose of '4U'.",
+    postPrompt: "Medical illustration of a relaxed procerus muscle after botulinum toxin treatment. The overlying skin is smooth and the horizontal rhytid is softened.",
+    narrative: {
+        who: "A patient with a static horizontal line at the top of their nose.",
+        what: "A hyperdynamic procerus muscle pulling the medial brows down.",
+        when: "The patient complains of looking 'angry' or 'scrunched up' even at rest.",
+        where: "A single, targeted injection into the belly of the procerus muscle (G1).",
+        why: "To relax the procerus with 4 Units of OnabotulinumtoxinA, softening the horizontal line for a more serene expression."
+    }
   },
   {
     id: 'glabellar',
     name: "Glabellar Complex",
-    description: "Visualize the interaction between muscles that create vertical '11' lines.",
     icon: (props) => <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 14L12 10L16 14M8 10L12 6L16 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
     prePrompt: "Anatomical view of a V-Pattern glabellar contraction, showing the downward pull of the procerus and the medial pull of the hypertrophic corrugator supercilii muscles, creating deep '11' lines.",
-    postPrompt: "Anatomical view of a relaxed glabellar complex post-treatment. The procerus and corrugator muscles are smooth, and the '11' lines are significantly reduced."
+    treatmentPrompt: "Medical illustration of a 7-point injection pattern for a V-pattern glabella. Label a central procerus point 'G1' (4U), two medial corrugator points 'G2' (4U each), and four lateral/superior corrugator points 'G3' (2U each).",
+    postPrompt: "Anatomical view of a relaxed glabellar complex post-treatment. The procerus and corrugator muscles are smooth, and the '11' lines are significantly reduced.",
+    narrative: {
+        who: "A patient presenting with deep vertical '11' lines between the eyebrows, typical of a V-Pattern contraction.",
+        what: "Hypertrophic corrugator supercilii muscles pulling brows medially, with strong procerus involvement.",
+        when: "The patient expresses concern about looking 'stern' or 'worried.'",
+        where: "A 7-point injection pattern across the glabellar complex targeting the procerus and corrugators.",
+        why: "To administer a total of 20 Units to reduce the action of the brow depressors, smoothing the '11s' and opening the medial brow."
+    }
   },
   {
     id: 'frontalis',
     name: "Frontalis & Brow Ptosis",
-    description: "Demonstrate the frontalis' role in brow elevation and ptosis risk.",
     icon: (props) => <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12H20M4 8H20M4 16H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
     prePrompt: "Illustration of the frontalis muscle contracting, creating deep horizontal forehead lines but also elevating low-set eyebrows. Highlight the lower third as a high-risk zone for ptosis.",
-    postPrompt: "Post-treatment illustration showing softened horizontal forehead lines with preserved eyebrow position. The injections were placed high in the frontalis, relaxing the upper muscle fibers while maintaining support for the brows."
+    treatmentPrompt: "Medical illustration of a conservative frontalis injection plan. Show 8 small-dose injection points placed at least 2cm above the orbital rim. Label each point 'F' with a dose of '1.5U'.",
+    postPrompt: "Post-treatment illustration showing softened horizontal forehead lines with preserved eyebrow position. The injections were placed high in the frontalis, relaxing the upper muscle fibers while maintaining support for the brows.",
+    narrative: {
+        who: "A patient with low-set brows concerned about forehead lines but at high risk for iatrogenic brow drop.",
+        what: "The frontalis is the sole elevator of the brow; treating it too aggressively or too low can cause ptosis.",
+        when: "The patient desires smoother forehead skin without a 'heavy' or 'tired' look post-treatment.",
+        where: "The superior two-thirds of the frontalis muscle, with all injection points >2cm above the orbital rim.",
+        why: "To use a total of 12 Units in microdroplets to conservatively soften upper horizontal rhytids while preserving the muscle's brow-lifting function."
+    }
   },
   {
     id: 'vasculature',
     name: "Periocular Vasculature",
-    description: "Map key arteries in the crow's feet area to minimize bruising risk.",
     icon: (props) => <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 4V20M12 4C10 6 8 10 8 12C8 14 10 18 12 20M12 4C14 6 16 10 16 12C16 14 14 18 12 20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
     prePrompt: "Detailed view of the lateral canthal region showing dynamic crow's feet rhytids on skin contraction. Overlay the typical superficial course of the angular and zygomaticofacial arteries beneath the skin.",
-    postPrompt: "View of the lateral canthal region post-treatment. The crow's feet are smooth. Illustrate safe, superficial injection points that successfully avoided the underlying vasculature, preventing bruising."
+    treatmentPrompt: "Medical illustration of safe injection points for crow's feet. Show 3 superficial injection points per side, placed over 1.5cm lateral to the lateral canthus, avoiding the illustrated arteries. Label each point 'C' with a dose of '2U'.",
+    postPrompt: "View of the lateral canthal region post-treatment. The crow's feet are smooth. Illustrate safe, superficial injection points that successfully avoided the underlying vasculature, preventing bruising.",
+    narrative: {
+        who: "Any patient, especially those with thin, translucent skin, undergoing treatment for crow's feet.",
+        what: "The superficial course of the angular and zygomaticofacial arteries poses a risk for bruising.",
+        when: "Planning lateral orbicularis oculi injections to minimize the risk of ecchymosis.",
+        where: "Three injection points per side, placed superficially and >1.5cm from the lateral canthus.",
+        why: "To administer a total of 12 Units (6 per side) in a safe plane, avoiding vessel puncture for a better patient experience and outcome."
+    }
   },
   {
     id: 'nerve',
     name: "Supraorbital Nerve",
-    description: "Visualize nerve pathways to correct issues like a 'Spock Brow'.",
     icon: (props) => <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L12 6M12 18L12 22M6 12L2 12M22 12L18 12M18 18L20 20M4 4L6 6M18 6L20 4M4 20L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
     prePrompt: "Anatomy of a 'Spock Brow' or 'Mephisto Sign', showing over-treatment of the central frontalis, leading to unopposed action of the lateral frontalis fibers and a peaked eyebrow.",
-    postPrompt: "Corrected brow appearance after targeted microdroplet injections into the lateral frontalis. The brow has a natural, gentle arch. Show the supraorbital notch and nerve path to illustrate how precise injection placement resolved the issue."
+    treatmentPrompt: "Medical illustration correcting a 'Spock Brow'. Show two targeted microdroplet injection points in the lateral frontalis fibers, superior and lateral to the brow peak. Label each point 'Correction' with a dose of '1U'.",
+    postPrompt: "Corrected brow appearance after targeted microdroplet injections into the lateral frontalis. The brow has a natural, gentle arch. Show the supraorbital notch and nerve path to illustrate how precise injection placement resolved the issue.",
+    narrative: {
+        who: "A patient with a 'Spock brow' (peaked lateral brow) from a previous treatment.",
+        what: "Over-treatment of the central frontalis has led to unopposed hyper-action of the lateral fibers.",
+        when: "Correcting an aesthetically undesirable outcome from a prior injection.",
+        where: "The lateral aspect of the frontalis muscle, superior to the peak of the brow.",
+        why: "To use a small dose (1U per side) to relax the hyperactive lateral frontalis fibers, lowering the brow peak and restoring a natural, aesthetically pleasing arch."
+    }
   }
 ];
 
@@ -83,7 +118,7 @@ const App: React.FC = () => {
   // Visualizer States
   const [visualPrompt, setVisualPrompt] = useState('');
   const [visualSize, setVisualSize] = useState<ImageSize>('1K');
-  const [visualResult, setVisualResult] = useState<{pre: string | null, post: string | null} | null>(null);
+  const [visualResult, setVisualResult] = useState<{pre: string | null, treatment: string | null, post: string | null} | null>(null);
   const [visualLoading, setVisualLoading] = useState(false);
   const [activeUseCase, setActiveUseCase] = useState<string | null>(null);
 
@@ -187,7 +222,7 @@ const App: React.FC = () => {
     setError(null);
     try {
       const url = await generateAestheticVisual(visualPrompt, visualSize);
-      setVisualResult({ pre: url, post: null });
+      setVisualResult({ pre: url, treatment: null, post: null });
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -209,11 +244,12 @@ const App: React.FC = () => {
     setError(null);
 
     try {
-      const [preUrl, postUrl] = await Promise.all([
+      const [preUrl, treatmentUrl, postUrl] = await Promise.all([
         generateAestheticVisual(useCase.prePrompt, visualSize),
+        generateAestheticVisual(useCase.treatmentPrompt, visualSize),
         generateAestheticVisual(useCase.postPrompt, visualSize),
       ]);
-      setVisualResult({ pre: preUrl, post: postUrl });
+      setVisualResult({ pre: preUrl, treatment: treatmentUrl, post: postUrl });
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -497,7 +533,7 @@ const App: React.FC = () => {
         {activeTab === 'visualizer' && (
           <div className="space-y-12 animate-in fade-in duration-700">
             <div className="bg-white p-14 rounded-[4rem] shadow-2xl border border-gray-50">
-              <div className="max-w-4xl mx-auto space-y-12">
+              <div className="max-w-6xl mx-auto space-y-12">
                 <div className="text-center space-y-4">
                   <h2 className="text-3xl font-black text-gray-900 uppercase tracking-tighter">Clinical Visualizer</h2>
                   <p className="text-gray-400 font-bold uppercase text-[11px] tracking-[0.4em]">Powered by Gemini 3 Image Pro</p>
@@ -580,17 +616,30 @@ const App: React.FC = () => {
 
                 {visualResult && (
                   <div className="space-y-8 pt-12 animate-in fade-in zoom-in duration-700">
-                    <div className={`grid ${visualResult.post ? 'grid-cols-2 gap-8' : 'grid-cols-1'}`}>
+                    <div className={`grid ${visualResult.post ? 'grid-cols-3 gap-8' : 'grid-cols-1'}`}>
                       {/* Pre-Treatment Image */}
                       <div className="space-y-4">
                          <div className="relative group rounded-[3rem] overflow-hidden border-8 border-gray-50 shadow-xl aspect-square bg-gray-100">
-                            <img src={visualResult.pre} alt="Generated Medical Asset" className="w-full h-full object-cover" />
+                            {visualResult.pre && <img src={visualResult.pre} alt="Generated Medical Asset" className="w-full h-full object-cover" />}
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                              <a href={visualResult.pre} download="clinical-visual-pre.png" className="bg-white text-gray-900 px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-2xl">Download</a>
+                              {visualResult.pre && <a href={visualResult.pre} download="clinical-visual-pre.png" className="bg-white text-gray-900 px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-2xl">Download</a>}
                             </div>
                          </div>
                          <p className="text-center text-[10px] text-gray-400 font-bold uppercase tracking-widest">{visualResult.post ? 'Pre-Treatment' : 'Generated Visual'}</p>
                       </div>
+
+                      {/* Treatment Plan Image */}
+                      {visualResult.treatment && (
+                        <div className="space-y-4">
+                           <div className="relative group rounded-[3rem] overflow-hidden border-8 border-blue-100 shadow-xl aspect-square bg-blue-50">
+                              <img src={visualResult.treatment} alt="Generated Medical Asset - Treatment Plan" className="w-full h-full object-cover" />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <a href={visualResult.treatment} download="clinical-visual-treatment.png" className="bg-white text-gray-900 px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-2xl">Download</a>
+                              </div>
+                           </div>
+                           <p className="text-center text-[10px] text-blue-500 font-bold uppercase tracking-widest">Treatment Plan</p>
+                        </div>
+                      )}
 
                       {/* Post-Treatment Image */}
                       {visualResult.post && (
@@ -605,6 +654,20 @@ const App: React.FC = () => {
                         </div>
                       )}
                     </div>
+                    {/* --- CLINICAL NARRATIVE --- */}
+                    {activeUseCase && (
+                      <div className="bg-gray-50/70 p-8 rounded-[2.5rem] border border-gray-100 space-y-4 mt-8">
+                        <h3 className="text-sm font-black text-gray-800 uppercase tracking-widest text-center">Clinical Narrative: {useCases.find(uc => uc.id === activeUseCase)?.name}</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 pt-4 border-t border-gray-200">
+                          {(Object.entries(useCases.find(uc => uc.id === activeUseCase)?.narrative || {}) as [string, string][]).map(([key, value]) => (
+                             <div key={key} className="flex items-start gap-3">
+                               <dt className="w-12 flex-shrink-0 text-[10px] font-black text-[#cc7e6d] uppercase tracking-widest">{key}:</dt>
+                               <dd className="text-xs text-gray-600 font-medium">{value}</dd>
+                             </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
