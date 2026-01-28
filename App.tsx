@@ -10,7 +10,7 @@ import TreatmentHistory from './components/TreatmentHistory';
 import UserGuideModal from './components/UserGuideModal';
 import ClinicalReportModal from './components/ClinicalReportModal';
 import FeedbackModal from './components/FeedbackModal';
-import { analyzePatientVideo, generateAestheticVisual, generateTreatmentMapVisual } from './services/geminiService';
+import { analyzePatientVideo, generateAestheticVisual, generatePostTreatmentVisual, generateTreatmentMapVisual } from './services/geminiService';
 import { AnalysisResult, ToxinBrand, TreatmentSession, InjectionSite, DangerZone, PatientGender, ImageSize, FeedbackData } from './types';
 import { SAMPLE_ANALYSIS_FEMALE, SAMPLE_ANALYSIS_MALE } from './constants';
 
@@ -100,6 +100,7 @@ const App: React.FC = () => {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isGeneratingMap, setIsGeneratingMap] = useState(false);
+  const [isGeneratingPostTreatmentVisual, setIsGeneratingPostTreatmentVisual] = useState(false);
   const [loadingStage, setLoadingStage] = useState('');
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -116,6 +117,8 @@ const App: React.FC = () => {
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [mapImageDataUrl, setMapImageDataUrl] = useState<string | null>(null);
   const [treatmentMapImageUrl, setTreatmentMapImageUrl] = useState<string | null>(null);
+  const [postTreatmentImageUrl, setPostTreatmentImageUrl] = useState<string | null>(null);
+  const [isDemoCase, setIsDemoCase] = useState(false);
   
   // Visualizer States
   const [visualPrompt, setVisualPrompt] = useState('');
@@ -142,6 +145,8 @@ const App: React.FC = () => {
       setResult(null);
       setError(null);
       setTreatmentMapImageUrl(null);
+      setPostTreatmentImageUrl(null);
+      setIsDemoCase(false);
     }
   };
 
@@ -149,8 +154,10 @@ const App: React.FC = () => {
     // Reset state
     setResult(null);
     setTreatmentMapImageUrl(null);
+    setPostTreatmentImageUrl(null);
     setError(null);
     setVideoFile(null);
+    setIsDemoCase(true);
 
     const isF = selectedGender === PatientGender.FEMALE;
     setPatientId(`DEMO-${isF ? 'F' : 'M'}-${Math.floor(Math.random() * 899) + 100}`);
@@ -166,7 +173,7 @@ const App: React.FC = () => {
     
     // Now generate the visual map
     setIsGeneratingMap(true);
-    setLoadingStage("Generating Demo Visual Treatment Map...");
+    setLoadingStage("Generating Demo Visuals...");
 
     try {
         const hasKey = await (window as any).aistudio.hasSelectedApiKey();
@@ -175,10 +182,17 @@ const App: React.FC = () => {
         }
         const imageUrl = await generateTreatmentMapVisual(freshSample);
         setTreatmentMapImageUrl(imageUrl);
+        setIsGeneratingMap(false);
+        
+        setIsGeneratingPostTreatmentVisual(true);
+        const postTreatmentUrl = await generatePostTreatmentVisual(freshSample);
+        setPostTreatmentImageUrl(postTreatmentUrl);
+
     } catch (err: any) {
-        setError("Failed to generate demo visual map. Please check your API key or try a live analysis. Error: " + err.message);
+        setError("Failed to generate demo visuals. Please check your API key or try a live analysis. Error: " + err.message);
     } finally {
         setIsGeneratingMap(false);
+        setIsGeneratingPostTreatmentVisual(false);
     }
   };
 
@@ -186,8 +200,10 @@ const App: React.FC = () => {
     if (!videoFile || !patientId) return;
     setResult(null);
     setTreatmentMapImageUrl(null);
+    setPostTreatmentImageUrl(null);
     setError(null);
     setIsAnalyzing(true);
+    setIsDemoCase(false);
     setLoadingStage("Step 2: Analyzing Video Dynamics...");
 
     try {
@@ -220,10 +236,18 @@ const App: React.FC = () => {
           setTreatmentMapImageUrl(imageUrl);
           setIsGeneratingMap(false);
           
+          // Step 3: Generate Post-Treatment Simulation
+          setIsGeneratingPostTreatmentVisual(true);
+          setLoadingStage("Step 3C: Simulating Post-Treatment Outcome...");
+          const postTreatmentUrl = await generatePostTreatmentVisual(analysis);
+          setPostTreatmentImageUrl(postTreatmentUrl);
+          setIsGeneratingPostTreatmentVisual(false);
+          
         } catch (err: any) { 
           setError(err.message); 
           setIsAnalyzing(false);
           setIsGeneratingMap(false);
+          setIsGeneratingPostTreatmentVisual(false);
         }
       };
       reader.onerror = (error) => {
@@ -339,7 +363,7 @@ const App: React.FC = () => {
     alert("Treatment record archived securely.");
   };
   
-  const isLoading = isAnalyzing || isGeneratingMap;
+  const isLoading = isAnalyzing || isGeneratingMap || isGeneratingPostTreatmentVisual;
 
   return (
     <div className="min-h-screen bg-[#fcfcf9] pb-40">
@@ -427,6 +451,51 @@ const App: React.FC = () => {
                           isGenerating={isGeneratingMap}
                           treatmentMapImageUrl={treatmentMapImageUrl}
                         />
+
+                        {/* NEW: Outcome Simulation View */}
+                        {(postTreatmentImageUrl || isGeneratingPostTreatmentVisual) && (
+                          <div className="space-y-8 animate-in fade-in duration-500">
+                            <h3 className="text-[12px] font-black text-gray-400 uppercase tracking-[0.4em] border-b border-gray-50 pb-4">Clinical Outcome Simulation</h3>
+                            <div className="grid grid-cols-2 gap-4 items-start bg-gray-50/30 p-4 rounded-[2.5rem] border border-gray-100">
+                              {/* Pre-Treatment Video/Image */}
+                              <div className="space-y-2">
+                                <div className="w-full rounded-2xl aspect-square overflow-hidden flex items-center justify-center">
+                                  {videoFile ? (
+                                    <video controls muted loop playsInline className="w-full h-full object-cover">
+                                      <source src={URL.createObjectURL(videoFile)} type={videoFile.type} />
+                                    </video>
+                                  ) : isDemoCase ? (
+                                    <div className="w-full h-full p-4 flex items-center justify-center" style={{ backgroundColor: '#F2E5CF' }}>
+                                        <div className="w-full h-full border-2 border-dashed border-blue-400 rounded-xl"></div>
+                                    </div>
+                                  ) : (
+                                    <div className="w-full h-full bg-gray-200 text-center p-4 flex flex-col items-center justify-center">
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-8 w-8 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15 10l4.55a2 2 0 01.996 1.713V14a2 2 0 01-2 2h-1.55a2 2 0 01-1.789-1.118l-1.9-3.774a2 2 0 00-1.79-1.108h-1.912a2 2 0 00-1.79 1.108l-1.9 3.774A2 2 0 015.55 16H4a2 2 0 01-2-2v-.287a2 2 0 01.996-1.713L7.5 10m7.5 0l-3.75-3.75M7.5 10l3.75-3.75" /></svg>
+                                      <p className="text-[10px] font-bold text-gray-400 mt-2">Dynamic Scan appears here</p>
+                                    </div>
+                                  )}
+                                </div>
+                                <p className="text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest">Pre-Treatment</p>
+                              </div>
+                              {/* Post-Treatment Image */}
+                              <div className="space-y-2">
+                                <div className="relative w-full aspect-square bg-gray-100 rounded-2xl border border-gray-200 overflow-hidden flex items-center justify-center">
+                                  {isGeneratingPostTreatmentVisual && (
+                                    <div className="flex flex-col items-center justify-center text-center p-2">
+                                        <div className="w-8 h-8 border-2 border-gray-200 border-t-green-500 rounded-full animate-spin mb-4"></div>
+                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Simulating Outcome...</p>
+                                    </div>
+                                  )}
+                                  {!isGeneratingPostTreatmentVisual && postTreatmentImageUrl && (
+                                    <img src={postTreatmentImageUrl} alt="AI-Generated Post-Treatment Simulation" className="w-full h-full object-cover animate-in fade-in duration-500" />
+                                  )}
+                                </div>
+                                <p className="text-center text-[10px] font-bold text-green-600 uppercase tracking-widest">AI Simulation (Post-Treatment)</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
                         {/* Step 3: Injection Strategy (Sites Detail) */}
                         <div className="space-y-8">
                           <h3 className="text-[12px] font-black text-gray-400 uppercase tracking-[0.4em] border-b border-gray-50 pb-4">Step 3B: Plan Visualization</h3>
@@ -480,12 +549,12 @@ const App: React.FC = () => {
                            <h3 className="text-[12px] font-black text-gray-400 uppercase tracking-[0.4em]">Step 3: Strategic Planning</h3>
                            
                            {/* Plan Overview */}
-                           <div className="bg-white rounded-[3rem] border border-gray-100 shadow-md p-8">
+                           <div className="bg-gray-100 rounded-[3rem] p-8">
                              <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6">Regional Strategy</h4>
-                             <div className="space-y-6">
+                             <div className="space-y-4">
                                {result.step3?.regionalPlans.map((plan, i) => (
-                                 <div key={i} className="flex gap-6 items-start">
-                                    <div className="flex-shrink-0 w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-lg font-black text-[#cc7e6d]">
+                                 <div key={i} className="bg-white rounded-2xl p-4 flex gap-4 items-center shadow-sm">
+                                    <div className="flex-shrink-0 w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center text-lg font-black text-[#cc7e6d]">
                                       {plan.points}
                                     </div>
                                     <div>

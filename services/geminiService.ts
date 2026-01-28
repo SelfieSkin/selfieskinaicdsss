@@ -120,6 +120,57 @@ export const generateTreatmentMapVisual = async (
 };
 
 
+export const generatePostTreatmentVisual = async (
+  analysis: AnalysisResult,
+  size: ImageSize = '1K'
+): Promise<string> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+  let prompt = `Create a photorealistic medical illustration showing the expected **post-treatment** outcome for an aesthetic botulinum toxin procedure.
+  The patient is ${analysis.gender}. The facial structure should be consistent with this.
+  The view should be anterior (front-facing), focusing on the upper face. The style should be photorealistic, clean, and professional.
+  
+  **Aesthetic Goal (Post-Treatment):**
+  ${
+    analysis.gender === PatientGender.MALE
+      ? "For this male patient, the treatment aimed to reduce deep rhytids while preserving a strong, masculine facial structure. The final image must show a natural reduction in lines with a maintained flat, lower brow line. Avoid any appearance of a high, arched brow."
+      : "For this female patient, the treatment aimed to soften dynamic rhytids for a relaxed, refreshed appearance. The final image must show softened lines with a gentle, aesthetically pleasing arch to the brow, creating an open periorbital area."
+  }
+  
+  **Pre-Treatment Observations (for context):**
+  - Glabellar Pattern was: ${analysis.step2.glabellarPattern}.
+  - Max contraction showed: Forehead: ${analysis.step2.maxContraction.frontalis}. Glabella: ${analysis.step2.maxContraction.glabella}.
+  - The treatment plan involved injections in: ${analysis.step3.regionalPlans.map(p => p.region).join(', ')}.
+  
+  **Required Output Image Details:**
+  - **Skin Texture:** Show smoother skin in the treated areas (glabella, forehead, crow's feet) compared to the pre-treatment state.
+  - **Rhytids:** Dynamic lines should be visibly softened or eliminated. Static lines may still be faintly visible but should be less pronounced.
+  - **Brow Position:** The brow position must reflect the gender-specific aesthetic goal described above.
+  - **Expression:** The patient should have a neutral, relaxed expression. The result should look natural and refreshed, NOT 'frozen' or unnatural.
+  
+  Generate only the image, with no text overlays, labels, or dots.`;
+
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-pro-image-preview',
+    contents: { parts: [{ text: prompt }] },
+    config: {
+      imageConfig: {
+        aspectRatio: "1:1",
+        imageSize: size
+      }
+    },
+  });
+
+  for (const part of response.candidates[0].content.parts) {
+    if (part.inlineData) {
+      return `data:image/png;base64,${part.inlineData.data}`;
+    }
+  }
+
+  throw new Error("No post-treatment simulation image was generated.");
+};
+
+
 export const generateAestheticVisual = async (
   prompt: string,
   size: ImageSize
