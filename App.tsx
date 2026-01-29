@@ -10,6 +10,7 @@ import TreatmentHistory from './components/TreatmentHistory';
 import UserGuideModal from './components/UserGuideModal';
 import ClinicalReportModal from './components/ClinicalReportModal';
 import FeedbackModal from './components/FeedbackModal';
+import InjectionPlanTable from './components/InjectionPlanTable';
 import { analyzePatientVideo, generateAestheticVisual, generatePostTreatmentVisual, generateTreatmentMapVisual } from './services/geminiService';
 import { AnalysisResult, ToxinBrand, TreatmentSession, InjectionSite, DangerZone, PatientGender, ImageSize, FeedbackData } from './types';
 import { SAMPLE_ANALYSIS_FEMALE, SAMPLE_ANALYSIS_MALE } from './constants';
@@ -95,6 +96,9 @@ const useCases = [
   }
 ];
 
+// Utility to convert data URL to a base64 string for the API
+const dataUrlToBase64 = (dataUrl: string) => dataUrl.split(',')[1];
+
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('assessment');
   const [videoFile, setVideoFile] = useState<File | null>(null);
@@ -158,32 +162,37 @@ const App: React.FC = () => {
     setError(null);
     setVideoFile(null);
     setIsDemoCase(true);
+    setIsAnalyzing(true);
 
     const isF = selectedGender === PatientGender.FEMALE;
     setPatientId(`DEMO-${isF ? 'F' : 'M'}-${Math.floor(Math.random() * 899) + 100}`);
     const sample = isF ? SAMPLE_ANALYSIS_FEMALE : SAMPLE_ANALYSIS_MALE;
-    
-    // Deep clone to ensure demo data remains fresh and mutable for this session
     const freshSample = JSON.parse(JSON.stringify(sample));
     freshSample.gender = selectedGender;
     
-    // Set text-based results first
+    // Set a temporary result to show something while images generate
     setResult(freshSample);
     window.scrollTo({ top: 350, behavior: 'smooth' });
     
-    // Now generate the visual map
-    setIsGeneratingMap(true);
-    setLoadingStage("Generating Demo Visuals...");
-
     try {
         const hasKey = await (window as any).aistudio.hasSelectedApiKey();
         if (!hasKey) {
           await (window as any).aistudio.openSelectKey();
         }
+
+        // Generate base image
+        setLoadingStage("Generating Anatomical Base...");
+        setIsGeneratingMap(true);
         const imageUrl = await generateTreatmentMapVisual(freshSample);
         setTreatmentMapImageUrl(imageUrl);
         setIsGeneratingMap(false);
+
+        // For demo, we assume the hardcoded coordinates are correct for the generated image.
+        // A live analysis would feed this image back to the AI.
+        setResult(freshSample);
         
+        // Generate post-treatment visual
+        setLoadingStage("Simulating Post-Treatment Outcome...");
         setIsGeneratingPostTreatmentVisual(true);
         const postTreatmentUrl = await generatePostTreatmentVisual(freshSample);
         setPostTreatmentImageUrl(postTreatmentUrl);
@@ -191,6 +200,7 @@ const App: React.FC = () => {
     } catch (err: any) {
         setError("Failed to generate demo visuals. Please check your API key or try a live analysis. Error: " + err.message);
     } finally {
+        setIsAnalyzing(false);
         setIsGeneratingMap(false);
         setIsGeneratingPostTreatmentVisual(false);
     }
@@ -198,65 +208,72 @@ const App: React.FC = () => {
 
   const handleAnalyze = async () => {
     if (!videoFile || !patientId) return;
+
+    // Reset states
     setResult(null);
     setTreatmentMapImageUrl(null);
     setPostTreatmentImageUrl(null);
     setError(null);
     setIsAnalyzing(true);
     setIsDemoCase(false);
-    setLoadingStage("Step 2: Analyzing Video Dynamics...");
 
     try {
-      const reader = new FileReader();
-      reader.readAsDataURL(videoFile);
-      reader.onload = async () => {
-        const base64 = (reader.result as string).split(',')[1];
-        try {
-          // Step 1: Get JSON analysis
-          const analysis = await analyzePatientVideo(
-            base64, 
-            videoFile.type, 
-            selectedGender,
-            selectedBrand,
-            offLabelConsent
-          );
-          
-          analysis.sites = (analysis.sites || []).map((s, i) => ({ 
-            ...s, id: `site-${i}`, actualDoseOna: s.doseOna, 
-            muscleFunction: s.muscleFunction || "Analyzing..." 
-          }));
-          analysis.dangerZones = (analysis.dangerZones || []).map((z, i) => ({ ...z, id: `danger-${i}` }));
-          setResult(analysis);
-          setIsAnalyzing(false);
-
-          // Step 2: Generate Visual Map
-          setIsGeneratingMap(true);
-          setLoadingStage("Step 3B: Generating Visual Treatment Map...");
-          const imageUrl = await generateTreatmentMapVisual(analysis);
-          setTreatmentMapImageUrl(imageUrl);
-          setIsGeneratingMap(false);
-          
-          // Step 3: Generate Post-Treatment Simulation
-          setIsGeneratingPostTreatmentVisual(true);
-          setLoadingStage("Step 3C: Simulating Post-Treatment Outcome...");
-          const postTreatmentUrl = await generatePostTreatmentVisual(analysis);
-          setPostTreatmentImageUrl(postTreatmentUrl);
-          setIsGeneratingPostTreatmentVisual(false);
-          
-        } catch (err: any) { 
-          setError(err.message); 
-          setIsAnalyzing(false);
-          setIsGeneratingMap(false);
-          setIsGeneratingPostTreatmentVisual(false);
+        const hasKey = await (window as any).aistudio.hasSelectedApiKey();
+        if (!hasKey) {
+          await (window as any).aistudio.openSelectKey();
         }
-      };
-      reader.onerror = (error) => {
-          setError('Failed to read the video file.');
-          setIsAnalyzing(false);
-      };
+
+        // STAGE 1: Generate the base anatomical map first for coordinate accuracy
+        setLoadingStage("Step 2A: Generating Anatomical Base...");
+        setIsGeneratingMap(true);
+        const imageUrl = await generateTreatmentMapVisual({ gender: selectedGender, step2: {} }); // Pass minimal data
+        setTreatmentMapImageUrl(imageUrl);
+        setIsGeneratingMap(false);
+
+        // STAGE 2: Analyze video WITH the generated base image for precise mapping
+        setLoadingStage("Step 2B: Analyzing Video & Mapping Points...");
+        const imageBase64 = dataUrlToBase64(imageUrl);
+
+        const reader = new FileReader();
+        reader.readAsDataURL(videoFile);
+        reader.onload = async () => {
+            const videoBase64 = dataUrlToBase64(reader.result as string);
+            try {
+                const analysis = await analyzePatientVideo(
+                    videoBase64,
+                    videoFile.type,
+                    selectedGender,
+                    selectedBrand,
+                    offLabelConsent,
+                    imageBase64 // Pass the generated image for accurate mapping
+                );
+
+                analysis.sites = (analysis.sites || []).map((s, i) => ({
+                    ...s, id: `site-${i}`, actualDoseOna: s.doseOna,
+                }));
+                setResult(analysis);
+
+                // STAGE 3: Generate Post-Treatment Simulation
+                setLoadingStage("Step 3C: Simulating Post-Treatment Outcome...");
+                setIsGeneratingPostTreatmentVisual(true);
+                const postTreatmentUrl = await generatePostTreatmentVisual(analysis);
+                setPostTreatmentImageUrl(postTreatmentUrl);
+
+            } catch (err: any) {
+                setError("Analysis failed: " + err.message);
+            } finally {
+                setIsAnalyzing(false);
+                setIsGeneratingPostTreatmentVisual(false);
+            }
+        };
+        reader.onerror = () => {
+            setError('Failed to read the video file.');
+            setIsAnalyzing(false);
+        };
     } catch (err: any) {
-      setError(err.message);
-      setIsAnalyzing(false);
+        setError("Image generation failed: " + err.message);
+        setIsAnalyzing(false);
+        setIsGeneratingMap(false);
     }
   };
 
@@ -444,75 +461,79 @@ const App: React.FC = () => {
                 {result && (
                   <>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 lg:gap-32">
-                      {/* Left Column: Map & Sites (Step 3 Visualization) */}
+                      {/* Left Column: Pre-Treatment, Simulation, and Plan Details */}
                       <div className="space-y-16">
-                        <AnatomicalMap 
-                          ref={mapRef}
-                          isGenerating={isGeneratingMap}
-                          treatmentMapImageUrl={treatmentMapImageUrl}
-                        />
+                        {/* 1. Pre-Treatment Assessment */}
+                        <div className="space-y-8">
+                          <h3 className="text-[12px] font-black text-gray-400 uppercase tracking-[0.4em] border-b border-gray-50 pb-4">Pre-Treatment Assessment</h3>
+                          <div className="w-full rounded-[3rem] aspect-square overflow-hidden border border-gray-200 shadow-lg bg-gray-50 flex items-center justify-center">
+                            {videoFile ? (
+                              <video controls muted loop playsInline className="w-full h-full object-cover">
+                                <source src={URL.createObjectURL(videoFile)} type={videoFile.type} />
+                              </video>
+                            ) : isDemoCase ? (
+                              <div className="w-full h-full p-4 md:p-6 flex items-center justify-center" style={{ backgroundColor: '#F2E5CF' }}>
+                                <div className="w-full h-full border-2 border-dashed border-blue-400/50 rounded-2xl flex items-center justify-center">
+                                  <span className="text-xs font-black text-blue-900/40 uppercase tracking-widest">Demo Case Video</span>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="w-full h-full text-center p-4 flex flex-col items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15 10l4.55a2 2 0 01.996 1.713V14a2 2 0 01-2 2h-1.55a2 2 0 01-1.789-1.118l-1.9-3.774a2 2 0 00-1.79-1.108h-1.912a2 2 0 00-1.79 1.108l-1.9 3.774A2 2 0 015.55 16H4a2 2 0 01-2-2v-.287a2 2 0 01.996-1.713L7.5 10m7.5 0l-3.75-3.75M7.5 10l3.75-3.75" /></svg>
+                                <p className="mt-4 text-xs font-black text-gray-300 uppercase tracking-[0.3em]">Patient Video appears here</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
 
-                        {/* NEW: Outcome Simulation View */}
-                        {(postTreatmentImageUrl || isGeneratingPostTreatmentVisual) && (
+                        {/* 2. Outcome Simulation View */}
+                        {(treatmentMapImageUrl || postTreatmentImageUrl || isGeneratingMap || isGeneratingPostTreatmentVisual) && (
                           <div className="space-y-8 animate-in fade-in duration-500">
                             <h3 className="text-[12px] font-black text-gray-400 uppercase tracking-[0.4em] border-b border-gray-50 pb-4">Clinical Outcome Simulation</h3>
-                            <div className="grid grid-cols-2 gap-4 items-start bg-gray-50/30 p-4 rounded-[2.5rem] border border-gray-100">
-                              {/* Pre-Treatment Video/Image */}
-                              <div className="space-y-2">
-                                <div className="w-full rounded-2xl aspect-square overflow-hidden flex items-center justify-center">
-                                  {videoFile ? (
-                                    <video controls muted loop playsInline className="w-full h-full object-cover">
-                                      <source src={URL.createObjectURL(videoFile)} type={videoFile.type} />
-                                    </video>
-                                  ) : isDemoCase ? (
-                                    <div className="w-full h-full p-4 flex items-center justify-center" style={{ backgroundColor: '#F2E5CF' }}>
-                                        <div className="w-full h-full border-2 border-dashed border-blue-400 rounded-xl"></div>
-                                    </div>
-                                  ) : (
-                                    <div className="w-full h-full bg-gray-200 text-center p-4 flex flex-col items-center justify-center">
-                                      <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-8 w-8 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15 10l4.55a2 2 0 01.996 1.713V14a2 2 0 01-2 2h-1.55a2 2 0 01-1.789-1.118l-1.9-3.774a2 2 0 00-1.79-1.108h-1.912a2 2 0 00-1.79 1.108l-1.9 3.774A2 2 0 015.55 16H4a2 2 0 01-2-2v-.287a2 2 0 01.996-1.713L7.5 10m7.5 0l-3.75-3.75M7.5 10l3.75-3.75" /></svg>
-                                      <p className="text-[10px] font-bold text-gray-400 mt-2">Dynamic Scan appears here</p>
-                                    </div>
-                                  )}
+                              <div className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-lg">
+                              <div className="flex items-center justify-center gap-4 md:gap-6">
+                                {/* Treatment Map */}
+                                <div className="w-full space-y-3 flex-1">
+                                  <AnatomicalMap 
+                                    ref={mapRef}
+                                    isGenerating={isGeneratingMap && !treatmentMapImageUrl}
+                                    treatmentMapImageUrl={treatmentMapImageUrl}
+                                    sites={result.sites}
+                                  />
+                                  <p className="text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest">Treatment Map</p>
                                 </div>
-                                <p className="text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest">Pre-Treatment</p>
-                              </div>
-                              {/* Post-Treatment Image */}
-                              <div className="space-y-2">
-                                <div className="relative w-full aspect-square bg-gray-100 rounded-2xl border border-gray-200 overflow-hidden flex items-center justify-center">
-                                  {isGeneratingPostTreatmentVisual && (
-                                    <div className="flex flex-col items-center justify-center text-center p-2">
+                                
+                                {/* Arrow */}
+                                <div className="flex-shrink-0 text-gray-200 self-center pb-6">
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                  </svg>
+                                </div>
+                      
+                                {/* Post-Treatment */}
+                                <div className="w-full space-y-3 flex-1">
+                                  <div className="relative w-full aspect-square bg-gray-100 rounded-[3rem] border-2 border-green-200 overflow-hidden flex items-center justify-center shadow-inner">
+                                    {isGeneratingPostTreatmentVisual && (
+                                      <div className="flex flex-col items-center justify-center text-center p-2">
                                         <div className="w-8 h-8 border-2 border-gray-200 border-t-green-500 rounded-full animate-spin mb-4"></div>
-                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Simulating Outcome...</p>
-                                    </div>
-                                  )}
-                                  {!isGeneratingPostTreatmentVisual && postTreatmentImageUrl && (
-                                    <img src={postTreatmentImageUrl} alt="AI-Generated Post-Treatment Simulation" className="w-full h-full object-cover animate-in fade-in duration-500" />
-                                  )}
+                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Simulating...</p>
+                                      </div>
+                                    )}
+                                    {!isGeneratingPostTreatmentVisual && postTreatmentImageUrl && (
+                                      <img src={postTreatmentImageUrl} alt="AI-Generated Post-Treatment Simulation" className="w-full h-full object-cover animate-in fade-in duration-500" />
+                                    )}
+                                  </div>
+                                  <p className="text-center text-[10px] font-bold text-green-600 uppercase tracking-widest">AI Simulation</p>
                                 </div>
-                                <p className="text-center text-[10px] font-bold text-green-600 uppercase tracking-widest">AI Simulation (Post-Treatment)</p>
                               </div>
                             </div>
                           </div>
                         )}
 
-                        {/* Step 3: Injection Strategy (Sites Detail) */}
+                        {/* 3. Injection Strategy (Sites Detail Table) */}
                         <div className="space-y-8">
-                          <h3 className="text-[12px] font-black text-gray-400 uppercase tracking-[0.4em] border-b border-gray-50 pb-4">Step 3B: Plan Visualization</h3>
-                          <div className="grid grid-cols-1 gap-6">
-                            {result.sites.map((site) => (
-                              <div key={site.id} className="bg-gray-50/30 p-8 rounded-[2.5rem] border border-gray-100 flex justify-between items-start group hover:bg-white hover:shadow-xl hover:border-gray-200 transition-all duration-500">
-                                <div className="space-y-3">
-                                  <div className="flex items-center gap-3">
-                                    <span className="bg-[#cc7e6d]/10 text-[#cc7e6d] text-[10px] font-black px-3 py-1 rounded-lg uppercase tracking-widest">{site.label}</span>
-                                    <h4 className="text-sm font-black text-gray-800 uppercase tracking-tight">{site.muscle}</h4>
-                                  </div>
-                                  <p className="text-xs text-gray-500 font-medium leading-relaxed max-w-xs italic">"{site.rationale}"</p>
-                                </div>
-                                <div className="text-[#22c55e] font-black text-xl">{site.actualDoseOna ?? site.doseOna}U</div>
-                              </div>
-                            ))}
-                          </div>
+                          <h3 className="text-[12px] font-black text-gray-400 uppercase tracking-[0.4em] border-b border-gray-50 pb-4">Step 3B: Injection Plan Details</h3>
+                          <InjectionPlanTable sites={result.sites} />
                         </div>
                       </div>
 

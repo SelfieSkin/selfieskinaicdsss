@@ -34,8 +34,14 @@ const DosageTable: React.FC<DosageTableProps> = ({ result, selectedBrand, onUpda
           <tbody className="divide-y divide-gray-50">
             {result.sites.map((site) => {
               const recBrandUnits = site.doseOna * conversionFactor;
-              const actualBrandUnits = (site.actualDoseOna ?? site.doseOna) * conversionFactor;
+              const actualOnaUnits = site.actualDoseOna ?? site.doseOna;
+              const actualBrandUnits = actualOnaUnits * conversionFactor;
               const hasDeviation = site.actualDoseOna !== undefined && site.actualDoseOna !== site.doseOna;
+
+              const handleDoseChange = (newBrandValue: number) => {
+                const newOnaValue = Math.max(0, newBrandValue) / conversionFactor;
+                onUpdateSiteDose(site.id, newOnaValue);
+              };
 
               return (
                 <tr key={site.id} className={`group transition-colors ${hasDeviation ? 'bg-orange-50/20' : 'hover:bg-gray-50/30'}`}>
@@ -50,16 +56,30 @@ const DosageTable: React.FC<DosageTableProps> = ({ result, selectedBrand, onUpda
                   </td>
                   <td className="px-6 py-5">
                     <div className="flex items-center gap-3">
-                      <input 
-                        type="number" 
-                        value={actualBrandUnits}
-                        onChange={(e) => {
-                          const val = parseFloat(e.target.value) || 0;
-                          // Convert brand units back to Ona for storage
-                          onUpdateSiteDose(site.id, val / conversionFactor);
-                        }}
-                        className="w-20 px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-sm font-black text-gray-900 focus:ring-2 focus:ring-[#cc7e6d]/20 focus:border-[#cc7e6d] outline-none transition-all no-print"
-                      />
+                      {/* New Interactive Stepper */}
+                      <div className="flex items-center bg-white border border-gray-200 rounded-xl p-1 no-print w-fit">
+                        <button 
+                          onClick={() => handleDoseChange(actualBrandUnits - 1)}
+                          className="w-7 h-7 flex items-center justify-center text-lg font-bold text-gray-400 bg-gray-50 rounded-lg hover:bg-gray-200 transition-colors active:bg-gray-300 disabled:opacity-50"
+                          disabled={actualBrandUnits <= 0}
+                        >
+                          -
+                        </button>
+                        <input 
+                          type="number" 
+                          value={actualBrandUnits}
+                          onChange={(e) => handleDoseChange(parseFloat(e.target.value) || 0)}
+                          className="w-16 text-center text-sm font-black text-gray-900 bg-transparent outline-none border-none focus:ring-0 p-0"
+                          step="0.5" // Allow manual entry of fractions
+                        />
+                        <button 
+                           onClick={() => handleDoseChange(actualBrandUnits + 1)}
+                           className="w-7 h-7 flex items-center justify-center text-lg font-bold text-gray-400 bg-gray-50 rounded-lg hover:bg-gray-200 transition-colors active:bg-gray-300"
+                        >
+                          +
+                        </button>
+                      </div>
+                      
                       <span className="hidden print:inline text-sm font-black text-gray-900">{actualBrandUnits} U</span>
                       {hasDeviation && (
                         <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse no-print" title="Clinical deviation detected"></span>
@@ -67,7 +87,7 @@ const DosageTable: React.FC<DosageTableProps> = ({ result, selectedBrand, onUpda
                     </div>
                   </td>
                   <td className="px-6 py-5 text-[11px] font-bold text-gray-300">
-                    {site.actualDoseOna ?? site.doseOna} Ona-Eq
+                    {actualOnaUnits} Ona-Eq
                   </td>
                 </tr>
               );

@@ -3,19 +3,32 @@ import { GoogleGenAI } from "@google/genai";
 import { SYSTEM_INSTRUCTION } from "../constants";
 import { AnalysisResult, PatientGender, ImageSize, ToxinBrand } from "../types";
 
+// Utility to convert data URL to a base64 string for the API
+const dataUrlToBase64 = (dataUrl: string) => dataUrl.split(',')[1];
+
 export const analyzePatientVideo = async (
   videoBase64: string,
   mimeType: string,
   gender: PatientGender,
   brand: ToxinBrand,
-  offLabelConsent: boolean
+  offLabelConsent: boolean,
+  imageBase64?: string
 ): Promise<AnalysisResult> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
+  const imagePart = imageBase64 ? [{
+    inlineData: {
+      mimeType: 'image/png',
+      data: imageBase64,
+    },
+  }] : [];
+
   const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+    // Fix: Upgraded to a more powerful model for this complex, multimodal analysis task.
+    model: 'gemini-3-pro-preview',
     contents: {
       parts: [
+        ...imagePart,
         {
           inlineData: {
             mimeType: mimeType,
@@ -28,7 +41,7 @@ export const analyzePatientVideo = async (
                  - Selected Toxin Brand: ${brand}
                  - Off-Label Lower Face Consent: ${offLabelConsent ? "GRANTED - Assess lower face if indicated" : "DENIED - Upper face only"}
                  
-                 Analyze this patient's facial dynamics. Generate the full Step 2-5 output as structured JSON.`,
+                 Analyze the patient's facial dynamics from the video. CRITICALLY, use the provided static anatomical image as the canvas for your output. All x/y coordinates in the 'sites' array must map precisely to the muscles on this specific image. Generate the full Step 2-5 output as structured JSON.`,
         },
       ],
     },
@@ -50,54 +63,35 @@ export const analyzePatientVideo = async (
 };
 
 export const generateTreatmentMapVisual = async (
-  analysis: AnalysisResult,
+  analysis: AnalysisResult | { gender: PatientGender, step2: any }, // Allow partial data for initial generation
   size: ImageSize = '1K'
 ): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-  const upperFaceSites = analysis.sites.filter(s => ['Glabella', 'Forehead', 'Periocular'].includes(s.region));
-  const upperFaceZones = analysis.dangerZones.filter(z => ['Periocular', 'Supraorbital'].includes(z.region));
-
-  let prompt = `Create a professional, evidence-based medical illustration for an upper-face botulinum toxin treatment plan.
-  The patient is ${analysis.gender}. The overall facial structure should reflect this.
-  The view should be anterior (front-facing), focusing on the upper face from the nose up.
-  Use a clean, white background. The style should be photorealistic with anatomical accuracy.
-  Labeling must be clear, legible, and unobtrusive, using a modern sans-serif font.
+  let prompt = `Create a professional, evidence-based medical illustration of a patient's face to serve as an anatomical backplate for a botulinum toxin treatment plan.
+  The patient is ${analysis.gender}. The overall facial structure, skin texture, and age appearance should reflect this.
+  The view must be anterior (front-facing), with the patient looking directly forward with a neutral expression.
+  The image should be photorealistic, with clear anatomical landmarks (e.g., brows, canthi, nasal root).
+  Use a clean, white background.
   
-  **Aesthetic Goal:**
+  **IMPORTANT FRAMING RULES:**
+  - The face must be perfectly centered horizontally and vertically.
+  - The top of the head should have a small, consistent margin from the top edge of the image.
+  - The chin should have a small, consistent margin from the bottom edge of the image.
+  - This strict, consistent framing is crucial for accurate coordinate mapping later.
+  
+  **IMPORTANT VISUAL RULES:**
+  - Do NOT add any text, labels, injection points, dots, or any other overlays to the image. 
+  - The image must be a clean, high-fidelity base layer suitable for a separate data overlay.
+  
+  **Aesthetic Context (for facial structure generation only):**
   ${
     analysis.gender === PatientGender.MALE
-      ? "For this male patient, the primary goal is to reduce deep rhytids while preserving a strong, masculine facial structure. Key considerations: Maintain a relatively flat, lower brow line. Aggressively treating the frontalis to create a high arch is clinically inappropriate and must be avoided. The final image should reflect a natural reduction in lines without feminizing the features."
-      : "For this female patient, the primary goal is to soften dynamic rhytids to create a relaxed and refreshed appearance. Key considerations: Aim to create a gentle, aesthetically pleasing arch to the brow. The treatment should open up the periorbital area while preserving natural expression. The final image should reflect softened lines and a subtle brow lift."
+      ? "The male patient has a strong jawline and lower, flatter brows. Reflect this masculine facial structure."
+      : "The female patient has softer features and a gentle brow arch. Reflect this feminine facial structure."
   }
   
-  **Patient Presentation:**
-  - Glabellar Pattern: ${analysis.step2.glabellarPattern}
-  - Resting Tone observations: ${analysis.step2.restingTone}
-  - Contraction observations: Forehead: ${analysis.step2.maxContraction.frontalis}. Glabella: ${analysis.step2.maxContraction.glabella}.
-  
-  **Treatment Plan Overlay:**
-  `;
-
-  if (upperFaceSites.length > 0) {
-    prompt += `\n**Injection Sites (Green Dots):**
-    Overlay the following injection points as small, distinct green dots. Next to each dot, add a label with its ID and Ona-equivalent dose.
-    `;
-    upperFaceSites.forEach(site => {
-        prompt += `- Site ID: ${site.label}, Dose: ${site.doseOna}U. Location: ${site.muscle}. Rationale for placement: ${site.rationale}. Visually place this accurately based on the muscle and rationale.\n`;
-    });
-  }
-
-  if (upperFaceZones.length > 0) {
-    prompt += `\n**Danger Zones (Red Areas):**
-    Illustrate the following anatomical danger zones as transparent red-hashed circular areas to be avoided.
-    `;
-    upperFaceZones.forEach(zone => {
-        prompt += `- Zone: ${zone.region}. Risk: ${zone.risk}. Center this zone appropriately.\n`;
-    });
-  }
-  
-  prompt += `\nEnsure the final image is a clear, high-fidelity clinical guide suitable for a medical professional, strictly adhering to the gender-specific aesthetic goals.`;
+  Generate only the clean, perfectly centered base image.`;
 
   const response = await ai.models.generateContent({
     model: 'gemini-3-pro-image-preview',

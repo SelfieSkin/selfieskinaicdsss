@@ -1,16 +1,18 @@
 
 import React, { forwardRef } from 'react';
+import { InjectionSite } from '../types';
 
 interface AnatomicalMapProps {
   treatmentMapImageUrl: string | null;
   isGenerating: boolean;
+  sites?: InjectionSite[];
 }
 
 const AnatomicalMap = forwardRef<HTMLDivElement, AnatomicalMapProps>(({ 
   treatmentMapImageUrl,
-  isGenerating
+  isGenerating,
+  sites = []
 }, ref) => {
-
   return (
     <div ref={ref} className="relative w-full aspect-[1/1] bg-gray-50 rounded-[3rem] border border-gray-100 overflow-hidden shadow-lg flex items-center justify-center select-none">
       {isGenerating && (
@@ -21,11 +23,31 @@ const AnatomicalMap = forwardRef<HTMLDivElement, AnatomicalMapProps>(({
         </div>
       )}
       {!isGenerating && treatmentMapImageUrl && (
-        <img 
-          src={treatmentMapImageUrl}
-          alt="AI-Generated Visual Treatment Plan"
-          className="w-full h-full object-cover animate-in fade-in duration-500"
-        />
+        <>
+          <img 
+            src={treatmentMapImageUrl}
+            alt="AI-Generated Visual Treatment Plan"
+            className="w-full h-full object-cover"
+          />
+          {sites.map(site => (
+            site.x && site.y &&
+            <div 
+              key={site.id}
+              className="absolute -translate-x-1/2 -translate-y-1/2"
+              style={{ left: `${site.x}%`, top: `${site.y}%` }}
+            >
+              {/* Green dot remains, but without hover effects */}
+              <div className="w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white shadow-md"></div>
+              {/* The label is still useful for cross-referencing with the table */}
+              <div 
+                className="absolute top-0 left-3 whitespace-nowrap text-xs font-bold text-gray-900 opacity-80" 
+                style={{textShadow: '0px 1px 3px rgba(255,255,255,0.7), 0px 1px 3px rgba(255,255,255,0.7)'}}
+              >
+                {site.label}
+              </div>
+            </div>
+          ))}
+        </>
       )}
        {!isGenerating && !treatmentMapImageUrl && (
         <div className="text-center p-8">
