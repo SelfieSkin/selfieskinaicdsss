@@ -484,51 +484,55 @@ const App: React.FC = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 lg:gap-32">
                       {/* Left Column: Pre-Treatment, Simulation, and Plan Details */}
                       <div className="space-y-16">
-                        {/* 1. Pre-Treatment Assessment */}
+                        
+                        {/* 1. Visual Treatment Map (Moved from Bottom Left to Top) */}
                         <div className="space-y-8">
-                          <h3 className="text-[12px] font-black text-gray-400 uppercase tracking-[0.4em] border-b border-gray-50 pb-4">Pre-Treatment Assessment</h3>
-                          <div className="w-full rounded-[3rem] aspect-[3/4] overflow-hidden border border-gray-200 shadow-lg bg-gray-50 flex items-center justify-center">
-                            {mediaFile ? (
-                              mediaFile.type.startsWith('video/') ? (
-                                <video controls muted loop playsInline className="w-full h-full object-cover">
-                                  <source src={URL.createObjectURL(mediaFile)} type={mediaFile.type} />
-                                </video>
-                              ) : (
-                                <img src={URL.createObjectURL(mediaFile)} alt="Patient Scan" className="w-full h-full object-cover" />
-                              )
-                            ) : isDemoCase ? (
-                                treatmentMapImageUrl ? 
-                                <img src={treatmentMapImageUrl} alt="Pre-Treatment Assessment" className="w-full h-full object-cover" /> :
-                                <div className="flex flex-col items-center justify-center text-center p-2">
-                                    <div className="w-8 h-8 border-2 border-gray-200 border-t-blue-500 rounded-full animate-spin mb-4"></div>
-                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Loading Base Image...</p>
-                                </div>
-                            ) : (
-                              <div className="w-full h-full text-center p-4 flex flex-col items-center justify-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15 10l4.55a2 2 0 01.996 1.713V14a2 2 0 01-2 2h-1.55a2 2 0 01-1.789-1.118l-1.9-3.774a2 2 0 00-1.79-1.108h-1.912a2 2 0 00-1.79 1.108l-1.9 3.774A2 2 0 015.55 16H4a2 2 0 01-2-2v-.287a2 2 0 01.996-1.713L7.5 10m7.5 0l-3.75-3.75M7.5 10l3.75-3.75" /></svg>
-                                <p className="mt-4 text-xs font-black text-gray-300 uppercase tracking-[0.3em]">Patient Scan Appears Here</p>
-                              </div>
-                            )}
-                          </div>
+                          <h3 className="text-[12px] font-black text-gray-400 uppercase tracking-[0.4em] border-b border-gray-50 pb-4">Step 3A: Visual Treatment Map</h3>
+                          <AnatomicalMap 
+                             ref={mapRef}
+                             isGenerating={isGeneratingMap && !treatmentMapImageUrl}
+                             isGeneratingAnatomy={isGeneratingAnatomy}
+                             treatmentMapImageUrl={treatmentMapImageUrl}
+                             anatomicalOverlayUrl={anatomicalOverlayUrl}
+                             sites={result.sites}
+                          />
                         </div>
 
-                        {/* 2. Outcome Simulation View */}
+                        {/* 2. Outcome Simulation View (Before vs After) */}
                         {(treatmentMapImageUrl || postTreatmentImageUrl || isGeneratingMap || isGeneratingPostTreatmentVisual) && (
                           <div className="space-y-8 animate-in fade-in duration-500">
                             <h3 className="text-[12px] font-black text-gray-400 uppercase tracking-[0.4em] border-b border-gray-50 pb-4">Clinical Outcome Simulation</h3>
                               <div className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-lg">
                               <div className="flex items-center justify-center gap-4 md:gap-6">
-                                {/* Treatment Map */}
+                                {/* Pre-Treatment (Scan) */}
                                 <div className="w-full space-y-3 flex-1">
-                                  <AnatomicalMap 
-                                    ref={mapRef}
-                                    isGenerating={isGeneratingMap && !treatmentMapImageUrl}
-                                    isGeneratingAnatomy={isGeneratingAnatomy}
-                                    treatmentMapImageUrl={treatmentMapImageUrl}
-                                    anatomicalOverlayUrl={anatomicalOverlayUrl}
-                                    sites={result.sites}
-                                  />
-                                  <p className="text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest">Treatment Map</p>
+                                  <div className="relative w-full aspect-[3/4] bg-gray-50 rounded-[3rem] border border-gray-200 overflow-hidden shadow-inner flex items-center justify-center">
+                                    {mediaFile ? (
+                                      mediaFile.type.startsWith('video/') ? (
+                                        <video controls muted loop playsInline className="w-full h-full object-cover">
+                                          <source src={URL.createObjectURL(mediaFile)} type={mediaFile.type} />
+                                        </video>
+                                      ) : (
+                                        <img src={URL.createObjectURL(mediaFile)} alt="Patient Scan" className="w-full h-full object-cover" />
+                                      )
+                                    ) : isDemoCase ? (
+                                        treatmentMapImageUrl ? 
+                                        <img src={treatmentMapImageUrl} alt="Pre-Treatment Assessment" className="w-full h-full object-cover" /> :
+                                        <div className="flex flex-col items-center justify-center text-center p-2">
+                                            <div className="w-8 h-8 border-2 border-gray-200 border-t-blue-500 rounded-full animate-spin mb-4"></div>
+                                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Loading Base...</p>
+                                        </div>
+                                    ) : (
+                                      <div className="w-full h-full text-center p-4 flex flex-col items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15 10l4.55a2 2 0 01.996 1.713V14a2 2 0 01-2 2h-1.55a2 2 0 01-1.789-1.118l-1.9-3.774a2 2 0 00-1.79-1.108h-1.912a2 2 0 00-1.79 1.108l-1.9 3.774A2 2 0 015.55 16H4a2 2 0 01-2-2v-.287a2 2 0 01.996-1.713L7.5 10m7.5 0l-3.75-3.75M7.5 10l3.75-3.75" /></svg>
+                                        <p className="mt-4 text-xs font-black text-gray-300 uppercase tracking-[0.3em]">Patient Scan</p>
+                                      </div>
+                                    )}
+                                    <div className="absolute top-4 left-4 bg-black/50 backdrop-blur-md px-3 py-1 rounded-full text-[9px] font-black text-white uppercase tracking-widest border border-white/20">
+                                      Before
+                                    </div>
+                                  </div>
+                                  <p className="text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pre-Treatment</p>
                                 </div>
                                 
                                 {/* Arrow */}
@@ -538,7 +542,7 @@ const App: React.FC = () => {
                                   </svg>
                                 </div>
                       
-                                {/* Post-Treatment */}
+                                {/* Post-Treatment (Stayed) */}
                                 <div className="w-full space-y-3 flex-1">
                                   <div className="relative w-full aspect-[3/4] bg-gray-100 rounded-[3rem] border-2 border-green-200 overflow-hidden flex items-center justify-center shadow-inner">
                                     {isGeneratingPostTreatmentVisual && (
@@ -550,6 +554,9 @@ const App: React.FC = () => {
                                     {!isGeneratingPostTreatmentVisual && postTreatmentImageUrl && (
                                       <img src={postTreatmentImageUrl} alt="AI-Generated Post-Treatment Simulation" className="w-full h-full object-cover animate-in fade-in duration-500" />
                                     )}
+                                    <div className="absolute top-4 right-4 bg-green-500/90 backdrop-blur-md px-3 py-1 rounded-full text-[9px] font-black text-white uppercase tracking-widest shadow-lg">
+                                       Projected
+                                    </div>
                                   </div>
                                   <p className="text-center text-[10px] font-bold text-green-600 uppercase tracking-widest">AI Simulation</p>
                                 </div>
