@@ -11,7 +11,7 @@ import UserGuideModal from './components/UserGuideModal';
 import ClinicalReportModal from './components/ClinicalReportModal';
 import FeedbackModal from './components/FeedbackModal';
 import InjectionPlanTable from './components/InjectionPlanTable';
-import { analyzePatientVideo, generateAestheticVisual, generatePostTreatmentVisual, generateTreatmentMapVisual } from './services/geminiService';
+import { analyzePatientInput, generateAestheticVisual, generatePostTreatmentVisual, generateTreatmentMapVisual, generateAnatomicalOverlayVisual } from './services/geminiService';
 import { AnalysisResult, ToxinBrand, TreatmentSession, InjectionSite, DangerZone, PatientGender, ImageSize, FeedbackData } from './types';
 import { SAMPLE_ANALYSIS_FEMALE, SAMPLE_ANALYSIS_MALE } from './constants';
 
@@ -101,9 +101,10 @@ const dataUrlToBase64 = (dataUrl: string) => dataUrl.split(',')[1];
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('assessment');
-  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isGeneratingMap, setIsGeneratingMap] = useState(false);
+  const [isGeneratingAnatomy, setIsGeneratingAnatomy] = useState(false);
   const [isGeneratingPostTreatmentVisual, setIsGeneratingPostTreatmentVisual] = useState(false);
   const [loadingStage, setLoadingStage] = useState('');
   const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -121,6 +122,7 @@ const App: React.FC = () => {
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [mapImageDataUrl, setMapImageDataUrl] = useState<string | null>(null);
   const [treatmentMapImageUrl, setTreatmentMapImageUrl] = useState<string | null>(null);
+  const [anatomicalOverlayUrl, setAnatomicalOverlayUrl] = useState<string | null>(null);
   const [postTreatmentImageUrl, setPostTreatmentImageUrl] = useState<string | null>(null);
   const [isDemoCase, setIsDemoCase] = useState(false);
   
@@ -145,10 +147,11 @@ const App: React.FC = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setVideoFile(file);
+      setMediaFile(file);
       setResult(null);
       setError(null);
       setTreatmentMapImageUrl(null);
+      setAnatomicalOverlayUrl(null);
       setPostTreatmentImageUrl(null);
       setIsDemoCase(false);
     }
@@ -158,9 +161,10 @@ const App: React.FC = () => {
     // Reset state
     setResult(null);
     setTreatmentMapImageUrl(null);
+    setAnatomicalOverlayUrl(null);
     setPostTreatmentImageUrl(null);
     setError(null);
-    setVideoFile(null);
+    setMediaFile(null);
     setIsDemoCase(true);
     setIsAnalyzing(true);
 
@@ -180,12 +184,18 @@ const App: React.FC = () => {
           await (window as any).aistudio.openSelectKey();
         }
 
-        // Generate base image
-        setLoadingStage("Generating Anatomical Base...");
+        // Generate base image and anatomy overlay in parallel
+        setLoadingStage("Generating Anatomical Visuals...");
         setIsGeneratingMap(true);
-        const imageUrl = await generateTreatmentMapVisual(freshSample);
+        setIsGeneratingAnatomy(true);
+        const [imageUrl, overlayUrl] = await Promise.all([
+          generateTreatmentMapVisual(freshSample),
+          generateAnatomicalOverlayVisual(selectedGender)
+        ]);
         setTreatmentMapImageUrl(imageUrl);
+        setAnatomicalOverlayUrl(overlayUrl);
         setIsGeneratingMap(false);
+        setIsGeneratingAnatomy(false);
 
         // For demo, we assume the hardcoded coordinates are correct for the generated image.
         // A live analysis would feed this image back to the AI.
@@ -202,16 +212,18 @@ const App: React.FC = () => {
     } finally {
         setIsAnalyzing(false);
         setIsGeneratingMap(false);
+        setIsGeneratingAnatomy(false);
         setIsGeneratingPostTreatmentVisual(false);
     }
   };
 
   const handleAnalyze = async () => {
-    if (!videoFile || !patientId) return;
+    if (!mediaFile || !patientId) return;
 
     // Reset states
     setResult(null);
     setTreatmentMapImageUrl(null);
+    setAnatomicalOverlayUrl(null);
     setPostTreatmentImageUrl(null);
     setError(null);
     setIsAnalyzing(true);
@@ -223,28 +235,36 @@ const App: React.FC = () => {
           await (window as any).aistudio.openSelectKey();
         }
 
-        // STAGE 1: Generate the base anatomical map first for coordinate accuracy
-        setLoadingStage("Step 2A: Generating Anatomical Base...");
+        // STAGE 1: Generate the base anatomical map and muscle overlay
+        setLoadingStage("Step 2A: Generating Anatomical Base & Overlay...");
         setIsGeneratingMap(true);
-        const imageUrl = await generateTreatmentMapVisual({ gender: selectedGender, step2: {} }); // Pass minimal data
+        setIsGeneratingAnatomy(true);
+        const [imageUrl, overlayUrl] = await Promise.all([
+          generateTreatmentMapVisual({ gender: selectedGender, step2: {} }),
+          generateAnatomicalOverlayVisual(selectedGender)
+        ]);
         setTreatmentMapImageUrl(imageUrl);
+        setAnatomicalOverlayUrl(overlayUrl);
         setIsGeneratingMap(false);
+        setIsGeneratingAnatomy(false);
 
         // STAGE 2: Analyze video WITH the generated base image for precise mapping
-        setLoadingStage("Step 2B: Analyzing Video & Mapping Points...");
+        setLoadingStage("Step 2B: Analyzing Media & Mapping Points...");
         const imageBase64 = dataUrlToBase64(imageUrl);
+        const isStaticImage = mediaFile.type.startsWith('image/');
 
         const reader = new FileReader();
-        reader.readAsDataURL(videoFile);
+        reader.readAsDataURL(mediaFile);
         reader.onload = async () => {
-            const videoBase64 = dataUrlToBase64(reader.result as string);
+            const mediaBase64 = dataUrlToBase64(reader.result as string);
             try {
-                const analysis = await analyzePatientVideo(
-                    videoBase64,
-                    videoFile.type,
+                const analysis = await analyzePatientInput(
+                    mediaBase64,
+                    mediaFile.type,
                     selectedGender,
                     selectedBrand,
                     offLabelConsent,
+                    isStaticImage,
                     imageBase64 // Pass the generated image for accurate mapping
                 );
 
@@ -267,13 +287,14 @@ const App: React.FC = () => {
             }
         };
         reader.onerror = () => {
-            setError('Failed to read the video file.');
+            setError('Failed to read the media file.');
             setIsAnalyzing(false);
         };
     } catch (err: any) {
         setError("Image generation failed: " + err.message);
         setIsAnalyzing(false);
         setIsGeneratingMap(false);
+        setIsGeneratingAnatomy(false);
     }
   };
 
@@ -443,10 +464,10 @@ const App: React.FC = () => {
               </div>
               <div className="flex flex-col gap-4 w-full xl:w-auto min-w-[300px]">
                 <button onClick={() => fileInputRef.current?.click()} className="w-full px-8 py-5 rounded-2xl border-2 border-dashed border-gray-200 font-black text-[10px] uppercase tracking-[0.2em] text-gray-400 bg-white hover:border-[#cc7e6d]/50 hover:text-[#cc7e6d] transition-all">
-                  {videoFile ? 'Replace Capture' : 'Upload Dynamic Scan'}
+                  {mediaFile ? `REPLACE SCAN (${mediaFile.name})` : 'Upload Scan (Image/Video)'}
                 </button>
-                <input type="file" ref={fileInputRef} className="hidden" accept="video/*" onChange={handleFileChange} />
-                <button disabled={isLoading || !videoFile || !patientId} onClick={handleAnalyze} className={`w-full px-10 py-5 rounded-2xl font-black uppercase text-[11px] tracking-widest text-white transition-all shadow-xl transform active:scale-95 ${isLoading || !videoFile || !patientId ? 'bg-gray-200 cursor-not-allowed shadow-none' : 'bg-[#cc7e6d] hover:bg-[#b86d5e]'}`}>
+                <input type="file" ref={fileInputRef} className="hidden" accept="video/*,image/*" onChange={handleFileChange} />
+                <button disabled={isLoading || !mediaFile || !patientId} onClick={handleAnalyze} className={`w-full px-10 py-5 rounded-2xl font-black uppercase text-[11px] tracking-widest text-white transition-all shadow-xl transform active:scale-95 ${isLoading || !mediaFile || !patientId ? 'bg-gray-200 cursor-not-allowed shadow-none' : 'bg-[#cc7e6d] hover:bg-[#b86d5e]'}`}>
                   {isLoading ? 'Processing...' : 'Run Clinical Analysis'}
                 </button>
               </div>
@@ -467,10 +488,14 @@ const App: React.FC = () => {
                         <div className="space-y-8">
                           <h3 className="text-[12px] font-black text-gray-400 uppercase tracking-[0.4em] border-b border-gray-50 pb-4">Pre-Treatment Assessment</h3>
                           <div className="w-full rounded-[3rem] aspect-[3/4] overflow-hidden border border-gray-200 shadow-lg bg-gray-50 flex items-center justify-center">
-                            {videoFile ? (
-                              <video controls muted loop playsInline className="w-full h-full object-cover">
-                                <source src={URL.createObjectURL(videoFile)} type={videoFile.type} />
-                              </video>
+                            {mediaFile ? (
+                              mediaFile.type.startsWith('video/') ? (
+                                <video controls muted loop playsInline className="w-full h-full object-cover">
+                                  <source src={URL.createObjectURL(mediaFile)} type={mediaFile.type} />
+                                </video>
+                              ) : (
+                                <img src={URL.createObjectURL(mediaFile)} alt="Patient Scan" className="w-full h-full object-cover" />
+                              )
                             ) : isDemoCase ? (
                                 treatmentMapImageUrl ? 
                                 <img src={treatmentMapImageUrl} alt="Pre-Treatment Assessment" className="w-full h-full object-cover" /> :
@@ -481,7 +506,7 @@ const App: React.FC = () => {
                             ) : (
                               <div className="w-full h-full text-center p-4 flex flex-col items-center justify-center">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15 10l4.55a2 2 0 01.996 1.713V14a2 2 0 01-2 2h-1.55a2 2 0 01-1.789-1.118l-1.9-3.774a2 2 0 00-1.79-1.108h-1.912a2 2 0 00-1.79 1.108l-1.9 3.774A2 2 0 015.55 16H4a2 2 0 01-2-2v-.287a2 2 0 01.996-1.713L7.5 10m7.5 0l-3.75-3.75M7.5 10l3.75-3.75" /></svg>
-                                <p className="mt-4 text-xs font-black text-gray-300 uppercase tracking-[0.3em]">Patient Video appears here</p>
+                                <p className="mt-4 text-xs font-black text-gray-300 uppercase tracking-[0.3em]">Patient Scan Appears Here</p>
                               </div>
                             )}
                           </div>
@@ -498,7 +523,9 @@ const App: React.FC = () => {
                                   <AnatomicalMap 
                                     ref={mapRef}
                                     isGenerating={isGeneratingMap && !treatmentMapImageUrl}
+                                    isGeneratingAnatomy={isGeneratingAnatomy}
                                     treatmentMapImageUrl={treatmentMapImageUrl}
+                                    anatomicalOverlayUrl={anatomicalOverlayUrl}
                                     sites={result.sites}
                                   />
                                   <p className="text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest">Treatment Map</p>
@@ -542,7 +569,7 @@ const App: React.FC = () => {
                       <div className="space-y-20">
                         {/* STEP 2: VIDEO DYNAMICS UI */}
                         <div className="space-y-10">
-                          <h3 className="text-[12px] font-black text-gray-400 uppercase tracking-[0.4em]">Step 2: Video Dynamics</h3>
+                          <h3 className="text-[12px] font-black text-gray-400 uppercase tracking-[0.4em]">Step 2: Clinical Observations</h3>
                           
                           <div className="p-10 bg-gray-50/50 rounded-[3rem] border-l-[8px] border-[#cc7e6d] shadow-sm">
                             <h4 className="text-[10px] font-black text-gray-400 mb-3 uppercase tracking-widest">Glabellar Classification</h4>

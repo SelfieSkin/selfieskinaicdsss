@@ -6,12 +6,13 @@ import { AnalysisResult, PatientGender, ImageSize, ToxinBrand } from "../types";
 // Utility to convert data URL to a base64 string for the API
 const dataUrlToBase64 = (dataUrl: string) => dataUrl.split(',')[1];
 
-export const analyzePatientVideo = async (
-  videoBase64: string,
+export const analyzePatientInput = async (
+  mediaBase64: string,
   mimeType: string,
   gender: PatientGender,
   brand: ToxinBrand,
   offLabelConsent: boolean,
+  isStaticImage: boolean,
   imageBase64?: string
 ): Promise<AnalysisResult> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -23,6 +24,11 @@ export const analyzePatientVideo = async (
     },
   }] : [];
 
+  const analysisInstruction = isStaticImage
+    ? `Analyze the patient's facial anatomy from the provided static image. Assess for resting tone, static rhytids, signs of muscle hypertrophy (e.g., masseter), and brow position. Generate a treatment plan based on these static observations. CRITICALLY, use the provided static anatomical image as the canvas for your output. All x/y coordinates in the 'sites' array must map precisely to the muscles on this specific image. Generate the full Step 2-5 output as structured JSON.`
+    : `Analyze the patient's facial dynamics from the video. CRITICALLY, use the provided static anatomical image as the canvas for your output. All x/y coordinates in the 'sites' array must map precisely to the muscles on this specific image. Generate the full Step 2-5 output as structured JSON.`;
+
+
   const response = await ai.models.generateContent({
     // Fix: Upgraded to a more powerful model for this complex, multimodal analysis task.
     model: 'gemini-3-pro-preview',
@@ -32,7 +38,7 @@ export const analyzePatientVideo = async (
         {
           inlineData: {
             mimeType: mimeType,
-            data: videoBase64,
+            data: mediaBase64,
           },
         },
         {
@@ -41,7 +47,7 @@ export const analyzePatientVideo = async (
                  - Selected Toxin Brand: ${brand}
                  - Off-Label Lower Face Consent: ${offLabelConsent ? "GRANTED - Assess lower face if indicated" : "DENIED - Upper face only"}
                  
-                 Analyze the patient's facial dynamics from the video. CRITICALLY, use the provided static anatomical image as the canvas for your output. All x/y coordinates in the 'sites' array must map precisely to the muscles on this specific image. Generate the full Step 2-5 output as structured JSON.`,
+                 ${analysisInstruction}`,
         },
       ],
     },
@@ -51,6 +57,7 @@ export const analyzePatientVideo = async (
     },
   });
 
+  // FIX: Access the 'text' property directly instead of calling it as a function.
   const text = response.text;
   if (!text) throw new Error("Empty AI result.");
 
@@ -72,7 +79,7 @@ export const generateTreatmentMapVisual = async (
   The patient is ${analysis.gender}. The overall facial structure, skin texture, and age appearance should reflect this.
   The view must be anterior (front-facing), showing the full face from the hairline down to the clavicles to include the neck and platysmal bands. The patient should look directly forward with a neutral, relaxed expression.
   The image must display subtle, realistic skin textures, including pores and fine lines.
-  Employ sophisticated, soft, clinical lighting and shading to accurately model the three-dimensional contours of the face and neck, creating a lifelike appearance. The musculature of the neck, including the sternocleidomastoid and platysma, should be subtly visible.
+  Employ sophisticated, soft, clinical lighting and shading to accurately model the three-dimensional contours of the face and neck, creating a lifelike appearance. The musculature of the neck, including the sternocleidocastoid and platysma, should be subtly visible.
   Use a clean, neutral, light gray background.
   
   **IMPORTANT FRAMING RULES:**
@@ -164,6 +171,49 @@ export const generatePostTreatmentVisual = async (
   }
 
   throw new Error("No post-treatment simulation image was generated.");
+};
+
+export const generateAnatomicalOverlayVisual = async (
+  gender: PatientGender,
+  size: ImageSize = '1K'
+): Promise<string> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+  const prompt = `Create a medically accurate anatomical illustration of the superficial facial and neck musculature.
+  
+  **CRITICAL REQUIREMENTS:**
+  1.  **Transparent Background:** The image MUST have a transparent background so it can be overlaid on another photograph.
+  2.  **Framing and Pose:** The illustration must be a direct anterior (front-facing) view, perfectly centered. The framing must match a clinical photograph, showing the area from just above the hairline down to the clavicles. The expression must be neutral / resting.
+  3.  **Realism and Detail:** The style should be that of a high-quality medical textbook illustration (e.g., Netter's Atlas of Human Anatomy). Muscles should be clearly defined, with accurate origins, insertions, and fiber direction. Include major muscles like the frontalis, procerus, corrugators, orbicularis oculi, zygomaticus major/minor, masseter, mentalis, and platysma.
+  4.  **Gender-Specific Anatomy:**
+      - The patient is **${gender}**.
+      - ${
+        gender === PatientGender.MALE
+          ? "Reflect typically masculine features: a larger overall skull, more prominent supraorbital ridges, larger masseter muscles, and a more prominent thyroid cartilage."
+          : "Reflect typically feminine features: a more gracile bone structure, smaller masseters, and less prominent supraorbital ridges."
+      }
+  5.  **Clean Output:** Do NOT include any labels, text, or pointers on the image itself. The output must be a clean anatomical illustration only.
+  
+  Generate only the muscle illustration on a transparent background.`;
+
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-pro-image-preview',
+    contents: { parts: [{ text: prompt }] },
+    config: {
+      imageConfig: {
+        aspectRatio: "3:4",
+        imageSize: size,
+      },
+    },
+  });
+
+  for (const part of response.candidates[0].content.parts) {
+    if (part.inlineData) {
+      return `data:image/png;base64,${part.inlineData.data}`;
+    }
+  }
+
+  throw new Error("No anatomical overlay image was generated.");
 };
 
 

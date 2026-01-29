@@ -4,70 +4,68 @@ import { KNOWLEDGE_BASE_DATA } from '../constants';
 
 const KnowledgeBase: React.FC = () => {
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-12 pb-12">
       <section>
-        <h2 className="text-2xl font-bold text-gray-900 mb-6 border-b pb-2">Clinical Reference Guide</h2>
-        <p className="text-gray-600 mb-8">Comprehensive evidence-based guidelines for Botulinum Toxin (BoNT) administration in aesthetic medicine.</p>
+        <div className="border-b border-gray-100 pb-8 mb-8">
+          <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight mb-2">Clinical Reference Guide</h2>
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Evidence-Based BoNT Administration</p>
+        </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <KBSection title="Indications for Use" items={KNOWLEDGE_BASE_DATA.indications} color="border-blue-500" />
-          <KBSection title="Contraindications" items={KNOWLEDGE_BASE_DATA.contraindications} color="border-red-500" />
-          <KBSection title="Common Adverse Events" items={KNOWLEDGE_BASE_DATA.adverseEvents} color="border-amber-500" />
-          <KBSection title="Patient Selection Criteria" items={KNOWLEDGE_BASE_DATA.patientSelection} color="border-green-500" />
+        <div className="space-y-10">
+          {KNOWLEDGE_BASE_DATA.treatmentAreas.map(area => (
+            <div key={area.area}>
+              <h3 className={`text-sm font-black text-gray-800 uppercase tracking-[0.3em] mb-6 border-l-4 ${area.color} pl-4`}>{area.area}</h3>
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                {area.muscles.map(muscle => (
+                  <div key={muscle.name} className="bg-white rounded-3xl border border-gray-100 shadow-lg p-6 flex flex-col">
+                    <h4 className="font-black text-gray-900 tracking-tight text-lg">{muscle.name}</h4>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-4">{muscle.description}</p>
+                    <div className="space-y-3 pt-4 border-t border-gray-100/80">
+                      {muscle.indications.map(indication => (
+                         <div key={indication.title}>
+                           <h5 className="text-xs font-bold text-gray-800">{indication.title}</h5>
+                           <p className="text-[11px] text-gray-500 leading-relaxed">{indication.detail}</p>
+                         </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
-      <section className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-        <h3 className="font-bold text-gray-800 mb-3">Pharmacological Comparison</h3>
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="px-4 py-2 text-left">Product</th>
-                <th className="px-4 py-2 text-left">Complex Size</th>
-                <th className="px-4 py-2 text-left">Storage</th>
-                <th className="px-4 py-2 text-left">Onset</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td className="px-4 py-2 font-medium">Botox (Ona)</td>
-                <td className="px-4 py-2">900 kDa</td>
-                <td className="px-4 py-2">Refrigerated</td>
-                <td className="px-4 py-2">3-5 Days</td>
-              </tr>
-              <tr>
-                <td className="px-4 py-2 font-medium">Dysport (Abo)</td>
-                <td className="px-4 py-2">500-900 kDa</td>
-                <td className="px-4 py-2">Refrigerated</td>
-                <td className="px-4 py-2">1-3 Days</td>
-              </tr>
-              <tr>
-                <td className="px-4 py-2 font-medium">Xeomin (Inco)</td>
-                <td className="px-4 py-2">150 kDa</td>
-                <td className="px-4 py-2">Room Temp</td>
-                <td className="px-4 py-2">3-4 Days</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <section>
+          <h3 className="text-sm font-black text-gray-800 uppercase tracking-[0.3em] mb-6 border-l-4 border-red-500 pl-4">Safety & Pharmacology</h3>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="bg-white rounded-3xl border border-gray-100 shadow-lg p-6">
+                <h4 className="font-bold text-red-800 mb-4 text-lg">Contraindications</h4>
+                 <div className="space-y-4">
+                  {KNOWLEDGE_BASE_DATA.contraindications.map((item, idx) => (
+                    <div key={idx}>
+                      <h5 className="font-semibold text-gray-800 text-sm mb-1">{item.title}</h5>
+                      <p className="text-gray-600 text-xs leading-relaxed">{item.description}</p>
+                    </div>
+                  ))}
+                 </div>
+              </div>
+              <div className="bg-white rounded-3xl border border-gray-100 shadow-lg p-6">
+                <h4 className="font-bold text-amber-800 mb-4 text-lg">Common Adverse Events</h4>
+                <div className="space-y-4">
+                  {KNOWLEDGE_BASE_DATA.adverseEvents.map((item, idx) => (
+                    <div key={idx}>
+                      <h5 className="font-semibold text-gray-800 text-sm mb-1">{item.title}</h5>
+                      <p className="text-gray-600 text-xs leading-relaxed">{item.description}</p>
+                    </div>
+                  ))}
+                 </div>
+              </div>
+          </div>
       </section>
+
     </div>
   );
 };
-
-const KBSection: React.FC<{ title: string, items: any[], color: string }> = ({ title, items, color }) => (
-  <div className={`bg-white rounded-lg shadow-sm border-l-4 ${color} p-5`}>
-    <h3 className="font-bold text-lg mb-4 text-gray-800">{title}</h3>
-    <div className="space-y-4">
-      {items.map((item, idx) => (
-        <div key={idx}>
-          <h4 className="font-semibold text-gray-700 text-sm mb-1">{item.title}</h4>
-          <p className="text-gray-500 text-xs leading-relaxed">{item.description}</p>
-        </div>
-      ))}
-    </div>
-  </div>
-);
 
 export default KnowledgeBase;

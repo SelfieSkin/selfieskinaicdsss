@@ -235,18 +235,18 @@ export const SAMPLE_ANALYSIS_MALE = {
   },
   sites: [
     // Glabella (30U) - Recalibrated for better anatomical position
-    { id: "mg1", label: "G1", region: "Glabella", muscle: "Procerus", doseOna: 8, rationale: "Increased dose for male muscle mass.", x: 50, y: 50 },
-    { id: "mg2l", label: "G2L", region: "Glabella", muscle: "Corrugator", doseOna: 7, rationale: "Address strong medial corrugator, left.", x: 45.5, y: 49 },
-    { id: "mg2r", label: "G2R", region: "Glabella", muscle: "Corrugator", doseOna: 7, rationale: "Address strong medial corrugator, right.", x: 54.5, y: 49 },
-    { id: "mg3l", label: "G3L", region: "Glabella", muscle: "Corrugator", doseOna: 4, rationale: "Address lateral corrugator, left.", x: 40, y: 48 },
-    { id: "mg3r", label: "G3R", region: "Glabella", muscle: "Corrugator", doseOna: 4, rationale: "Address lateral corrugator, right.", x: 60, y: 48 },
+    { id: "mg1", label: "G1", region: "Glabella", muscle: "Procerus", doseOna: 8, rationale: "Increased dose for male muscle mass.", x: 50, y: 49 },
+    { id: "mg2l", label: "G2L", region: "Glabella", muscle: "Corrugator", doseOna: 7, rationale: "Address strong medial corrugator, left.", x: 45.5, y: 47 },
+    { id: "mg2r", label: "G2R", region: "Glabella", muscle: "Corrugator", doseOna: 7, rationale: "Address strong medial corrugator, right.", x: 54.5, y: 47 },
+    { id: "mg3l", label: "G3L", region: "Glabella", muscle: "Corrugator", doseOna: 4, rationale: "Address lateral corrugator, left.", x: 40, y: 46 },
+    { id: "mg3r", label: "G3R", region: "Glabella", muscle: "Corrugator", doseOna: 4, rationale: "Address lateral corrugator, right.", x: 60, y: 46 },
     // Masseter (30U) - Recalibrated for better anatomical position
-    { id: "mm1l", label: "M1L", region: "Jaw", muscle: "Masseter", doseOna: 5, rationale: "Superior-posterior masseter point, left.", x: 25, y: 74 },
-    { id: "mm2l", label: "M2L", region: "Jaw", muscle: "Masseter", doseOna: 5, rationale: "Anterior masseter point, left.", x: 29, y: 79 },
-    { id: "mm3l", label: "M3L", region: "Jaw", muscle: "Masseter", doseOna: 5, rationale: "Inferior-posterior masseter point, left.", x: 25, y: 84 },
-    { id: "mm1r", label: "M1R", region: "Jaw", muscle: "Masseter", doseOna: 5, rationale: "Superior-posterior masseter point, right.", x: 75, y: 74 },
-    { id: "mm2r", label: "M2R", region: "Jaw", muscle: "Masseter", doseOna: 5, rationale: "Anterior masseter point, right.", x: 71, y: 79 },
-    { id: "mm3r", label: "M3R", region: "Jaw", muscle: "Masseter", doseOna: 5, rationale: "Inferior-posterior masseter point, right.", x: 75, y: 84 }
+    { id: "mm1l", label: "M1L", region: "Jaw", muscle: "Masseter", doseOna: 5, rationale: "Superior-posterior masseter point, left.", x: 27, y: 74 },
+    { id: "mm2l", label: "M2L", region: "Jaw", muscle: "Masseter", doseOna: 5, rationale: "Anterior masseter point, left.", x: 27, y: 79 },
+    { id: "mm3l", label: "M3L", region: "Jaw", muscle: "Masseter", doseOna: 5, rationale: "Inferior-posterior masseter point, left.", x: 27, y: 84 },
+    { id: "mm1r", label: "M1R", region: "Jaw", muscle: "Masseter", doseOna: 5, rationale: "Superior-posterior masseter point, right.", x: 73, y: 74 },
+    { id: "mm2r", label: "M2R", region: "Jaw", muscle: "Masseter", doseOna: 5, rationale: "Anterior masseter point, right.", x: 73, y: 79 },
+    { id: "mm3r", label: "M3R", region: "Jaw", muscle: "Masseter", doseOna: 5, rationale: "Inferior-posterior masseter point, right.", x: 73, y: 84 }
   ],
   dangerZones: [
     { id: "md1", region: "Supraorbital", risk: "Avoid feminized arch." }
@@ -301,18 +301,74 @@ _____________________________________________________________________________
 };
 
 export const KNOWLEDGE_BASE_DATA = {
-  indications: [
-    { title: "Glabellar Lines", description: "Moderate to severe frown lines." },
-    { title: "Forehead Lines", description: "Horizontal frontalis activity." }
+  treatmentAreas: [
+    {
+      area: 'Upper Face',
+      color: 'border-blue-500',
+      muscles: [
+        {
+          name: 'Glabellar Complex (Procerus, Corrugator)',
+          description: 'Responsible for frowning and creating vertical "11" lines and horizontal nasal root lines.',
+          indications: [
+            { title: "Dynamic Rhytids ('11' lines)", detail: "Lines that appear upon maximal contraction (frowning)." },
+            { title: "Static Rhytids", detail: "Lines that are present at rest, indicating collagen breakdown from repeated movement." },
+            { title: "Medial Brow Ptosis", detail: "A heavy or lowered appearance of the inner eyebrows caused by hyperactive depressor muscles." },
+            { title: "Procerus Hypertrophy", detail: "A prominent horizontal line at the nasal root." }
+          ]
+        },
+        {
+          name: 'Frontalis',
+          description: 'The sole elevator of the eyebrows, responsible for horizontal forehead lines.',
+          indications: [
+            { title: "Horizontal Forehead Lines", detail: "Lines appearing when raising the eyebrows." },
+            { title: "Brow Asymmetry", detail: "Uneven brow height at rest or with expression, which can be balanced with careful placement." },
+            { title: "Compensatory Elevation", detail: "Overactive frontalis used to compensate for eyelid ptosis (dermatochalasis). Requires extreme caution." }
+          ]
+        },
+        {
+          name: 'Orbicularis Oculi (Lateral Canthus)',
+          description: 'Circular muscle around the eye responsible for "crow\'s feet" when smiling or squinting.',
+          indications: [
+            { title: "Lateral Canthal Rhytids ('Crow\'s Feet')", detail: "Radiating lines from the outer corner of the eyes." },
+            { title: "Infraorbital Rhytids", detail: "Fine lines under the eye; requires advanced, superficial technique with microdroplets." },
+            { title: "'Jelly Roll' Hypertrophy", detail: "Bulging of the lower eyelid muscle upon smiling, can be softened with a microdroplet." }
+          ]
+        }
+      ]
+    },
+    {
+      area: 'Lower Face & Neck (Off-Label)',
+      color: 'border-green-500',
+      muscles: [
+        {
+          name: 'Masseter',
+          description: 'Primary muscle of mastication; hypertrophy can lead to a wide, square jaw appearance.',
+          indications: [
+            { title: "Masseteric Hypertrophy", detail: "Enlarged masseter muscles leading to a square jawline, often associated with bruxism (teeth grinding)." },
+            { title: "Facial Slimming", detail: "Aesthetic goal to create a more tapered, V-shaped lower face." },
+            { title: "TMJ Dysfunction Symptoms", detail: "Can provide symptomatic relief from tension headaches and jaw pain associated with bruxism." }
+          ]
+        },
+        {
+          name: 'Mentalis',
+          description: 'Muscle in the chin that elevates the lower lip, causing a dimpled or "pebbled" chin appearance.',
+          indications: [
+            { title: "'Peau d\'orange' or 'Pebble Chin'", detail: "A dimpled, orange-peel texture of the chin skin upon animation." },
+            { title: "Deep Mental Crease", detail: "A prominent horizontal line between the lower lip and chin." }
+          ]
+        }
+      ]
+    }
   ],
   contraindications: [
-    { title: "Hypersensitivity", description: "Known hypersensitivity to BoNT." }
+    { title: "Hypersensitivity", description: "Known hypersensitivity to any botulinum toxin product or its components." },
+    { title: "Infection at Injection Site", description: "Active infection or inflammation at the proposed injection site." },
+    { title: "Neuromuscular Disorders", description: "Conditions like Amyotrophic Lateral Sclerosis (ALS), Myasthenia Gravis, or Lambert-Eaton syndrome." }
   ],
   adverseEvents: [
-    { title: "Eyelid Ptosis", description: "Upper eyelid drooping." }
-  ],
-  patientSelection: [
-    { title: "Functional Anatomy", description: "Assessment of muscle mass and contraction strength." }
+    { title: "Eyelid Ptosis", description: "Upper eyelid drooping from diffusion into levator palpebrae superioris. Risk minimized by injecting >1cm above orbital rim." },
+    { title: "Brow Ptosis ('Spocking')", description: "Unnatural brow shape (usually peaked or heavy) from imbalanced frontalis treatment." },
+    { title: "Diplopia (Double Vision)", description: "Resulting from diffusion into extraocular muscles; a rare but serious complication of crow's feet treatment." }
   ]
 };
 
