@@ -8,7 +8,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ onOpenGuide }) => {
   return (
-    <header className="bg-white py-10 px-6 max-w-7xl mx-auto">
+    <header className="bg-white pt-10 px-6 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-start border-b border-gray-100 pb-8">
         <div className="flex items-center gap-8">
           {/* Logo Section */}
@@ -38,6 +38,9 @@ const Header: React.FC<HeaderProps> = ({ onOpenGuide }) => {
           <h2 className="text-lg font-bold text-gray-600 tracking-tight">Aesthetic Medicine Tool</h2>
           <p className="text-sm font-medium text-gray-300">Secure Provider Portal</p>
         </div>
+      </div>
+      <div className="text-center pt-4 pb-6">
+        <p className="text-sm italic" style={{ color: BRAND_CORAL }}>Application create for and by Jason Walker.</p>
       </div>
     </header>
   );

@@ -466,17 +466,18 @@ const App: React.FC = () => {
                         {/* 1. Pre-Treatment Assessment */}
                         <div className="space-y-8">
                           <h3 className="text-[12px] font-black text-gray-400 uppercase tracking-[0.4em] border-b border-gray-50 pb-4">Pre-Treatment Assessment</h3>
-                          <div className="w-full rounded-[3rem] aspect-square overflow-hidden border border-gray-200 shadow-lg bg-gray-50 flex items-center justify-center">
+                          <div className="w-full rounded-[3rem] aspect-[3/4] overflow-hidden border border-gray-200 shadow-lg bg-gray-50 flex items-center justify-center">
                             {videoFile ? (
                               <video controls muted loop playsInline className="w-full h-full object-cover">
                                 <source src={URL.createObjectURL(videoFile)} type={videoFile.type} />
                               </video>
                             ) : isDemoCase ? (
-                              <div className="w-full h-full p-4 md:p-6 flex items-center justify-center" style={{ backgroundColor: '#F2E5CF' }}>
-                                <div className="w-full h-full border-2 border-dashed border-blue-400/50 rounded-2xl flex items-center justify-center">
-                                  <span className="text-xs font-black text-blue-900/40 uppercase tracking-widest">Demo Case Video</span>
+                                treatmentMapImageUrl ? 
+                                <img src={treatmentMapImageUrl} alt="Pre-Treatment Assessment" className="w-full h-full object-cover" /> :
+                                <div className="flex flex-col items-center justify-center text-center p-2">
+                                    <div className="w-8 h-8 border-2 border-gray-200 border-t-blue-500 rounded-full animate-spin mb-4"></div>
+                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Loading Base Image...</p>
                                 </div>
-                              </div>
                             ) : (
                               <div className="w-full h-full text-center p-4 flex flex-col items-center justify-center">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15 10l4.55a2 2 0 01.996 1.713V14a2 2 0 01-2 2h-1.55a2 2 0 01-1.789-1.118l-1.9-3.774a2 2 0 00-1.79-1.108h-1.912a2 2 0 00-1.79 1.108l-1.9 3.774A2 2 0 015.55 16H4a2 2 0 01-2-2v-.287a2 2 0 01.996-1.713L7.5 10m7.5 0l-3.75-3.75M7.5 10l3.75-3.75" /></svg>
@@ -512,7 +513,7 @@ const App: React.FC = () => {
                       
                                 {/* Post-Treatment */}
                                 <div className="w-full space-y-3 flex-1">
-                                  <div className="relative w-full aspect-square bg-gray-100 rounded-[3rem] border-2 border-green-200 overflow-hidden flex items-center justify-center shadow-inner">
+                                  <div className="relative w-full aspect-[3/4] bg-gray-100 rounded-[3rem] border-2 border-green-200 overflow-hidden flex items-center justify-center shadow-inner">
                                     {isGeneratingPostTreatmentVisual && (
                                       <div className="flex flex-col items-center justify-center text-center p-2">
                                         <div className="w-8 h-8 border-2 border-gray-200 border-t-green-500 rounded-full animate-spin mb-4"></div>
@@ -643,7 +644,9 @@ const App: React.FC = () => {
               <div className="max-w-6xl mx-auto space-y-12">
                 <div className="text-center space-y-4">
                   <h2 className="text-3xl font-black text-gray-900 uppercase tracking-tighter">Clinical Visualizer</h2>
-                  <p className="text-gray-400 font-bold uppercase text-[11px] tracking-[0.4em]">Powered by Gemini 3 Image Pro</p>
+                  <div className="inline-block bg-gray-100 text-gray-400 font-bold uppercase text-[9px] tracking-[0.2em] px-4 py-1.5 rounded-full">
+                    Powered by Gemini 3 Image Pro
+                  </div>
                 </div>
 
                 {/* --- USE CASE SELECTOR --- */}
