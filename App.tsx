@@ -22,7 +22,7 @@ const useCases = [
   {
     id: 'procerus',
     name: "Procerus Isolation",
-    icon: (props) => <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 8C10.8954 8 10 7.10457 10 6C10 4.89543 10.8954 4 12 4C13.1046 4 14 4.89543 14 6C14 7.10457 13.1046 8 12 8ZM12 12C10.8954 12 10 11.1046 10 10C10 8.89543 10.8954 8 12 8C13.1046 8 14 8.89543 14 10C14 11.1046 13.1046 12 12 12ZM12 16C10.8954 16 10 15.1046 10 14C10 12.8954 10.8954 12 12 12C13.1046 12 14 12.8954 14 14C14 15.1046 13.1046 16 12 16ZM12 20C10.8954 20 10 19.1046 10 18C10 16.8954 10.8954 16 12 16C13.1046 16 14 16.8954 14 18C14 19.1046 13.1046 20 12 20Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+    icon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 8C10.8954 8 10 7.10457 10 6C10 4.89543 10.8954 4 12 4C13.1046 4 14 4.89543 14 6C14 7.10457 13.1046 8 12 8ZM12 12C10.8954 12 10 11.1046 10 10C10 8.89543 10.8954 8 12 8C13.1046 8 14 8.89543 14 10C14 11.1046 13.1046 12 12 12ZM12 16C10.8954 16 10 15.1046 10 14C10 12.8954 10.8954 12 12 12C13.1046 12 14 12.8954 14 14C14 15.1046 13.1046 16 12 16ZM12 20C10.8954 20 10 19.1046 10 18C10 16.8954 10.8954 16 12 16C13.1046 16 14 16.8954 14 18C14 19.1046 13.1046 20 12 20Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
     prePrompt: "Medical illustration of a hyperdynamic procerus muscle causing a deep horizontal rhytid at the nasal root. Show muscle contraction lines.",
     treatmentPrompt: "Medical illustration of a single injection point in the belly of the procerus muscle. Label it 'G1' with a dose of '4U'.",
     postPrompt: "Medical illustration of a relaxed procerus muscle after botulinum toxin treatment. The overlying skin is smooth and the horizontal rhytid is softened.",
@@ -37,7 +37,7 @@ const useCases = [
   {
     id: 'glabellar',
     name: "Glabellar Complex",
-    icon: (props) => <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 14L12 10L16 14M8 10L12 6L16 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+    icon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 14L12 10L16 14M8 10L12 6L16 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
     prePrompt: "Anatomical view of a V-Pattern glabellar contraction, showing the downward pull of the procerus and the medial pull of the hypertrophic corrugator supercilii muscles, creating deep '11' lines.",
     treatmentPrompt: "Medical illustration of a 7-point injection pattern for a V-pattern glabella. Label a central procerus point 'G1' (4U), two medial corrugator points 'G2' (4U each), and four lateral/superior corrugator points 'G3' (2U each).",
     postPrompt: "Anatomical view of a relaxed glabellar complex post-treatment. The procerus and corrugator muscles are smooth, and the '11' lines are significantly reduced.",
@@ -52,7 +52,7 @@ const useCases = [
   {
     id: 'frontalis',
     name: "Frontalis & Brow Ptosis",
-    icon: (props) => <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12H20M4 8H20M4 16H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+    icon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12H20M4 8H20M4 16H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
     prePrompt: "Illustration of the frontalis muscle contracting, creating deep horizontal forehead lines but also elevating low-set eyebrows. Highlight the lower third as a high-risk zone for ptosis.",
     treatmentPrompt: "Medical illustration of a conservative frontalis injection plan. Show 8 small-dose injection points placed at least 2cm above the orbital rim. Label each point 'F' with a dose of '1.5U'.",
     postPrompt: "Post-treatment illustration showing softened horizontal forehead lines with preserved eyebrow position. The injections were placed high in the frontalis, relaxing the upper muscle fibers while maintaining support for the brows.",
@@ -67,7 +67,7 @@ const useCases = [
   {
     id: 'vasculature',
     name: "Periocular Vasculature",
-    icon: (props) => <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 4V20M12 4C10 6 8 10 8 12C8 14 10 18 12 20M12 4C14 6 16 10 16 12C16 14 14 18 12 20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+    icon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 4V20M12 4C10 6 8 10 8 12C8 14 10 18 12 20M12 4C14 6 16 10 16 12C16 14 14 18 12 20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
     prePrompt: "Detailed view of the lateral canthal region showing dynamic crow's feet rhytids on skin contraction. Overlay the typical superficial course of the angular and zygomaticofacial arteries beneath the skin.",
     treatmentPrompt: "Medical illustration of safe injection points for crow's feet. Show 3 superficial injection points per side, placed over 1.5cm lateral to the lateral canthus, avoiding the illustrated arteries. Label each point 'C' with a dose of '2U'.",
     postPrompt: "View of the lateral canthal region post-treatment. The crow's feet are smooth. Illustrate safe, superficial injection points that successfully avoided the underlying vasculature, preventing bruising.",
@@ -82,7 +82,7 @@ const useCases = [
   {
     id: 'nerve',
     name: "Supraorbital Nerve",
-    icon: (props) => <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L12 6M12 18L12 22M6 12L2 12M22 12L18 12M18 18L20 20M4 4L6 6M18 6L20 4M4 20L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+    icon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L12 6M12 18L12 22M6 12L2 12M22 12L18 12M18 18L20 20M4 4L6 6M18 6L20 4M4 20L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
     prePrompt: "Anatomy of a 'Spock Brow' or 'Mephisto Sign', showing over-treatment of the central frontalis, leading to unopposed action of the lateral frontalis fibers and a peaked eyebrow.",
     treatmentPrompt: "Medical illustration correcting a 'Spock Brow'. Show two targeted microdroplet injection points in the lateral frontalis fibers, superior and lateral to the brow peak. Label each point 'Correction' with a dose of '1U'.",
     postPrompt: "Corrected brow appearance after targeted microdroplet injections into the lateral frontalis. The brow has a natural, gentle arch. Show the supraorbital notch and nerve path to illustrate how precise injection placement resolved the issue.",
@@ -485,7 +485,7 @@ const App: React.FC = () => {
                       {/* Left Column: Pre-Treatment, Simulation, and Plan Details */}
                       <div className="space-y-16">
                         
-                        {/* 1. Visual Treatment Map (Moved from Bottom Left to Top) */}
+                        {/* 1. Visual Treatment Map (Step 3A) */}
                         <div className="space-y-8">
                           <h3 className="text-[12px] font-black text-gray-400 uppercase tracking-[0.4em] border-b border-gray-50 pb-4">Step 3A: Visual Treatment Map</h3>
                           <AnatomicalMap 
@@ -498,7 +498,7 @@ const App: React.FC = () => {
                           />
                         </div>
 
-                        {/* 2. Outcome Simulation View (Before vs After) */}
+                        {/* 2. Clinical Outcome Simulation (Before vs After) */}
                         {(treatmentMapImageUrl || postTreatmentImageUrl || isGeneratingMap || isGeneratingPostTreatmentVisual) && (
                           <div className="space-y-8 animate-in fade-in duration-500">
                             <h3 className="text-[12px] font-black text-gray-400 uppercase tracking-[0.4em] border-b border-gray-50 pb-4">Clinical Outcome Simulation</h3>
