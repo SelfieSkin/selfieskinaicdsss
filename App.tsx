@@ -4,7 +4,6 @@ import { toPng } from 'html-to-image';
 import Header from './components/Header';
 import AnatomicalMap from './components/AnatomicalMap';
 import DosageTable from './components/DosageTable';
-import ComparativeDosing from './components/ComparativeDosing';
 import KnowledgeBase from './components/KnowledgeBase';
 import TreatmentHistory from './components/TreatmentHistory';
 import UserGuideModal from './components/UserGuideModal';
@@ -171,6 +170,15 @@ const App: React.FC = () => {
     }
   };
 
+  const readFileAsBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+    });
+  };
+
   const handleAnalyze = async () => {
     if (!mediaFile || !patientId) return;
     setResult(null);
@@ -181,11 +189,25 @@ const App: React.FC = () => {
     setIsAnalyzing(true);
 
     try {
+        const mediaBase64Url = await readFileAsBase64(mediaFile);
+        const mediaBase64 = dataUrlToBase64(mediaBase64Url);
+        const isStaticImage = mediaFile.type.startsWith('image/');
+
+        // 1. Analyze Clinical Dynamics First
+        setLoadingStage("Reasoning Dynamic Patterns...");
+        const analysis = await analyzePatientInput(mediaBase64, mediaFile.type, selectedGender, selectedBrand, false, isStaticImage);
+        
+        // Ensure analysis IDs are unique for the map
+        analysis.sites = (analysis.sites || []).map((s, i) => ({ ...s, id: s.id || `site-${i}`, actualDoseOna: s.doseOna }));
+        setResult(analysis);
+
+        // 2. Generate Patient-Specific Visuals using Analysis Data
         setLoadingStage("Establishing Baseline Tryptych...");
         setIsGeneratingMap(true);
         setIsGeneratingAnatomy(true);
+        
         const [imageUrl, overlayUrl] = await Promise.all([
-          generateTreatmentMapVisual({ gender: selectedGender, step2: {} as any }, '2K'),
+          generateTreatmentMapVisual(analysis, '2K'),
           generateAnatomicalOverlayVisual(selectedGender, '2K')
         ]);
         setTreatmentMapImageUrl(imageUrl);
@@ -193,37 +215,19 @@ const App: React.FC = () => {
         setIsGeneratingMap(false);
         setIsGeneratingAnatomy(false);
 
-        setLoadingStage("Reasoning Dynamic Patterns...");
-        const imageBase64 = dataUrlToBase64(imageUrl);
-        const isStaticImage = mediaFile.type.startsWith('image/');
+        // 3. Project Outcome based on Visual & Analysis
+        setLoadingStage("Projecting Clinical Outcome...");
+        setIsGeneratingPostTreatmentVisual(true);
+        const postTreatmentUrl = await generatePostTreatmentVisual(analysis, imageUrl, '2K');
+        setPostTreatmentImageUrl(postTreatmentUrl);
 
-        const reader = new FileReader();
-        reader.readAsDataURL(mediaFile);
-        reader.onload = async () => {
-            const mediaBase64 = dataUrlToBase64(reader.result as string);
-            try {
-                const analysis = await analyzePatientInput(mediaBase64, mediaFile.type, selectedGender, selectedBrand, false, isStaticImage, imageBase64);
-                analysis.sites = (analysis.sites || []).map((s, i) => ({ ...s, id: s.id || `site-${i}`, actualDoseOna: s.doseOna }));
-                setResult(analysis);
-
-                setLoadingStage("Projecting Outcome Tryptych...");
-                setIsGeneratingPostTreatmentVisual(true);
-                const postTreatmentUrl = await generatePostTreatmentVisual(analysis, imageUrl, '2K');
-                setPostTreatmentImageUrl(postTreatmentUrl);
-            } catch (err: any) {
-                setError("Analysis failed: " + err.message);
-            } finally {
-                setIsAnalyzing(false);
-                setIsGeneratingPostTreatmentVisual(false);
-            }
-        };
-        reader.onerror = () => {
-            setError('Failed to process media.');
-            setIsAnalyzing(false);
-        };
     } catch (err: any) {
         setError("Assessment generation failed: " + err.message);
+    } finally {
         setIsAnalyzing(false);
+        setIsGeneratingMap(false);
+        setIsGeneratingAnatomy(false);
+        setIsGeneratingPostTreatmentVisual(false);
     }
   };
 

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { AnalysisResult, FeedbackData, ToxinBrand } from '../types';
 import { AIMS_DOSING_NOTE, BRAND_CORAL, BRAND_SAGE } from '../constants';
 

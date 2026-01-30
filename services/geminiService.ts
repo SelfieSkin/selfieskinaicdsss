@@ -1,5 +1,5 @@
 
-import { GoogleGenAI, Modality } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import { SYSTEM_INSTRUCTION } from "../constants";
 import { AnalysisResult, PatientGender, ImageSize, ToxinBrand } from "../types";
 
@@ -11,28 +11,22 @@ export const analyzePatientInput = async (
   gender: PatientGender,
   brand: ToxinBrand,
   offLabelConsent: boolean, 
-  isStaticImage: boolean,
-  imageBase64?: string
+  isStaticImage: boolean
 ): Promise<AnalysisResult> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
-  const imagePart = imageBase64 ? [{
-    inlineData: {
-      mimeType: 'image/png',
-      data: imageBase64,
-    },
-  }] : [];
-
   const analysisInstruction = `Analyze patient facial dynamics from the provided scan. 
-  CRITICAL: First, perform a deep reasoning of the muscle recruitment patterns (thinking phase). 
-  Then, map injection sites across the Left Oblique, Anterior, and Right Oblique panels of the clinical tryptych. 
+  CRITICAL THINKING:
+  1. Identify muscle recruitment patterns (Glabella pattern, Frontalis recruitment type).
+  2. ACTIVELY SCREEN FOR ASYMMETRY: Look for unilateral brow elevation ("Spock Brow"), ptosis, or uneven static lines. 
+  3. If "Spock Brow" is detected, classify it and recommend lateral frontalis injection sites to correct it.
+  4. Map injection sites across the Left Oblique, Anterior, and Right Oblique panels of the clinical tryptych. 
   Output the result as structured JSON.`;
 
   const response = await ai.models.generateContent({
     model: 'gemini-3-pro-preview',
     contents: {
       parts: [
-        ...imagePart,
         {
           inlineData: {
             mimeType: mimeType,
@@ -69,9 +63,21 @@ export const generateTreatmentMapVisual = async (
 ): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
+  let conditionDescription = "";
+  if (analysis.step2 && analysis.step2.observedDynamics) {
+      conditionDescription = `
+      **CLINICAL PRESENTATION TO VISUALIZE:**
+      - Resting Tone: ${analysis.step2.restingTone}
+      - Dynamics: ${analysis.step2.observedDynamics}
+      - Glabellar Pattern: ${analysis.step2.glabellarPattern}
+      **CRITICAL INSTRUCTION:** Accurately depict any diagnosed asymmetries described above in the "Dynamics" section (e.g., Unilateral "Spock Brow"/lateral brow elevation, uneven brow height, or static rhytid asymmetry). The baseline image must clearly show the clinical indication being treated.
+      `;
+  }
+
   let prompt = `Create a hyper-realistic, clinical-grade BASELINE anatomical tryptych (16:9).
   Three panels: Left Oblique, Anterior, Right Oblique.
   Patient: ${analysis.gender}. 
+  ${conditionDescription}
   FRAMING: EXTREME CLOSE-UP HEADSHOTS ONLY (FROM CLAVICLE UP). DO NOT INCLUDE SHOULDERS, CHEST, OR TORSO.
   The face must be vertically centered and fill 80% of the frame to ensure accurate injection coordinate mapping.
   Orientation:
@@ -117,7 +123,8 @@ export const generatePostTreatmentVisual = async (
   CRITICAL: MAINTAIN IDENTICAL TIGHT HEADSHOT FRAMING (NECK UP). Do not zoom out.
   Patient identity and framing must be IDENTICAL. 
   Show smooth, relaxed skin in: ${analysis.step3.regionalPlans.map(p => p.region).join(', ')}.
-  Brow position: ${analysis.gender === PatientGender.MALE ? "Flat masculine" : "Soft feminine arch"}.`;
+  **CORRECTION GOAL:** Visually correct any asymmetries (like Spock Brow) identified in the baseline. Ensure symmetric, balanced brow height and relaxation of hyperactive zones.
+  Brow position goal: ${analysis.gender === PatientGender.MALE ? "Flat masculine" : "Soft feminine arch"}.`;
 
   const response = await ai.models.generateContent({
     model: 'gemini-3-pro-image-preview',
