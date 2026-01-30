@@ -10,53 +10,41 @@ export const AIMS_DOSING_NOTE = "Observation: AI models (AIMS Protocol) typicall
 export const SYSTEM_INSTRUCTION = `
 You are SelfieSkin, an AI Clinical Decision Support System (AI-CDSS) for aesthetic medicine. Your users are licensed healthcare providers only (MD, NP, PA, RN).
 
-Your purpose is to analyze dynamic facial muscle activity from patient video input and generate evidence-based Botulinum Toxin (BoNT) injection recommendations. You provide decision support only. You do not diagnose, prescribe, or replace clinical judgment.
+Your scope is STRICTLY limited to the UPPER FACE:
+1. Crow’s Feet (Orbicularis Oculi)
+2. Bunny Lines (Nasalis)
+3. Forehead (Frontalis)
+4. Lower Eyelids (Inferior Orbicularis Oculi)
+5. Glabella (Procerus, Corrugator Supercilii, Nasalis)
 
 Hard constraints:
-1) Non-interchangeability: Treat OnabotulinumtoxinA (Ona: Botox, Xeomin, Jeuveau), AbobotulinumtoxinA (Abo: Dysport), and DaxibotulinumtoxinA (Daxxify) as distinct biologic products with non-interchangeable units.
-2) Human-in-the-loop: Every output must clearly state it is a recommendation and that final clinical decisions remain with the licensed provider. Reference that AI lacks full contextual sensitivity (AIMS Study).
-3) Safety-first: Always prioritize “danger zones” and complication prevention (ptosis, diplopia, pseudoblepharoptosis). If risk factors are detected, you must flag them and recommend conservative dosing/placement.
+1) Non-interchangeability: Treat OnabotulinumtoxinA (Ona), AbobotulinumtoxinA (Abo), and DaxibotulinumtoxinA (Daxxify) as distinct biologic products with non-interchangeable units.
+2) Human-in-the-loop: Every output must clearly state it is a recommendation.
+3) Safety-first: Prioritize “danger zones” and complication prevention (ptosis, diplopia).
 
-Output discipline:
-- Be concise and clinical.
-- Use structured sections and tables when helpful.
-- If input is missing or unclear, ask the provider for the minimum additional information needed.
-- Never generate patient-facing marketing language. Maintain professional clinical tone.
+**CRITICAL RULE FOR TRYPTYCH COORDINATES:** 
+- **Panel 1 (Left 0-33.3% x):** Left Oblique.
+- **Panel 2 (Center 33.3-66.6% x):** Anterior.
+- **Panel 3 (Right 66.6-100% x):** Right Oblique.
 
-WORKFLOW EXECUTION:
-Perform the following steps internally to generate the response:
-STEP 1 (Intake): Context is provided in the prompt (Sex, Toxin Brand, Off-Label Consent, and crucially, a base anatomical image).
-STEP 2 (Video Dynamics): Analyze functional anatomy from the video. Identify Resting Tone, Max Contraction, and classify Glabellar Pattern (V/U/Omega/etc).
-STEP 3 (Injection Planning): Generate a strategic plan based ONLY on Step 2.
-   - RULES UPPER FACE:
-     * Glabella: If V-pattern = 7 points (Procerus + Corrugators). If U-pattern = 5 points.
-     * Forehead: Injections must be 1.5-2.5cm above eyebrow rim.
-     * Risk Flag: If low-set brows or dermatochalasis detected, flag "Pseudoblepharoptosis Risk" and recommend conservative dosing.
-     * **Gender Aesthetics:** For 'Male Presenting' patients, prioritize a lower, flatter brow shape; avoid creating a high arch. For 'Female Presenting' patients, a gentle arch is generally preferred.
-   - RULES PERIOCULAR:
-     * Crow's Feet: Injection points >1.5-2.0cm lateral to lateral canthus (prevent diplopia/strabismus).
-     * Bunny Lines: High on nasal wall, avoid levator labii superioris.
-   - RULES LOWER FACE:
-     * ONLY if "Off-Label Consent" is TRUE and hyperkinesis is present.
-     * Gummy Smile: Target LLSAN (Yonsei Point) if gingival display >3mm.
-     * Masseter: Safe zone below tragus-to-mouth line.
-     * Mentalis: Low on chin.
-   - Do NOT output units in Step 3 data, only point counts and reasoning.
-STEP 4 (Dosing Engine): Calculate doses based on the plan from Step 3.
-   - **Gender Dosing:** For 'Male Presenting' patients, increase baseline doses by 25-50% for larger muscle groups like the glabella and masseter to account for increased muscle mass. You MUST state this adjustment clearly in the 'dosingAssumptions' array.
-   - Generate a Comparative Dosing Table (Ona, Abo 2.5/3, Dax).
-   - Daxxify Rule: Standard Glabella dose is 40U (vs ~20U Ona). Note "2:1 for Indication Only" for Glabella. Other regions marked as "Off-Label/Clinical Judgment".
-   - Explicitly list Assumptions and AIMS Disclaimer.
-STEP 5 (Report Pack): Generate a full Markdown clinical report string tailored for PDF export.
+Injection Mapping Rules:
+1. **Left-sided sites** (Left Crow's Feet, Left Corrugator, Left Nasalis): 
+   - Primary: Left Oblique (x: 12-24%).
+   - Secondary: Center Anterior (x: 38-48%).
+2. **Right-sided sites**:
+   - Primary: Right Oblique (x: 76-88%).
+   - Secondary: Center Anterior (x: 52-62%).
+3. **Midline sites** (Procerus, Frontalis-Mid): 
+   - Map primarily to the Center panel (x: 48-52%).
+4. **Lower Eyelids**: Map carefully to the inferior portion of the orbicularis (y: 52-54% range).
+5. **Bunny Lines**: Map to the nasalis on the side of the bridge of the nose.
 
-**CRITICAL RULE FOR COORDINATES:** You are provided with a base anatomical image. All \`x\` and \`y\` coordinates for the \`sites\` array MUST be precisely mapped to the anatomical landmarks and muscles visible on that specific image to ensure perfect visual alignment. The coordinate system is a 100x100 grid where (0,0) is top-left. (50, 50) should be the approximate center of the nasal root. **Account for gender-specific structural differences:** male facial structures are typically larger with more prominent supraorbital ridges, which may shift the relative positions of forehead and glabellar injection points compared to female structures.
-
-RESPONSE FORMAT: You must return a single JSON object matching this schema exactly.
+RESPONSE FORMAT: Return a single JSON object.
 {
   "gender": "Female Presenting" | "Male Presenting",
   "step2": {
     "restingTone": string,
-    "maxContraction": { "frontalis": string, "glabella": string, "orbicularis": string },
+    "maxContraction": { "frontalis": string, "glabella": string, "orbicularis": string, "nasalis": string },
     "glabellarPattern": "V" | "U" | "Omega" | "Inverted Omega" | "Converging Arrows" | "Indeterminate",
     "observedDynamics": string
   },
@@ -70,16 +58,8 @@ RESPONSE FORMAT: You must return a single JSON object matching this schema exact
     "dosingAssumptions": Array<string>,
     "aimsDisclaimer": string
   },
-  "sites": Array<{ 
-    "region": string, 
-    "muscle": string,
-    "doseOna": number, 
-    "label": string,
-    "rationale": string,
-    "x": number,
-    "y": number
-  }>,
-  "dangerZones": Array<{ "region": string, "risk": string }>,
+  "sites": Array<{ id, region, muscle, doseOna, label, rationale, x, y }>,
+  "dangerZones": Array<{ id, region, risk }>,
   "safetyWarnings": Array<string>,
   "reconstitutionGuide": string,
   "totalDoseOna": number,
@@ -90,317 +70,152 @@ RESPONSE FORMAT: You must return a single JSON object matching this schema exact
 export const SAMPLE_ANALYSIS_FEMALE = {
   gender: PatientGender.FEMALE,
   step2: {
-    restingTone: "Mild right brow ptosis detected at rest. Oral commissures symmetric.",
+    restingTone: "Symmetric upper face. High dynamic lines in forehead.",
     maxContraction: {
-      frontalis: "Type 2 recruitment (Full field) with preserved lateral activity.",
-      glabella: "Strong procerus recruitment vs moderate corrugator activity.",
-      orbicularis: "Lateral crow's feet extending to mid-cheek."
+      frontalis: "Type 2 recruitment (Full field) with deep rhytids.",
+      glabella: "Strong V-pattern recruitment.",
+      orbicularis: "Dynamic lateral canthal lines.",
+      nasalis: "Active bunny lines during speech."
     },
     glabellarPattern: "V",
-    observedDynamics: "Patient demonstrates high medial recruitment in the glabella complex consistent with a V-pattern. Frontalis activity is broad. Suggested treatment focuses on superior frontalis placement to preserve brow height."
+    observedDynamics: "High medial recruitment in glabella complex. Nasalis involvement noted."
   },
   step3: {
     regionalPlans: [
-      { region: "Glabella", muscle: "Procerus + Corrugator", points: 7, reasoning: "V-Pattern protocol: 1 central, 2 medial corrugator, 2 lateral corrugator, 2 superior/tail." },
-      { region: "Forehead", muscle: "Frontalis", points: 8, reasoning: "High placement (>2cm from rim) to preserve brow height." },
-      { region: "Periocular", muscle: "Orbicularis Oculi", points: 6, reasoning: "3 points per side, >1.5cm lateral to canthus." }
+      { region: "Glabella", muscle: "Procerus + Corrugator", points: 5, reasoning: "Medial dominance focus." },
+      { region: "Bunny Lines", muscle: "Nasalis", points: 2, reasoning: "Targeting lateral bridge." },
+      { region: "Forehead", muscle: "Frontalis", points: 8, reasoning: "High placement microdroplets." },
+      { region: "Crow's Feet", muscle: "Orbicularis", points: 6, reasoning: "3 pts per side." }
     ],
-    safetyFlags: ["Pseudoblepharoptosis Risk (Right Brow)", "Lateral Rectus Avoidance Zone"],
-    conservativeAdjustments: "Reduced dose in lower frontalis to prevent brow heaviness. Strict avoidance of orbital rim injection."
+    safetyFlags: ["Avoid low frontalis"],
+    conservativeAdjustments: "Reduced dose in central frontalis."
   },
   step4: {
     dosingRows: [
-      { region: "Glabella", onaDose: 20, aboDose25: 50, aboDose30: 60, daxDose: "40U (Standard)", notes: "Standard FDA-approved Daxxify dose." },
-      { region: "Forehead", onaDose: 12, aboDose25: 30, aboDose30: 36, daxDose: "Off-Label", notes: "Conservative dosing to avoid ptosis." },
-      { region: "Crow's Feet", onaDose: 12, aboDose25: 30, aboDose30: 36, daxDose: "Off-Label", notes: "Split between 3 points per side." }
+      { region: "Glabella", onaDose: 20, aboDose25: 50, aboDose30: 60, daxDose: "40U", notes: "Standard." },
+      { region: "Bunny Lines", onaDose: 4, aboDose25: 10, aboDose30: 12, daxDose: "Off-Label", notes: "Lateral nasal." },
+      { region: "Forehead", onaDose: 12, aboDose25: 30, aboDose30: 36, daxDose: "Off-Label", notes: "Conservative." },
+      { region: "Crow's Feet", onaDose: 12, aboDose25: 30, aboDose30: 36, daxDose: "Off-Label", notes: "Standard." }
     ],
-    dosingAssumptions: [
-      "Standard dilution (2.5mL/100U Ona).",
-      "Abo conversion range provided for clinical preference (2.5:1 vs 3:1).",
-      "Doses reduced by 10% due to ptosis risk flag."
-    ],
-    aimsDisclaimer: "This guidance is generated by AI (AIMS Protocol). It lacks haptic feedback and full patient history. The licensed provider assumes full liability for final dosing."
+    dosingAssumptions: ["Standard concentration applied.", "Upper face focus."],
+    aimsDisclaimer: "Clinical decision support only."
   },
   sites: [
-    // Glabella (20U) - V-Pattern
-    { id: "g1", label: "G1", region: "Glabella", muscle: "Procerus", doseOna: 4, rationale: "Centralize to address medial brow descent.", x: 50, y: 49 },
-    { id: "g2l", label: "G2L", region: "Glabella", muscle: "Corrugator", doseOna: 4, rationale: "Address medial frown lines, left.", x: 45.5, y: 47 },
-    { id: "g2r", label: "G2R", region: "Glabella", muscle: "Corrugator", doseOna: 4, rationale: "Address medial frown lines, right.", x: 54.5, y: 47 },
-    { id: "g3l", label: "G3L", region: "Glabella", muscle: "Corrugator", doseOna: 2, rationale: "Soften lateral corrugator pull, left.", x: 40, y: 46 },
-    { id: "g3r", label: "G3R", region: "Glabella", muscle: "Corrugator", doseOna: 2, rationale: "Soften lateral corrugator pull, right.", x: 60, y: 46 },
-    { id: "g4l", label: "G4L", region: "Glabella", muscle: "Corrugator", doseOna: 2, rationale: "Address tail of corrugator, left.", x: 35, y: 44 },
-    { id: "g4r", label: "G4R", region: "Glabella", muscle: "Corrugator", doseOna: 2, rationale: "Address tail of corrugator, right.", x: 65, y: 44 },
-    // Forehead (12U)
-    { id: "f1", label: "F1", region: "Forehead", muscle: "Frontalis", doseOna: 1.5, rationale: "Upper forehead placement, left.", x: 40, y: 31 },
-    { id: "f2", label: "F2", region: "Forehead", muscle: "Frontalis", doseOna: 1.5, rationale: "Upper forehead placement, mid-left.", x: 46, y: 29 },
-    { id: "f3", label: "F3", region: "Forehead", muscle: "Frontalis", doseOna: 1.5, rationale: "Upper forehead placement, mid-right.", x: 54, y: 29 },
-    { id: "f4", label: "F4", region: "Forehead", muscle: "Frontalis", doseOna: 1.5, rationale: "Upper forehead placement, right.", x: 60, y: 31 },
-    { id: "f5", label: "F5", region: "Forehead", muscle: "Frontalis", doseOna: 1.5, rationale: "Mid-forehead placement, left.", x: 38, y: 36 },
-    { id: "f6", label: "F6", region: "Forehead", muscle: "Frontalis", doseOna: 1.5, rationale: "Mid-forehead placement, mid-left.", x: 44, y: 35 },
-    { id: "f7", label: "F7", region: "Forehead", muscle: "Frontalis", doseOna: 1.5, rationale: "Mid-forehead placement, mid-right.", x: 56, y: 35 },
-    { id: "f8", label: "F8", region: "Forehead", muscle: "Frontalis", doseOna: 1.5, rationale: "Mid-forehead placement, right.", x: 62, y: 36 },
-    // Periocular (12U)
-    { id: "c1l", label: "C1L", region: "Periocular", muscle: "Orbicularis Oculi", doseOna: 2, rationale: "Lateral canthal rhytids, left upper.", x: 29, y: 48 },
-    { id: "c2l", label: "C2L", region: "Periocular", muscle: "Orbicularis Oculi", doseOna: 2, rationale: "Lateral canthal rhytids, left mid.", x: 27, y: 52 },
-    { id: "c3l", label: "C3L", region: "Periocular", muscle: "Orbicularis Oculi", doseOna: 2, rationale: "Lateral canthal rhytids, left lower.", x: 29, y: 56 },
-    { id: "c1r", label: "C1R", region: "Periocular", muscle: "Orbicularis Oculi", doseOna: 2, rationale: "Lateral canthal rhytids, right upper.", x: 71, y: 48 },
-    { id: "c2r", label: "C2R", region: "Periocular", muscle: "Orbicularis Oculi", doseOna: 2, rationale: "Lateral canthal rhytids, right mid.", x: 73, y: 52 },
-    { id: "c3r", label: "C3R", region: "Periocular", muscle: "Orbicularis Oculi", doseOna: 2, rationale: "Lateral canthal rhytids, right lower.", x: 71, y: 56 }
+    // --- CENTER PANEL (33-66) ---
+    { id: "f-g1-c", label: "G1", region: "Glabella", muscle: "Procerus", doseOna: 4, rationale: "Center.", x: 50, y: 48 },
+    { id: "f-g2l-c", label: "G2L", region: "Glabella", muscle: "Corrugator", doseOna: 4, rationale: "Left Medial.", x: 47, y: 46 },
+    { id: "f-g2r-c", label: "G2R", region: "Glabella", muscle: "Corrugator", doseOna: 4, rationale: "Right Medial.", x: 53, y: 46 },
+    { id: "f-b1l-c", label: "B1L", region: "Bunny Lines", muscle: "Nasalis", doseOna: 2, rationale: "Left bridge.", x: 48, y: 55 },
+    { id: "f-b1r-c", label: "B1R", region: "Bunny Lines", muscle: "Nasalis", doseOna: 2, rationale: "Right bridge.", x: 52, y: 55 },
+    
+    // --- OBLIQUE PANELS ---
+    { id: "f-c1l-l", label: "C1L", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 2, rationale: "Left Lateral.", x: 12, y: 49 },
+    { id: "f-c1r-r", label: "C1R", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 2, rationale: "Right Lateral.", x: 88, y: 49 },
+    { id: "f-e1l-l", label: "E1L", region: "Lower Eyelid", muscle: "Inf. Orbicularis", doseOna: 1, rationale: "Left Inferior.", x: 15, y: 54 },
+    { id: "f-e1r-r", label: "E1R", region: "Lower Eyelid", muscle: "Inf. Orbicularis", doseOna: 1, rationale: "Right Inferior.", x: 85, y: 54 }
   ],
-  dangerZones: [
-    { id: "fd1", region: "Periocular", risk: "Levator palpebrae risk." }
-  ],
-  safetyWarnings: ["Focus on brow symmetry.", "Superficial injection in lateral frontalis."],
+  dangerZones: [{ id: "fd1", region: "Periocular", risk: "Levator palpebrae risk." }],
+  safetyWarnings: ["Focus on brow symmetry."],
   reconstitutionGuide: "100U in 2.5mL saline.",
-  totalDoseOna: 44,
-  clinicalReport: `# SelfieSkin Clinical Report
-
-### A. Human-in-the-Loop Disclaimer
-**AIMS Protocol Active.** This report is generated by an AI Clinical Decision Support System. It provides evidence-based anatomical analysis but lacks haptic feedback, full patient history, and physical examination capabilities. **Final dosing, injection depth, and product selection are the sole responsibility of the licensed provider.**
-
-### B. Observed Dynamics
-**Patient ID:** DEMO-F
-**Functional Anatomy:**
-- **Resting Tone:** Mild right brow ptosis detected at rest. Oral commissures symmetric.
-- **Glabellar Pattern:** V-Pattern (Medial Dominance).
-- **Maximal Contraction:**
-  - Frontalis: Type 2 recruitment (Full field) with preserved lateral activity.
-  - Glabella: Strong procerus recruitment vs moderate corrugator activity.
-  - Orbicularis: Lateral crow's feet extending to mid-cheek.
-
-### C. Injection Plan by Region
-| Region | Muscle | Target Pts | Rationale |
-| :--- | :--- | :--- | :--- |
-| **Glabella** | Procerus + Corrugator | 7 | V-Pattern protocol: 1 central, 2 medial, 2 lateral, 2 superior/tail. |
-| **Forehead** | Frontalis | 8 | High placement (>2cm from rim) to preserve brow height. |
-| **Periocular** | Orbicularis Oculi | 6 | 3 points per side, >1.5cm lateral to canthus. |
-
-**Identified Danger Zones:**
-- **Lateral Orbital Rim:** Risk of Levator Palpebrae interaction (Ptosis). Keep >1cm margin.
-
-### D. Comparative Dosing Engine
-| Region | Ona (1:1) | Abo (2.5:1) | Abo (3:1) | Daxxify |
-| :--- | :--- | :--- | :--- | :--- |
-| Glabella | 20U | 50U | 60U | 40U (Std) |
-| Forehead | 12U | 30U | 36U | Off-Label |
-| Crow's Feet | 12U | 30U | 36U | Off-Label |
-
-### E. Reconstitution Guide
-**For OnabotulinumtoxinA (100U Vial):**
-- Reconstitute with **2.5mL** of 0.9% non-preserved saline.
-- **Concentration:** 4.0 Units per 0.1mL.
-
-### F. Safety Alerts
-- **ALERT:** Right brow ptosis detected at rest. Reduce frontalis dose on right side by 10-20% to prevent exacerbation.
-- **ALERT:** Maintain >1.5cm clearance from lateral canthus to avoid lateral rectus diffusion (diplopia risk).
-
-### G. Provider Notes
-_____________________________________________________________________________
-_____________________________________________________________________________
-_____________________________________________________________________________
-`
+  totalDoseOna: 48,
+  clinicalReport: `# SelfieSkin Clinical Report\n\n### A. Human-in-the-Loop Disclaimer\n**AIMS Protocol Active.** ...`
 };
 
 export const SAMPLE_ANALYSIS_MALE = {
   gender: PatientGender.MALE,
   step2: {
-    restingTone: "No significant resting asymmetry. Hypertrophic masseter appearance.",
+    restingTone: "Strong frontal muscle mass, horizontal lines present at rest.",
     maxContraction: {
-      frontalis: "Deep horizontal rhytids, central dominance.",
-      glabella: "Severe global recruitment (Procerus + Corrugators).",
-      orbicularis: "Coarse static and dynamic lines."
+      frontalis: "Severe recruitment, full field rhytids.",
+      glabella: "U-Pattern (Global recruitment).",
+      orbicularis: "Coarse static and dynamic crow's feet.",
+      nasalis: "Moderate bunny line recruitment."
     },
     glabellarPattern: "U",
-    observedDynamics: "Significant muscle mass in corrugators and masseters (U-pattern). High dose requirement for effective paralysis. Avoid arched brows to maintain masculine aesthetic."
+    observedDynamics: "Hypertrophic upper face musculature."
   },
   step3: {
     regionalPlans: [
-      { region: "Glabella", muscle: "Procerus + Corrugator", points: 5, reasoning: "U-Pattern protocol: Heavy central dose, lateral extension." },
-      { region: "Lower Face", muscle: "Masseter", points: 6, reasoning: "3 points per side, inferior to tragus-mouth line (Safety Zone)." }
+      { region: "Glabella", muscle: "Procerus + Corrugator", points: 5, reasoning: "U-pattern heavy dose." },
+      { region: "Bunny Lines", muscle: "Nasalis", points: 2, reasoning: "Treating lateral bridge." },
+      { region: "Forehead", muscle: "Frontalis", points: 10, reasoning: "Broad microdroplet spread." }
     ],
-    safetyFlags: ["Brow Feminization Risk", "Masseter Diffusion Risk"],
-    conservativeAdjustments: "Maintain flat brow shape. Deep intramuscular injection for masseters."
+    safetyFlags: ["Maintain masculine brow"],
+    conservativeAdjustments: "Avoid peaked lateral arch."
   },
   step4: {
     dosingRows: [
-      { region: "Glabella", onaDose: 30, aboDose25: 75, aboDose30: 90, daxDose: "40U+", notes: "High dose for male muscle mass." },
-      { region: "Masseter", onaDose: 30, aboDose25: 75, aboDose30: 90, daxDose: "Off-Label", notes: "15U per side for hypertrophy." }
+      { region: "Glabella", onaDose: 30, aboDose25: 75, aboDose30: 90, daxDose: "40U+", notes: "Male dose." },
+      { region: "Bunny Lines", onaDose: 6, aboDose25: 15, aboDose30: 18, daxDose: "Off-Label", notes: "3U/side." },
+      { region: "Forehead", onaDose: 20, aboDose25: 50, aboDose30: 60, daxDose: "Off-Label", notes: "Heavy frontalis." }
     ],
-    dosingAssumptions: [
-      "Male gender adjustment (+50% base dose).",
-      "Masseter treatment included (Off-label consent active).",
-      "Standard concentrations applied."
-    ],
-    aimsDisclaimer: "AI-CDSS recommendation. Verify masseter palpation before injection."
+    dosingAssumptions: ["Male dosing correction (+50% glabella)."],
+    aimsDisclaimer: "Clinical judgment mandatory."
   },
   sites: [
-    // Glabella (30U) - Recalibrated for better anatomical position
-    { id: "mg1", label: "G1", region: "Glabella", muscle: "Procerus", doseOna: 8, rationale: "Increased dose for male muscle mass.", x: 50, y: 49 },
-    { id: "mg2l", label: "G2L", region: "Glabella", muscle: "Corrugator", doseOna: 7, rationale: "Address strong medial corrugator, left.", x: 45.5, y: 47 },
-    { id: "mg2r", label: "G2R", region: "Glabella", muscle: "Corrugator", doseOna: 7, rationale: "Address strong medial corrugator, right.", x: 54.5, y: 47 },
-    { id: "mg3l", label: "G3L", region: "Glabella", muscle: "Corrugator", doseOna: 4, rationale: "Address lateral corrugator, left.", x: 40, y: 46 },
-    { id: "mg3r", label: "G3R", region: "Glabella", muscle: "Corrugator", doseOna: 4, rationale: "Address lateral corrugator, right.", x: 60, y: 46 },
-    // Masseter (30U) - Recalibrated for better anatomical position
-    { id: "mm1l", label: "M1L", region: "Jaw", muscle: "Masseter", doseOna: 5, rationale: "Superior-posterior masseter point, left.", x: 27, y: 74 },
-    { id: "mm2l", label: "M2L", region: "Jaw", muscle: "Masseter", doseOna: 5, rationale: "Anterior masseter point, left.", x: 27, y: 79 },
-    { id: "mm3l", label: "M3L", region: "Jaw", muscle: "Masseter", doseOna: 5, rationale: "Inferior-posterior masseter point, left.", x: 27, y: 84 },
-    { id: "mm1r", label: "M1R", region: "Jaw", muscle: "Masseter", doseOna: 5, rationale: "Superior-posterior masseter point, right.", x: 73, y: 74 },
-    { id: "mm2r", label: "M2R", region: "Jaw", muscle: "Masseter", doseOna: 5, rationale: "Anterior masseter point, right.", x: 73, y: 79 },
-    { id: "mm3r", label: "M3R", region: "Jaw", muscle: "Masseter", doseOna: 5, rationale: "Inferior-posterior masseter point, right.", x: 73, y: 84 }
+    // --- CENTER PANEL (33-66) ---
+    { id: "m-g1-c", label: "G1", region: "Glabella", muscle: "Procerus", doseOna: 8, rationale: "Male dose.", x: 50, y: 48 },
+    { id: "m-g2l-c", label: "G2L", region: "Glabella", muscle: "Corrugator", doseOna: 7, rationale: "Medial.", x: 47, y: 46 },
+    { id: "m-g2r-c", label: "G2R", region: "Glabella", muscle: "Corrugator", doseOna: 7, rationale: "Medial.", x: 53, y: 46 },
+    { id: "m-b1l-c", label: "B1L", region: "Bunny Lines", muscle: "Nasalis", doseOna: 3, rationale: "Left bridge.", x: 48, y: 55 },
+    { id: "m-b1r-c", label: "B1R", region: "Bunny Lines", muscle: "Nasalis", doseOna: 3, rationale: "Right bridge.", x: 52, y: 55 },
+    
+    // --- OBLIQUE PANELS ---
+    { id: "m-c1l-l", label: "C1L", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 3, rationale: "Left Lateral.", x: 12, y: 49 },
+    { id: "m-c1r-r", label: "C1R", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 3, rationale: "Right Lateral.", x: 88, y: 49 }
   ],
-  dangerZones: [
-    { id: "md1", region: "Supraorbital", risk: "Avoid feminized arch." }
-  ],
-  safetyWarnings: ["Ensure deep intramuscular injection in masseter.", "Higher doses required for glabella."],
-  reconstitutionGuide: "100U in 1.0mL saline for high concentration.",
-  totalDoseOna: 60,
-  clinicalReport: `# SelfieSkin Clinical Report
-
-### A. Human-in-the-Loop Disclaimer
-**AIMS Protocol Active.** This report is generated by an AI Clinical Decision Support System. It provides evidence-based anatomical analysis but lacks haptic feedback, full patient history, and physical examination capabilities. **Final dosing, injection depth, and product selection are the sole responsibility of the licensed provider.**
-
-### B. Observed Dynamics
-**Patient ID:** DEMO-M
-**Functional Anatomy:**
-- **Resting Tone:** Symmetric. Hypertrophic masseter appearance.
-- **Glabellar Pattern:** U-Pattern (Heavy recruitment).
-- **Maximal Contraction:**
-  - Frontalis: Deep horizontal rhytids, central dominance.
-  - Glabella: Severe global recruitment (Procerus + Corrugators).
-  - Orbicularis: Coarse static and dynamic lines.
-
-### C. Injection Plan by Region
-| Region | Muscle | Target Pts | Rationale |
-| :--- | :--- | :--- | :--- |
-| **Glabella** | Procerus + Corrugator | 5 | U-Pattern protocol: Heavy central dose, lateral extension. |
-| **Masseter** | Masseter | 6 | 3 pts/side, inferior to tragus-mouth line. |
-
-**Identified Danger Zones:**
-- **Supraorbital:** Avoid feminization of brow arch.
-
-### D. Comparative Dosing Engine
-| Region | Ona (1:1) | Abo (2.5:1) | Abo (3:1) | Daxxify |
-| :--- | :--- | :--- | :--- | :--- |
-| Glabella | 30U | 75U | 90U | 40U+ |
-| Masseter | 30U | 75U | 90U | Off-Label |
-
-### E. Reconstitution Guide
-**For OnabotulinumtoxinA (100U Vial):**
-- Reconstitute with **1.0mL** of 0.9% non-preserved saline.
-- **Concentration:** 10.0 Units per 0.1mL (High concentration for large muscles).
-
-### F. Safety Alerts
-- **ALERT:** Deep intramuscular injection required for masseter to avoid risorius diffusion (smile asymmetry).
-- **ALERT:** Higher doses required for male glabella; under-dosing may result in poor efficacy.
-
-### G. Provider Notes
-_____________________________________________________________________________
-_____________________________________________________________________________
-_____________________________________________________________________________
-`
+  dangerZones: [{ id: "md1", region: "Supraorbital", risk: "Avoid feminizing arch." }],
+  safetyWarnings: ["Higher glabella doses needed."],
+  reconstitutionGuide: "100U in 1.0mL saline.",
+  totalDoseOna: 56,
+  clinicalReport: `# SelfieSkin Clinical Report\n\n### A. Human-in-the-Loop Disclaimer\n**AIMS Protocol Active.** ...`
 };
 
 export const KNOWLEDGE_BASE_DATA = {
   treatmentAreas: [
     {
-      area: 'Upper Face',
+      area: 'Upper Face Core',
       color: 'border-blue-500',
       muscles: [
         {
-          name: 'Glabellar Complex (Procerus, Corrugator)',
-          description: 'Responsible for frowning and creating vertical "11" lines and horizontal nasal root lines.',
+          name: 'Glabellar Complex & Nasalis',
+          description: 'Frowning, vertical "11" lines, and nasal bunny lines.',
           indications: [
-            { title: "Dynamic Rhytids ('11' lines)", detail: "Lines that appear upon maximal contraction (frowning)." },
-            { title: "Static Rhytids", detail: "Lines that are present at rest, indicating collagen breakdown from repeated movement." },
-            { title: "Medial Brow Ptosis", detail: "A heavy or lowered appearance of the inner eyebrows caused by hyperactive depressor muscles." },
-            { title: "Procerus Hypertrophy", detail: "A prominent horizontal line at the nasal root." }
+            { title: "Glabellar Rhytids", detail: "Frown lines (11s)." },
+            { title: "Bunny Lines", detail: "Lines on the bridge of the nose." }
           ]
         },
         {
           name: 'Frontalis',
-          description: 'The sole elevator of the eyebrows, responsible for horizontal forehead lines.',
+          description: 'Sole eyebrow elevator; horizontal lines.',
           indications: [
-            { title: "Horizontal Forehead Lines", detail: "Lines appearing when raising the eyebrows." },
-            { title: "Brow Asymmetry", detail: "Uneven brow height at rest or with expression, which can be balanced with careful placement." },
-            { title: "Compensatory Elevation", detail: "Overactive frontalis used to compensate for eyelid ptosis (dermatochalasis). Requires extreme caution." }
+            { title: "Horizontal Forehead Lines", detail: "Elevation rhytids." }
           ]
         },
         {
-          name: 'Orbicularis Oculi (Lateral Canthus)',
-          description: 'Circular muscle around the eye responsible for "crow\'s feet" when smiling or squinting.',
+          name: 'Orbicularis Oculi',
+          description: 'Sphincter muscle around the eye.',
           indications: [
-            { title: "Lateral Canthal Rhytids ('Crow\'s Feet')", detail: "Radiating lines from the outer corner of the eyes." },
-            { title: "Infraorbital Rhytids", detail: "Fine lines under the eye; requires advanced, superficial technique with microdroplets." },
-            { title: "'Jelly Roll' Hypertrophy", detail: "Bulging of the lower eyelid muscle upon smiling, can be softened with a microdroplet." }
-          ]
-        }
-      ]
-    },
-    {
-      area: 'Lower Face & Neck (Off-Label)',
-      color: 'border-green-500',
-      muscles: [
-        {
-          name: 'Masseter',
-          description: 'Primary muscle of mastication; hypertrophy can lead to a wide, square jaw appearance.',
-          indications: [
-            { title: "Masseteric Hypertrophy", detail: "Enlarged masseter muscles leading to a square jawline, often associated with bruxism (teeth grinding)." },
-            { title: "Facial Slimming", detail: "Aesthetic goal to create a more tapered, V-shaped lower face." },
-            { title: "TMJ Dysfunction Symptoms", detail: "Can provide symptomatic relief from tension headaches and jaw pain associated with bruxism." }
-          ]
-        },
-        {
-          name: 'Mentalis',
-          description: 'Muscle in the chin that elevates the lower lip, causing a dimpled or "pebbled" chin appearance.',
-          indications: [
-            { title: "'Peau d\'orange' or 'Pebble Chin'", detail: "A dimpled, orange-peel texture of the chin skin upon animation." },
-            { title: "Deep Mental Crease", detail: "A prominent horizontal line between the lower lip and chin." }
+            { title: "Lateral Crow's Feet", detail: "Smiling lines." },
+            { title: "Inferior Eyelid Lines", detail: "Fine lines under eye (Inf. Orbicularis)." }
           ]
         }
       ]
     }
   ],
   contraindications: [
-    { title: "Hypersensitivity", description: "Known hypersensitivity to any botulinum toxin product or its components." },
-    { title: "Infection at Injection Site", description: "Active infection or inflammation at the proposed injection site." },
-    { title: "Neuromuscular Disorders", description: "Conditions like Amyotrophic Lateral Sclerosis (ALS), Myasthenia Gravis, or Lambert-Eaton syndrome." }
+    { title: "Hypersensitivity", description: "Allergy to BoNT components." }
   ],
   adverseEvents: [
-    { title: "Eyelid Ptosis", description: "Upper eyelid drooping from diffusion into levator palpebrae superioris. Risk minimized by injecting >1cm above orbital rim." },
-    { title: "Brow Ptosis ('Spocking')", description: "Unnatural brow shape (usually peaked or heavy) from imbalanced frontalis treatment." },
-    { title: "Diplopia (Double Vision)", description: "Resulting from diffusion into extraocular muscles; a rare but serious complication of crow's feet treatment." }
+    { title: "Ptosis", description: "Drooping of lid or brow." }
   ]
 };
 
 export const INJECTION_TECHNIQUES = {
-  'Frontalis': {
-    depth: 'Superficial Intradermal',
-    angle: '15-30° Bevel Up',
-    pearl: 'Place injections high to avoid brow ptosis. Use microdroplets.'
-  },
-  'Corrugator': {
-    depth: 'Intramuscular',
-    angle: '90° to bone',
-    pearl: 'Palpate muscle during frown. Avoid orbital rim.'
-  },
-  'Procerus': {
-    depth: 'Intramuscular',
-    angle: '90° to bone',
-    pearl: 'Single injection in the muscle belly. Can be treated from above.'
-  },
-  'Orbicularis Oculi': {
-    depth: 'Superficial Intradermal',
-    angle: '10-20° Bevel Up',
-    pearl: 'Stay >1.5cm from lateral canthus. Inject into contracting muscle.'
-  },
-  'Masseter': {
-    depth: 'Deep Intramuscular',
-    angle: '90° to bone',
-    pearl: 'Inject within safety zone below tragus-mouth line. Palpate during clench.'
-  },
-  'Default': {
-    depth: 'Perpendicular to skin',
-    angle: '90°',
-    pearl: 'Follow standard protocol for the target muscle.'
-  }
+  'Frontalis': { depth: 'Superficial Intradermal', angle: '15-30°', pearl: 'Stay high to preserve brow height.' },
+  'Corrugator': { depth: 'Intramuscular', angle: '90°', pearl: 'Avoid orbital rim.' },
+  'Procerus': { depth: 'Intramuscular', angle: '90°', pearl: 'Central muscle belly.' },
+  'Orbicularis': { depth: 'Superficial Intradermal', angle: '10-20°', pearl: 'Stay >1.5cm from lateral canthus.' },
+  'Nasalis': { depth: 'Superficial Intradermal', angle: '30°', pearl: 'Inject lateral nasal bridge.' },
+  'Default': { depth: 'Standard', angle: '90°', pearl: 'Follow anatomy.' }
 };
