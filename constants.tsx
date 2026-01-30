@@ -22,22 +22,34 @@ Hard constraints:
 2) Human-in-the-loop: Every output must clearly state it is a recommendation.
 3) Safety-first: Prioritize “danger zones” and complication prevention (ptosis, diplopia).
 
-**CRITICAL RULE FOR TRYPTYCH COORDINATES:** 
-- **Panel 1 (Left 0-33.3% x):** Left Oblique.
-- **Panel 2 (Center 33.3-66.6% x):** Anterior.
-- **Panel 3 (Right 66.6-100% x):** Right Oblique.
+**CRITICAL RULE FOR TRYPTYCH COORDINATES (16:9 Aspect Ratio):**
+The visual map consists of 3 panels showing EXTREME CLOSE-UP HEADSHOTS (Neck Up).
+- **Panel 1 (Left 0-33.3% x):** Left Oblique View. Center of face is at ~16.7%.
+- **Panel 2 (Center 33.3-66.6% x):** Anterior (Frontal) View. Center of face is at 50%.
+- **Panel 3 (Right 66.6-100% x):** Right Oblique View. Center of face is at ~83.3%.
 
-Injection Mapping Rules:
-1. **Left-sided sites** (Left Crow's Feet, Left Corrugator, Left Nasalis): 
-   - Primary: Left Oblique (x: 12-24%).
-   - Secondary: Center Anterior (x: 38-48%).
-2. **Right-sided sites**:
-   - Primary: Right Oblique (x: 76-88%).
-   - Secondary: Center Anterior (x: 52-62%).
-3. **Midline sites** (Procerus, Frontalis-Mid): 
-   - Map primarily to the Center panel (x: 48-52%).
-4. **Lower Eyelids**: Map carefully to the inferior portion of the orbicularis (y: 52-54% range).
-5. **Bunny Lines**: Map to the nasalis on the side of the bridge of the nose.
+**Y-AXIS MAPPING (Neck-Up Framing):**
+- Hairline/Upper Forehead: y=20-25%
+- Mid-Forehead: y=30-35%
+- Glabella (Brows): y=40-42%
+- Eye Level (Lateral Canthus): y=46-48%
+- Infraorbital/Bunny Lines: y=53-56%
+
+**X-AXIS MAPPING:**
+1. **Glabella & Frontalis (Center Panel):**
+   - Procerus: x=50.
+   - Medial Corrugators: x=47 (Left), x=53 (Right).
+   - Lateral Corrugators: x=44 (Left), x=56 (Right).
+   - Frontalis: Distributed between x=40 and x=60.
+   - Bunny Lines (Nasalis): x=47 (Left), x=53 (Right).
+
+2. **Left Crow's Feet (Left Panel - Left Oblique):**
+   - Target Lateral Canthus of Left Eye.
+   - x: 10-13%.
+
+3. **Right Crow's Feet (Right Panel - Right Oblique):**
+   - Target Lateral Canthus of Right Eye.
+   - x: 87-90%.
 
 RESPONSE FORMAT: Return a single JSON object.
 {
@@ -84,7 +96,7 @@ export const SAMPLE_ANALYSIS_FEMALE = {
     regionalPlans: [
       { region: "Glabella", muscle: "Procerus + Corrugator", points: 5, reasoning: "Medial dominance focus." },
       { region: "Bunny Lines", muscle: "Nasalis", points: 2, reasoning: "Targeting lateral bridge." },
-      { region: "Forehead", muscle: "Frontalis", points: 8, reasoning: "High placement microdroplets." },
+      { region: "Forehead", muscle: "Frontalis", points: 6, reasoning: "High placement microdroplets." },
       { region: "Crow's Feet", muscle: "Orbicularis", points: 6, reasoning: "3 pts per side." }
     ],
     safetyFlags: ["Avoid low frontalis"],
@@ -102,17 +114,29 @@ export const SAMPLE_ANALYSIS_FEMALE = {
   },
   sites: [
     // --- CENTER PANEL (33-66) ---
-    { id: "f-g1-c", label: "G1", region: "Glabella", muscle: "Procerus", doseOna: 4, rationale: "Center.", x: 50, y: 48 },
-    { id: "f-g2l-c", label: "G2L", region: "Glabella", muscle: "Corrugator", doseOna: 4, rationale: "Left Medial.", x: 47, y: 46 },
-    { id: "f-g2r-c", label: "G2R", region: "Glabella", muscle: "Corrugator", doseOna: 4, rationale: "Right Medial.", x: 53, y: 46 },
-    { id: "f-b1l-c", label: "B1L", region: "Bunny Lines", muscle: "Nasalis", doseOna: 2, rationale: "Left bridge.", x: 48, y: 55 },
-    { id: "f-b1r-c", label: "B1R", region: "Bunny Lines", muscle: "Nasalis", doseOna: 2, rationale: "Right bridge.", x: 52, y: 55 },
+    // Glabella (Between Brows ~42% Y)
+    { id: "f-g1-c", label: "G1", region: "Glabella", muscle: "Procerus", doseOna: 4, rationale: "Center.", x: 50, y: 42 },
+    { id: "f-g2l-c", label: "G2L", region: "Glabella", muscle: "Corrugator", doseOna: 4, rationale: "Left Medial.", x: 47, y: 40 },
+    { id: "f-g2r-c", label: "G2R", region: "Glabella", muscle: "Corrugator", doseOna: 4, rationale: "Right Medial.", x: 53, y: 40 },
+    
+    // Frontalis (Forehead ~25-35% Y)
+    { id: "f-f1-c", label: "F1", region: "Forehead", muscle: "Frontalis", doseOna: 2, rationale: "Mid-L.", x: 45, y: 28 },
+    { id: "f-f2-c", label: "F2", region: "Forehead", muscle: "Frontalis", doseOna: 2, rationale: "Mid-R.", x: 55, y: 28 },
+    { id: "f-f3-c", label: "F3", region: "Forehead", muscle: "Frontalis", doseOna: 2, rationale: "High-L.", x: 42, y: 22 },
+    { id: "f-f4-c", label: "F4", region: "Forehead", muscle: "Frontalis", doseOna: 2, rationale: "High-R.", x: 58, y: 22 },
+
+    // Bunny Lines (Nose ~55% Y)
+    { id: "f-b1l-c", label: "B1L", region: "Bunny Lines", muscle: "Nasalis", doseOna: 2, rationale: "Left bridge.", x: 47, y: 55 },
+    { id: "f-b1r-c", label: "B1R", region: "Bunny Lines", muscle: "Nasalis", doseOna: 2, rationale: "Right bridge.", x: 53, y: 55 },
     
     // --- OBLIQUE PANELS ---
-    { id: "f-c1l-l", label: "C1L", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 2, rationale: "Left Lateral.", x: 12, y: 49 },
-    { id: "f-c1r-r", label: "C1R", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 2, rationale: "Right Lateral.", x: 88, y: 49 },
-    { id: "f-e1l-l", label: "E1L", region: "Lower Eyelid", muscle: "Inf. Orbicularis", doseOna: 1, rationale: "Left Inferior.", x: 15, y: 54 },
-    { id: "f-e1r-r", label: "E1R", region: "Lower Eyelid", muscle: "Inf. Orbicularis", doseOna: 1, rationale: "Right Inferior.", x: 85, y: 54 }
+    // Left Oblique (Left Panel 0-33): Lateral Canthus is LEFT of eye center. Eye is ~17. Crows ~12.
+    { id: "f-c1l-l", label: "C1L", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 2, rationale: "Left Lateral.", x: 12, y: 48 },
+    { id: "f-e1l-l", label: "E1L", region: "Lower Eyelid", muscle: "Inf. Orbicularis", doseOna: 1, rationale: "Left Inferior.", x: 15, y: 53 },
+
+    // Right Oblique (Right Panel 66-100): Lateral Canthus is RIGHT of eye center. Eye is ~83. Crows ~88.
+    { id: "f-c1r-r", label: "C1R", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 2, rationale: "Right Lateral.", x: 88, y: 48 },
+    { id: "f-e1r-r", label: "E1R", region: "Lower Eyelid", muscle: "Inf. Orbicularis", doseOna: 1, rationale: "Right Inferior.", x: 85, y: 53 }
   ],
   dangerZones: [{ id: "fd1", region: "Periocular", risk: "Levator palpebrae risk." }],
   safetyWarnings: ["Focus on brow symmetry."],
@@ -138,7 +162,7 @@ export const SAMPLE_ANALYSIS_MALE = {
     regionalPlans: [
       { region: "Glabella", muscle: "Procerus + Corrugator", points: 5, reasoning: "U-pattern heavy dose." },
       { region: "Bunny Lines", muscle: "Nasalis", points: 2, reasoning: "Treating lateral bridge." },
-      { region: "Forehead", muscle: "Frontalis", points: 10, reasoning: "Broad microdroplet spread." }
+      { region: "Forehead", muscle: "Frontalis", points: 6, reasoning: "Broad microdroplet spread." }
     ],
     safetyFlags: ["Maintain masculine brow"],
     conservativeAdjustments: "Avoid peaked lateral arch."
@@ -154,15 +178,23 @@ export const SAMPLE_ANALYSIS_MALE = {
   },
   sites: [
     // --- CENTER PANEL (33-66) ---
-    { id: "m-g1-c", label: "G1", region: "Glabella", muscle: "Procerus", doseOna: 8, rationale: "Male dose.", x: 50, y: 48 },
-    { id: "m-g2l-c", label: "G2L", region: "Glabella", muscle: "Corrugator", doseOna: 7, rationale: "Medial.", x: 47, y: 46 },
-    { id: "m-g2r-c", label: "G2R", region: "Glabella", muscle: "Corrugator", doseOna: 7, rationale: "Medial.", x: 53, y: 46 },
-    { id: "m-b1l-c", label: "B1L", region: "Bunny Lines", muscle: "Nasalis", doseOna: 3, rationale: "Left bridge.", x: 48, y: 55 },
-    { id: "m-b1r-c", label: "B1R", region: "Bunny Lines", muscle: "Nasalis", doseOna: 3, rationale: "Right bridge.", x: 52, y: 55 },
+    { id: "m-g1-c", label: "G1", region: "Glabella", muscle: "Procerus", doseOna: 8, rationale: "Male dose.", x: 50, y: 42 },
+    { id: "m-g2l-c", label: "G2L", region: "Glabella", muscle: "Corrugator", doseOna: 7, rationale: "Medial.", x: 47, y: 40 },
+    { id: "m-g2r-c", label: "G2R", region: "Glabella", muscle: "Corrugator", doseOna: 7, rationale: "Medial.", x: 53, y: 40 },
+    
+    // Frontalis (Male - Straighter/Lower)
+    { id: "m-f1-c", label: "F1", region: "Forehead", muscle: "Frontalis", doseOna: 3, rationale: "Mid-L.", x: 45, y: 25 },
+    { id: "m-f2-c", label: "F2", region: "Forehead", muscle: "Frontalis", doseOna: 3, rationale: "Mid-R.", x: 55, y: 25 },
+    { id: "m-f3-c", label: "F3", region: "Forehead", muscle: "Frontalis", doseOna: 3, rationale: "Lat-L.", x: 40, y: 28 },
+    { id: "m-f4-c", label: "F4", region: "Forehead", muscle: "Frontalis", doseOna: 3, rationale: "Lat-R.", x: 60, y: 28 },
+
+    // Bunny Lines
+    { id: "m-b1l-c", label: "B1L", region: "Bunny Lines", muscle: "Nasalis", doseOna: 3, rationale: "Left bridge.", x: 47, y: 55 },
+    { id: "m-b1r-c", label: "B1R", region: "Bunny Lines", muscle: "Nasalis", doseOna: 3, rationale: "Right bridge.", x: 53, y: 55 },
     
     // --- OBLIQUE PANELS ---
-    { id: "m-c1l-l", label: "C1L", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 3, rationale: "Left Lateral.", x: 12, y: 49 },
-    { id: "m-c1r-r", label: "C1R", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 3, rationale: "Right Lateral.", x: 88, y: 49 }
+    { id: "m-c1l-l", label: "C1L", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 3, rationale: "Left Lateral.", x: 12, y: 48 },
+    { id: "m-c1r-r", label: "C1R", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 3, rationale: "Right Lateral.", x: 88, y: 48 }
   ],
   dangerZones: [{ id: "md1", region: "Supraorbital", risk: "Avoid feminizing arch." }],
   safetyWarnings: ["Higher glabella doses needed."],

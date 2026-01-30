@@ -16,8 +16,7 @@ import {
   generateAestheticVisual, 
   generatePostTreatmentVisual, 
   generateTreatmentMapVisual, 
-  generateAnatomicalOverlayVisual,
-  generatePatientBriefAudio
+  generateAnatomicalOverlayVisual
 } from './services/geminiService';
 import { AnalysisResult, ToxinBrand, TreatmentSession, PatientGender, ImageSize, FeedbackData } from './types';
 import { SAMPLE_ANALYSIS_FEMALE, SAMPLE_ANALYSIS_MALE } from './constants';
@@ -26,20 +25,44 @@ type Tab = 'assessment' | 'visualizer' | 'knowledge' | 'history';
 
 const useCases = [
   {
-    id: 'glabellar',
-    name: "Glabellar & Bunny Lines",
-    icon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 14L12 10L16 14M8 10L12 6L16 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
-    prePrompt: "Dynamic glabellar rhytids and nasal bunny lines.",
-    treatmentPrompt: "Injection sites in procerus, corrugators, and nasalis.",
-    postPrompt: "Smooth upper nasal and glabellar region post-BoNT.",
+    id: 'muscle_isolation',
+    name: "Muscle Isolation",
+    icon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+    prePrompt: "Detailed medical illustration of the procerus muscle in isolation on a female face, showing fiber direction.",
+    treatmentPrompt: "Highlighting the procerus muscle origin and insertion points.",
+    postPrompt: "Visual of relaxed procerus muscle fibers.",
   },
   {
-    id: 'frontalis',
-    name: "Frontalis Preservation",
-    icon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12H20M4 8H20M4 16H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
-    prePrompt: "Frontalis lines on max surprise, low brow risk.",
-    treatmentPrompt: "High forehead microdroplets >2cm above rim.",
-    postPrompt: "Softened forehead with preserved brow height.",
+    id: 'muscle_group',
+    name: "Muscle Interaction",
+    icon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 7v10M16 7v10M8 12h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+    prePrompt: "Anatomical diagram showing the relationship between procerus and corrugator supercilii muscles, highlighting opposing vectors.",
+    treatmentPrompt: "Strategic injection points to balance medial and lateral forces in the glabella.",
+    postPrompt: "Illustration of balanced muscle interaction post-treatment.",
+  },
+  {
+    id: 'risk_zone',
+    name: "Frontalis & Brow Risk",
+    icon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+    prePrompt: "Lateral view of frontalis muscle showing its role as the sole brow elevator. Highlight the 'danger zone' near the orbital rim.",
+    treatmentPrompt: "Correct placement of microdroplets high in the forehead to preserve brow height.",
+    postPrompt: "Result showing smoothed forehead with maintained brow position.",
+  },
+  {
+    id: 'vasculature',
+    name: "Vascular Safety",
+    icon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+    prePrompt: "Detailed anatomy of the lateral canthal region showing the path of the angular artery and zygomaticofacial artery relative to orbicularis oculi.",
+    treatmentPrompt: "Injection mapping avoiding superficial vessels in the temple region.",
+    postPrompt: "Safe injection planes visualized relative to vasculature.",
+  },
+  {
+    id: 'nerve_anatomy',
+    name: "Nerve Pathways",
+    icon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+    prePrompt: "Illustration of the supraorbital nerve emerging from the supraorbital notch, showing its deep branch path under the frontalis.",
+    treatmentPrompt: "Injection points designed to modulate frontalis without affecting nerve function.",
+    postPrompt: "Balanced brow elevation with nerve safety preserved.",
   }
 ];
 
@@ -77,7 +100,6 @@ const App: React.FC = () => {
 
   const [sliderPos, setSliderPos] = useState(50);
   const [salineMl, setSalineMl] = useState(2.5); 
-  const [isBriefLoading, setIsBriefLoading] = useState(false);
 
   const [history, setHistory] = useState<TreatmentSession[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -89,20 +111,6 @@ const App: React.FC = () => {
       try { setHistory(JSON.parse(saved)); } catch (e) { console.error(e); }
     }
   }, []);
-
-  const playPatientBrief = async () => {
-    if (!result) return;
-    setIsBriefLoading(true);
-    try {
-      const base64Audio = await generatePatientBriefAudio(result);
-      const audio = new Audio(`data:audio/mp3;base64,${base64Audio}`);
-      audio.play();
-    } catch (err) {
-      console.error("Brief generation failed", err);
-    } finally {
-      setIsBriefLoading(false);
-    }
-  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -240,12 +248,10 @@ const App: React.FC = () => {
     setVisualResult(null);
     setError(null);
     try {
-      const [preUrl, treatmentUrl, postUrl] = await Promise.all([
-        generateAestheticVisual(useCase.prePrompt, visualSize),
-        generateAestheticVisual(useCase.treatmentPrompt, visualSize),
-        generateAestheticVisual(useCase.postPrompt, visualSize),
+      const [preUrl] = await Promise.all([
+        generateAestheticVisual(useCase.prePrompt, visualSize)
       ]);
-      setVisualResult({ pre: preUrl, treatment: treatmentUrl, post: postUrl });
+      setVisualResult({ pre: preUrl, treatment: null, post: null });
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -257,7 +263,11 @@ const App: React.FC = () => {
     if (!mapRef.current) return;
     setIsGeneratingReport(true);
     try {
-      const dataUrl = await toPng(mapRef.current, { quality: 0.95, backgroundColor: 'white' });
+      const dataUrl = await toPng(mapRef.current, { 
+        quality: 0.95, 
+        backgroundColor: 'white',
+        fontEmbedCSS: '' // Fix for CORS errors with Google Fonts
+      });
       setIsReportOpen(true);
     } catch (error) {
       console.error('Report capture failed:', error);
@@ -385,9 +395,6 @@ const App: React.FC = () => {
                           <div className="space-y-8 animate-in fade-in duration-500">
                             <div className="flex justify-between items-end border-b border-gray-50 pb-4">
                                 <h3 className="text-[12px] font-black text-gray-400 uppercase tracking-[0.4em]">Interactive Outcome Projection</h3>
-                                <button disabled={isBriefLoading} onClick={playPatientBrief} className="flex items-center gap-2 bg-[#97a98c] text-white px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg hover:bg-[#86987a] disabled:bg-gray-200">
-                                   {isBriefLoading ? "Thinking..." : "🔊 Play Patient Brief"}
-                                </button>
                             </div>
                             <div className="relative w-full aspect-[16/9] bg-gray-50 rounded-[3rem] border-4 border-white shadow-2xl overflow-hidden group cursor-ew-resize select-none">
                               <img src={treatmentMapImageUrl || ""} alt="Baseline" className="absolute inset-0 w-full h-full object-cover" />
@@ -478,6 +485,26 @@ const App: React.FC = () => {
                     </button>
                   ))}
                 </div>
+                {activeUseCase && (
+                  <div className="mt-8 bg-gray-50 p-6 rounded-2xl border border-gray-100 text-left animate-in fade-in slide-in-from-top-4">
+                     {(() => {
+                        const uc = useCases.find(u => u.id === activeUseCase);
+                        return uc ? (
+                          <>
+                             <div className="flex items-center gap-3 mb-2">
+                                <span className="bg-[#cc7e6d] text-white text-[9px] font-black uppercase px-2 py-1 rounded">Scenario</span>
+                                <h5 className="text-xs font-bold text-gray-900">{uc.name}</h5>
+                             </div>
+                             <p className="text-xs text-gray-600 mb-4">{uc.prePrompt}</p>
+                             <div className="flex items-center gap-3 mb-2">
+                                <span className="bg-[#97a98c] text-white text-[9px] font-black uppercase px-2 py-1 rounded">Clinical Value</span>
+                             </div>
+                             <p className="text-xs text-gray-600">{uc.postPrompt}</p>
+                          </>
+                        ) : null;
+                     })()}
+                  </div>
+                )}
                 <div className="pt-12">
                    <textarea value={visualPrompt} onChange={(e) => setVisualPrompt(e.target.value)} placeholder="Describe custom anatomical asset..." className="w-full h-32 border-gray-100 bg-gray-50 rounded-[2.5rem] px-10 py-8 text-sm font-bold focus:ring-4 focus:ring-[#cc7e6d]/10 outline-none resize-none" />
                    <button disabled={visualLoading || !visualPrompt} onClick={handleGenerateVisual} className="mt-6 bg-[#cc7e6d] text-white px-12 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl hover:bg-[#b86d5e] transition-all disabled:bg-gray-200">{visualLoading ? 'Rendering Asset...' : 'Generate Clinical Asset'}</button>

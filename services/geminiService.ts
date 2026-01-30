@@ -63,28 +63,6 @@ export const analyzePatientInput = async (
   }
 };
 
-export const generatePatientBriefAudio = async (analysis: AnalysisResult): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  const prompt = `Based on this treatment plan for a ${analysis.gender} patient, create a warm, professional, and reassuring 30-second audio message for the patient. Explain that we are targeting the ${analysis.step3.regionalPlans.map(p => p.region).join(' and ')} to create a refreshed, natural look. Mention that safety is our priority.`;
-
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash-preview-tts",
-    contents: [{ parts: [{ text: prompt }] }],
-    config: {
-      responseModalities: [Modality.AUDIO],
-      speechConfig: {
-        voiceConfig: {
-          prebuiltVoiceConfig: { voiceName: 'Charon' },
-        },
-      },
-    },
-  });
-
-  const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-  if (!base64Audio) throw new Error("Failed to generate brief audio.");
-  return base64Audio;
-};
-
 export const generateTreatmentMapVisual = async (
   analysis: AnalysisResult | { gender: PatientGender, step2: any },
   size: ImageSize = '1K'
@@ -93,7 +71,14 @@ export const generateTreatmentMapVisual = async (
 
   let prompt = `Create a hyper-realistic, clinical-grade BASELINE anatomical tryptych (16:9).
   Three panels: Left Oblique, Anterior, Right Oblique.
-  Patient: ${analysis.gender}. Clean studio background, medical lighting. NO text or markers.`;
+  Patient: ${analysis.gender}. 
+  FRAMING: EXTREME CLOSE-UP HEADSHOTS ONLY (FROM CLAVICLE UP). DO NOT INCLUDE SHOULDERS, CHEST, OR TORSO.
+  The face must be vertically centered and fill 80% of the frame to ensure accurate injection coordinate mapping.
+  Orientation:
+  - Panel 1 (Left): Left Oblique view (Patient turns head 45 degrees to their right, exposing Left profile).
+  - Panel 2 (Center): Direct Anterior (Frontal) view.
+  - Panel 3 (Right): Right Oblique view (Patient turns head 45 degrees to their left, exposing Right profile).
+  Clean studio background, medical lighting. NO text or markers.`;
 
   const response = await ai.models.generateContent({
     model: 'gemini-3-pro-image-preview',
@@ -129,6 +114,7 @@ export const generatePostTreatmentVisual = async (
   }] : [];
 
   let prompt = `Using the provided baseline image, generate a simulated OUTCOME tryptych.
+  CRITICAL: MAINTAIN IDENTICAL TIGHT HEADSHOT FRAMING (NECK UP). Do not zoom out.
   Patient identity and framing must be IDENTICAL. 
   Show smooth, relaxed skin in: ${analysis.step3.regionalPlans.map(p => p.region).join(', ')}.
   Brow position: ${analysis.gender === PatientGender.MALE ? "Flat masculine" : "Soft feminine arch"}.`;
@@ -163,6 +149,8 @@ export const generateAnatomicalOverlayVisual = async (
 ): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const prompt = `Medical 3D anatomical render of upper face muscles. 16:9 Tryptych format. 
+  FRAMING: EXTREME CLOSE-UP HEADSHOTS ONLY (FROM NECK UP). MATCHING CLINICAL PHOTOGRAPHY FRAMING.
+  Panel 1: Left Oblique. Panel 2: Anterior. Panel 3: Right Oblique.
   Transparent/Black background. Clean, high-fidelity anatomy.`;
 
   const response = await ai.models.generateContent({
