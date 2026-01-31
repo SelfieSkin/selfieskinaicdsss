@@ -151,23 +151,26 @@ const DosageTable: React.FC<DosageTableProps> = ({ result, selectedBrand, patien
         </table>
       </div>
 
-      {/* Rationale and Notes Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      {/* Rationale and Notes Section - SINGLE COLUMN */}
+      <div className="space-y-8">
+          {/* Rationale */}
           <div className="space-y-4">
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Clinical Rationale for Adjustments</label>
               <textarea 
                   value={rationale}
                   onChange={(e) => setRationale(e.target.value)}
                   placeholder="Enter clinical reasoning for any dose modifications here..."
-                  className="w-full h-40 bg-white border border-gray-200 rounded-2xl p-4 text-sm font-medium focus:ring-4 focus:ring-[#cc7e6d]/10 outline-none transition-all shadow-sm"
+                  className="w-full h-32 bg-white border border-gray-200 rounded-2xl p-4 text-sm font-medium focus:ring-4 focus:ring-[#cc7e6d]/10 outline-none transition-all shadow-sm"
               />
           </div>
+          
+          {/* Auto-Generated Note */}
           <div className="space-y-4">
               <div className="flex justify-between items-center">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Auto-Generated Clinical Note</label>
                   <span className="text-[9px] font-bold text-[#cc7e6d] bg-[#cc7e6d]/10 px-2 py-0.5 rounded-full">LIVE PREVIEW</span>
               </div>
-              <div className="w-full h-40 bg-gray-50 border border-gray-100 rounded-2xl p-4 text-xs font-mono text-gray-600 overflow-y-auto leading-relaxed whitespace-pre-wrap">
+              <div className="w-full h-40 bg-gray-50 border border-gray-100 rounded-2xl p-4 text-xs font-mono text-gray-600 overflow-y-auto leading-relaxed whitespace-pre-wrap shadow-inner">
                   {clinicalNote}
               </div>
           </div>

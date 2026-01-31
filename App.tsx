@@ -394,8 +394,7 @@ const App: React.FC = () => {
                 
                 {result && (
                   <>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 lg:gap-32">
-                      <div className="space-y-16">
+                    <div className="space-y-16 max-w-6xl mx-auto">
                         {/* Section 1: Treatment Assessment Map */}
                         <div className="space-y-8">
                           <div className="flex justify-between items-end border-b border-gray-50 pb-4">
@@ -415,7 +414,7 @@ const App: React.FC = () => {
                           />
                         </div>
 
-                         {/* Section 3: Interactive Outcome */}
+                         {/* Section 2: Interactive Outcome */}
                         {postTreatmentImageUrl && (
                           <div className="space-y-8 animate-in fade-in duration-500">
                             <div className="flex justify-between items-end border-b border-gray-50 pb-4">
@@ -441,18 +440,11 @@ const App: React.FC = () => {
                           </div>
                         )}
 
-                        {/* Section 4: Injection Plan Logic */}
-                        <div className="space-y-8">
-                          <h3 className="text-[12px] font-black text-gray-400 uppercase tracking-[0.4em] border-b border-gray-50 pb-4">Injection Plan Logic</h3>
-                          <InjectionPlanTable sites={result.sites} />
-                        </div>
-                      </div>
-
-                      <div className="space-y-20">
-                        {/* Section 2: Clinical Reasonings */}
+                        {/* Section 3: Clinical Reasonings */}
                         <div className="space-y-10">
                           <h3 className="text-[12px] font-black text-gray-400 uppercase tracking-[0.4em]">Clinical Reasonings</h3>
                           
+                          {/* Row 1: Morphology & Skin */}
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                               <div className="p-8 bg-gray-50/50 rounded-[2.5rem] border-l-[8px] border-[#cc7e6d] shadow-sm flex flex-col justify-center">
                                 <h4 className="text-[10px] font-black text-gray-400 mb-2 uppercase tracking-widest">Morphology Classification</h4>
@@ -464,26 +456,38 @@ const App: React.FC = () => {
                               </div>
                           </div>
                           
-                          {/* Protocol Visual */}
-                          {protocolImageUrl && (
-                              <div className="border border-gray-100 rounded-[2.5rem] p-2 bg-white shadow-sm">
-                                  <div className="rounded-[2rem] overflow-hidden border border-gray-50 relative group">
-                                      <img src={protocolImageUrl} alt="Protocol Illustration" className="w-full h-auto" />
-                                      <div className="absolute bottom-4 left-4 bg-white/80 backdrop-blur-md px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest text-gray-800">
-                                          Suggested Protocol
+                          {/* Row 2: Protocol & Dynamics */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+                               <div className="space-y-3">
+                                   <h5 className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Suggested Protocol</h5>
+                                   {protocolImageUrl ? (
+                                      <div className="border border-gray-100 rounded-[2.5rem] p-2 bg-white shadow-sm h-full max-h-[400px]">
+                                          <div className="rounded-[2rem] overflow-hidden border border-gray-50 relative group h-full">
+                                              <img src={protocolImageUrl} alt="Protocol Illustration" className="w-full h-full object-cover" />
+                                          </div>
                                       </div>
-                                  </div>
-                              </div>
-                          )}
+                                   ) : (
+                                       <div className="h-full bg-gray-50 rounded-[2.5rem] border border-gray-100 flex items-center justify-center p-8">
+                                          <span className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Protocol Visual Not Available</span>
+                                       </div>
+                                   )}
+                               </div>
 
-                          <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
-                               <h5 className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-3">Dynamics Assessment</h5>
-                               <ul className="space-y-3">
-                                  <li className="text-[11px] text-gray-600 border-b border-gray-50 pb-2"><strong className="text-gray-900 block mb-1">Frontalis</strong> {result.step2?.maxContraction?.frontalis}</li>
-                                  <li className="text-[11px] text-gray-600 border-b border-gray-50 pb-2"><strong className="text-gray-900 block mb-1">Glabella</strong> {result.step2?.maxContraction?.glabella}</li>
-                                  <li className="text-[11px] text-gray-600"><strong className="text-gray-900 block mb-1">Orbicularis</strong> {result.step2?.maxContraction?.orbicularis}</li>
-                               </ul>
-                           </div>
+                               <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm h-full">
+                                   <h5 className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-3">Dynamics Assessment</h5>
+                                   <ul className="space-y-4">
+                                      <li className="text-[11px] text-gray-600 border-b border-gray-50 pb-2"><strong className="text-gray-900 block mb-1">Frontalis</strong> {result.step2?.maxContraction?.frontalis}</li>
+                                      <li className="text-[11px] text-gray-600 border-b border-gray-50 pb-2"><strong className="text-gray-900 block mb-1">Glabella</strong> {result.step2?.maxContraction?.glabella}</li>
+                                      <li className="text-[11px] text-gray-600"><strong className="text-gray-900 block mb-1">Orbicularis</strong> {result.step2?.maxContraction?.orbicularis}</li>
+                                   </ul>
+                               </div>
+                          </div>
+                        </div>
+
+                        {/* Section 4: Injection Plan Logic */}
+                        <div className="space-y-8">
+                          <h3 className="text-[12px] font-black text-gray-400 uppercase tracking-[0.4em] border-b border-gray-50 pb-4">Injection Plan Logic</h3>
+                          <InjectionPlanTable sites={result.sites} />
                         </div>
 
                         {/* Section 5: Precision Execution */}
@@ -500,7 +504,6 @@ const App: React.FC = () => {
                                 onUpdateSignature={setSignature}
                            />
                         </div>
-                      </div>
                     </div>
 
                     <div className="mt-24 pt-20 border-t border-gray-100 flex justify-center gap-8 no-print">
