@@ -13,116 +13,106 @@ const UserGuideModal: React.FC<UserGuideModalProps> = ({ isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
       <div className="bg-white rounded-[3rem] shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="p-8 border-b border-gray-100 flex justify-between items-center">
+        <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-[#fcfcf9]">
           <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
             <span style={{ color: BRAND_SAGE }}>SelfieSkin</span> Protocol
           </h2>
           <button onClick={onClose} className="text-[10px] font-black text-gray-300 hover:text-gray-900 uppercase tracking-widest transition-colors">
-            Close
+            Close Guide
           </button>
         </div>
 
         <div className="p-10 overflow-y-auto custom-scrollbar space-y-12">
             {/* Intro */}
             <section>
-                <h3 className="text-xl font-bold text-gray-800 mb-2">Welcome & Core Philosophy</h3>
+                <h3 className="text-xl font-bold text-gray-800 mb-2">Clinical Decision Support Architecture</h3>
                 <p className="text-sm text-gray-600 leading-relaxed">
-                    SelfieSkin is an AI-powered Clinical Decision Support System (AI-CDSS). Its purpose is to act as an expert "second opinion" by analyzing patient facial dynamics to provide evidence-based treatment recommendations. It is a tool to augment, not replace, your clinical judgment.
+                    SelfieSkin is an AI-powered Clinical Decision Support System (AI-CDSS) designed to augment expert judgment in aesthetic medicine. It combines computer vision analysis with interactive simulation to provide a "second opinion" on upper-face Botulinum Toxin treatments.
                 </p>
-                 <p className="mt-2 text-xs font-medium text-gray-500 italic">
-                    <strong>Human-in-the-Loop Principle:</strong> You, the licensed provider, always make the final decision. This system provides data and a proposed plan; you provide the clinical expertise and final sign-off.
-                 </p>
             </section>
 
             {/* Assessment Tab */}
             <section>
                 <h3 className="text-lg font-black text-gray-900 mb-4 flex items-center gap-3 uppercase tracking-widest">
-                    <span className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-sans" style={{ backgroundColor: BRAND_CORAL }}>1</span>
-                    The Assessment Tab: Your Primary Workspace
+                    <span className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-sans shadow-md" style={{ backgroundColor: BRAND_CORAL }}>1</span>
+                    Assessment Tab: Clinical Intake & Analysis
                 </h3>
                 <div className="pl-11 space-y-8">
                     <div>
-                        <h4 className="font-bold text-gray-800 mb-2">Step 1: Patient Intake (Data Foundation)</h4>
+                        <h4 className="font-bold text-gray-800 mb-2 text-sm uppercase tracking-wide">Step 1: The Anatomical Tryptych</h4>
                         <p className="text-sm text-gray-600 leading-relaxed mb-4">
-                            Accurate intake is critical for a valid analysis. All fields must be completed.
+                            The system analyzes patient video inputs to generate a high-fidelity <strong>Clinical Tryptych</strong> (Left Profile, Anterior, Right Profile). This standardized 16:9 visualization maps muscle dynamics across the entire upper face.
                         </p>
-                        <ul className="text-xs text-gray-500 space-y-4 list-disc pl-5 font-medium">
-                            <li><strong>Patient ID:</strong> Use a consistent, unique identifier for each patient to enable reliable record retrieval in the History tab.</li>
-                            <li><strong>Formula:</strong> Select the Botulinum Toxin brand you plan to use. This choice dictates the unit conversions in all subsequent dosing tables.</li>
-                            <li><strong>Morphology:</strong> Selecting "Female Presenting" or "Male Presenting" informs the AI's aesthetic goals. For example, it will prioritize a gentle brow arch for female morphologies and a flatter, lower brow for male morphologies to preserve gender-affirming features.</li>
-                            <li>
-                                <strong>Upload Dynamic Scan (Critical Input):</strong> A high-quality video is the most important data source.
-                                <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                    <span className="font-black text-gray-600 block mb-1">Best Practices for Video Capture:</span>
-                                    <ul className="list-[circle] pl-5 space-y-1 text-gray-500">
-                                        <li><strong>Lighting:</strong> Use bright, even, frontal lighting to avoid shadows that can obscure muscle movement.</li>
-                                        <li><strong>Angle:</strong> The camera should be stable, at eye level, and directly in front of the patient.</li>
-                                        <li><strong>Patient Instructions:</strong> Clearly ask the patient to perform each expression to its maximum for 1-2 seconds: Rest -> Max Frown -> Max Surprise (eyebrow raise) -> Max Smile (crow's feet).</li>
-                                        <li><strong>Framing:</strong> Ensure the entire face, from hairline to chin, is visible throughout the video.</li>
-                                    </ul>
-                                </div>
-                            </li>
+                        <ul className="text-xs text-gray-500 space-y-2 list-disc pl-5 font-medium">
+                            <li><strong>Dynamic Analysis:</strong> The AI identifies recruitment patterns (e.g., "V-Pattern" Glabella) and asymmetries (e.g., "Spock Brow").</li>
+                            <li><strong>Morphology Settings:</strong> Selecting "Male Presenting" triggers specific algorithms for hypertrophic muscle mass dosing (+50-100% units) and flat brow positioning.</li>
                         </ul>
                     </div>
                     <div>
-                        <h4 className="font-bold text-gray-800 mb-2">Step 2: AI Analysis & Clinical Review (The "Second Opinion")</h4>
+                        <h4 className="font-bold text-gray-800 mb-2 text-sm uppercase tracking-wide">Step 2: Protocol Verification (Human-in-the-Loop)</h4>
                         <p className="text-sm text-gray-600 leading-relaxed">
-                            After clicking <strong>"Run Clinical Analysis,"</strong> the AI generates a multi-part report. Your task is to critically appraise its findings.
+                            The <strong>"Protocol Execution"</strong> table is the command center. The AI proposes a starting dose based on the AIMS protocol.
                         </p>
-                         <ul className="text-xs text-gray-500 space-y-3 list-disc pl-5 font-medium mt-4">
-                            <li><strong>Review the Visual Treatment Map:</strong> This is the AI's anatomical hypothesis. Do the proposed injection sites align with your anatomical knowledge and the patient's specific presentation? Do the danger zones accurately reflect high-risk areas for this individual?</li>
-                            <li><strong>Cross-Reference the Data Panels:</strong> Check the AI's "Step 2: Video Dynamics" findings. Does its classification (e.g., "V-Pattern Glabella") match what you observed in the video? Does the "Step 3: Strategic Planning" rationale make clinical sense?</li>
-                         </ul>
-                    </div>
-                    <div>
-                        <h4 className="font-bold text-gray-800 mb-2">Step 3: Protocol Execution (Your Clinical Judgment)</h4>
-                        <p className="text-sm text-gray-600 leading-relaxed">
-                            This is the most critical human-in-the-loop step. In the <strong>"Protocol Execution"</strong> table, the "Administered" column is editable for a reason. You must review each AI-suggested dose and override it with your own clinical decision based on your direct patient assessment. The system automatically flags any deviations from the AI's plan, which is essential for robust medical record-keeping.
-                        </p>
-                    </div>
-                    <div>
-                        <h4 className="font-bold text-gray-800 mb-2">Step 4: Finalize & Archive (Documentation)</h4>
-                        <p className="text-sm text-gray-600 leading-relaxed">
-                            Proper documentation is the final step of the clinical workflow.
-                        </p>
-                         <ul className="text-xs text-gray-500 space-y-2 list-disc pl-5 font-medium mt-3">
-                            <li><strong>View Full Clinical Report:</strong> This generates a clean, PDF-ready summary of the entire session, including the visual map, AI analysis, and your final, administered doses. It is designed to be printed or saved directly into a patient's EMR.</li>
-                            <li><strong>Archive Record:</strong> Before saving, you are prompted to complete a feedback form. Logging your rationale for any deviations, as well as patient outcomes, is crucial for longitudinal tracking and contributes to the continuous refinement of best practices.</li>
-                        </ul>
+                        <div className="mt-3 p-4 bg-amber-50 rounded-xl border border-amber-100">
+                             <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest block mb-1">Provider Responsibility</span>
+                             <p className="text-xs text-amber-900/80 font-medium">
+                                You must manually verify or adjust every dose in the "Administered" column. The system automatically calculates "Ona-Equivalents" (OnabotulinumtoxinA units) regardless of whether you select Dysport or Daxxify, ensuring standardized record keeping.
+                             </p>
+                        </div>
                     </div>
                 </div>
             </section>
 
-             {/* Visualizer Tab */}
+             {/* Simulator Tab (UPDATED) */}
             <section>
                 <h3 className="text-lg font-black text-gray-900 mb-4 flex items-center gap-3 uppercase tracking-widest">
-                    <span className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-sans" style={{ backgroundColor: BRAND_CORAL }}>2</span>
-                    The Visualizer Tab: Education & Consultation
+                    <span className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-sans shadow-md" style={{ backgroundColor: BRAND_CORAL }}>2</span>
+                    Clinical Simulator: Interactive Training
                 </h3>
-                <p className="text-sm text-gray-600 leading-relaxed pl-11 mb-4">
-                    This is a powerful educational tool for both providers and patients, powered by a dedicated image generation model.
-                </p>
-                <ul className="text-xs text-gray-500 space-y-3 list-disc pl-16 font-medium">
-                    <li><strong>Clinical Use Cases:</strong> These pre-built scenarios generate a triptych of images (Pre-treatment, Treatment Plan, Post-treatment) to illustrate common clinical concepts. Use them to explain the rationale for a procedure to a patient (e.g., "why we inject high on the forehead to avoid brow drop") or for staff training.</li>
-                    <li><strong>Manual Anatomical Query:</strong> This free-text field allows you to generate custom medical illustrations on demand. Use it to explore complex anatomy for your own learning or to create a specific visual for a patient. Examples: <em>"Illustrate the path of the angular artery relative to the nasolabial fold,"</em> or <em>"Show the difference in masseter muscle size between a normal and a hypertrophic jaw."</em></li>
-                </ul>
+                <div className="pl-11 space-y-6">
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                        The <strong>Aesthetic Case Simulator</strong> is a gamified environment for practicing injection strategy without patient risk. It uses Generative AI to create unique, medically realistic patient faces for every session.
+                    </p>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Level 1: Spock Brow</h4>
+                            <p className="text-xs text-gray-600 font-medium">
+                                <strong>Objective:</strong> Correct unilateral lateral brow elevation.
+                                <br/><br/>
+                                <strong>Success Criteria:</strong>
+                                <br/>• Identify the hyperactive lateral frontalis.
+                                <br/>• Place 1-2 units high in the lateral forehead.
+                                <br/>• AVOID the "Danger Zone" (orbital rim) to prevent ptosis.
+                            </p>
+                        </div>
+                        <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Scoring Engine</h4>
+                            <p className="text-xs text-gray-600 font-medium">
+                                <strong>Real-Time Feedback:</strong>
+                                <br/>After submitting your plan, the simulator overlays a "Heat Map" showing:
+                                <br/><span className="text-green-600 font-bold">● Green Zones:</span> Correct Target.
+                                <br/><span className="text-red-500 font-bold">● Red Zones:</span> Risk of Ptosis/Drop.
+                                <br/><br/>
+                                Score > 85 is considered "Clinically Sound".
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </section>
 
-            {/* Other Tabs */}
+            {/* Knowledge & History */}
             <section className="pl-11 space-y-8">
                  <div>
-                     <h3 className="text-base font-black text-gray-900 mb-2 uppercase tracking-widest">Knowledge Base: Quick Reference</h3>
+                     <h3 className="text-base font-black text-gray-900 mb-2 uppercase tracking-widest">Knowledge Base</h3>
                      <p className="text-sm text-gray-600 leading-relaxed">
-                        This tab is not a textbook. It is a quick clinical refresher for essential information like toxin conversion ratios, contraindications, and common adverse events. Refer to it for at-a-glance information during treatment planning.
+                        A quick-reference guide for anatomy, muscle functions, and safety profiles. It includes specific injection depths and angles for each muscle group.
                     </p>
                  </div>
                  <div>
-                    <h3 className="text-base font-black text-gray-900 mb-2 uppercase tracking-widest">History Tab: Secure & Private Records</h3>
+                    <h3 className="text-base font-black text-gray-900 mb-2 uppercase tracking-widest">Secure Treatment History</h3>
                     <p className="text-sm text-gray-600 leading-relaxed">
-                        <strong>Privacy First:</strong> All archived treatment sessions are stored exclusively on your device in your browser's local storage. No patient data is ever sent to or stored on an external server, ensuring complete confidentiality.
-                    </p>
-                    <p className="text-xs text-gray-500 mt-2">
-                        Use this tab to track a patient's treatment journey over time, review past dosages to inform future sessions, and analyze outcomes.
+                        <strong>Local Storage Architecture:</strong> Patient data is stored locally in your browser to ensure privacy. Use the "Feedback & Deviation Log" after every case to archive your rationale, safety checks, and patient outcomes for longitudinal tracking.
                     </p>
                  </div>
             </section>
@@ -130,21 +120,21 @@ const UserGuideModal: React.FC<UserGuideModalProps> = ({ isOpen, onClose }) => {
             {/* Disclaimer */}
             <section>
                 <div className="bg-gray-50 p-6 rounded-2xl border-l-4 border-gray-300">
-                    <h3 className="text-sm font-bold text-gray-800 mb-2">Final Disclaimer: Safety & Provider Responsibility</h3>
+                    <h3 className="text-sm font-bold text-gray-800 mb-2">Final Disclaimer</h3>
                     <p className="text-xs text-gray-600 leading-relaxed">
-                        This AI-CDSS is a powerful tool, but it is not a substitute for comprehensive medical training, experience, and direct patient examination. The licensed provider is solely and entirely responsible for all diagnoses, treatment decisions, and outcomes. Use this tool wisely as one part of a holistic approach to patient care.
+                        This application is for educational and clinical decision support purposes only. It does not practice medicine. The generated visuals are simulations. Final treatment responsibility rests exclusively with the licensed practitioner.
                     </p>
                 </div>
             </section>
         </div>
 
-        <div className="p-6 border-t border-gray-100 bg-gray-50">
+        <div className="p-6 border-t border-gray-100 bg-[#fcfcf9]">
           <button 
             onClick={onClose}
-            className="w-full py-4 rounded-2xl text-white font-black uppercase tracking-[0.2em] text-xs shadow-xl transition-all active:scale-95 hover:shadow-2xl"
+            className="w-full py-4 rounded-2xl text-white font-black uppercase tracking-[0.2em] text-xs shadow-xl transition-all active:scale-95 hover:shadow-2xl hover:bg-[#c96650]"
             style={{ backgroundColor: BRAND_CORAL }}
           >
-            Acknowledge & Begin
+            Enter Clinical Workspace
           </button>
         </div>
       </div>
