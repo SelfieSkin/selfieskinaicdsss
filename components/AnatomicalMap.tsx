@@ -70,8 +70,8 @@ const AnatomicalMap = forwardRef<HTMLDivElement, AnatomicalMapProps>(({
             )}
             
             <div className="absolute inset-0 pointer-events-none flex">
-              <div className="h-full w-1/3 border-r border-white/10"></div>
-              <div className="h-full w-1/3 border-r border-white/10"></div>
+              <div className="h-full w-1/3 border-r-2 border-white/50 shadow-[4px_0_8px_rgba(0,0,0,0.1)]"></div>
+              <div className="h-full w-1/3 border-r-2 border-white/50 shadow-[4px_0_8px_rgba(0,0,0,0.1)]"></div>
             </div>
 
             {sites.map(site => (

@@ -107,15 +107,24 @@ export const generateTreatmentMapVisual = async (
   }
 
   let prompt = `Create a hyper-realistic, clinical-grade BASELINE anatomical tryptych (16:9).
-  Three panels: Left Profile, Anterior, Right Profile.
+  Three distinct vertical panels separated by thin white lines.
   Patient: ${analysis.gender}. 
   ${conditionDescription}
-  FRAMING: EXTREME CLOSE-UP HEADSHOTS ONLY (FROM CLAVICLE UP). DO NOT INCLUDE SHOULDERS, CHEST, OR TORSO.
-  The face must be vertically centered and fill 80% of the frame to ensure accurate injection coordinate mapping.
-  Orientation:
-  - Panel 1 (Left): Left Lateral Profile view (90 degrees, Patient facing Right).
-  - Panel 2 (Center): Direct Anterior (Frontal) view.
-  - Panel 3 (Right): Right Lateral Profile view (90 degrees, Patient facing Left).
+  
+  PANEL CONFIGURATION (CRITICAL):
+  1. **LEFT PANEL (0-33%)**: LEFT PROFILE VIEW (90°).
+     - Show the patient's LEFT side (Left Ear, Left Temple, Left Cheek).
+     - Patient must be facing RIGHT towards the center panel.
+     
+  2. **CENTER PANEL (33-66%)**: ANTERIOR VIEW (Frontal).
+     - Direct eye contact. Symmetrical full face.
+     
+  3. **RIGHT PANEL (66-100%)**: RIGHT PROFILE VIEW (90°).
+     - Show the patient's RIGHT side (Right Ear, Right Temple, Right Cheek).
+     - Patient must be facing LEFT towards the center panel.
+
+  FRAMING: EXTREME CLOSE-UP HEADSHOTS ONLY (FROM NECK UP). 
+  The eyes in all three panels must be aligned at approximately 50% vertical height.
   Clean studio background, medical lighting. NO text or markers.`;
 
   const response = await ai.models.generateContent({
@@ -193,7 +202,9 @@ export const generateAnatomicalOverlayVisual = async (
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const prompt = `Medical 3D anatomical render of upper face muscles. 16:9 Tryptych format. 
   FRAMING: EXTREME CLOSE-UP HEADSHOTS ONLY (FROM NECK UP). MATCHING CLINICAL PHOTOGRAPHY FRAMING.
-  Panel 1: Left Lateral Profile (90 deg). Panel 2: Anterior. Panel 3: Right Lateral Profile (90 deg).
+  Panel 1: Left Lateral Profile (90 deg) showing Temporalis and Orbicularis Oculi.
+  Panel 2: Anterior Frontal View showing Frontalis, Glabella, and Nasalis.
+  Panel 3: Right Lateral Profile (90 deg) showing Temporalis and Orbicularis Oculi.
   Transparent/Black background. Clean, high-fidelity anatomy.`;
 
   const response = await ai.models.generateContent({
