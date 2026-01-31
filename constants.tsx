@@ -35,8 +35,8 @@ The visual map consists of 3 panels showing EXTREME CLOSE-UP HEADSHOTS (Neck Up)
 - View: Left Oblique (Patient turns head right).
 - Content: Shows Patient's Left Eye and Left Crows Feet.
 - Orientation: Ear is towards Left edge (0%). Nose towards Right edge (33%).
-- **Left Crow's Feet (C1L):** X ~ 16-18%. Y ~ 43-45%. (Lateral to eye, slightly medial from edge).
-- **Left Inf. Eyelid (E1L):** X ~ 20-22%. Y ~ 49-51%.
+- **Left Crow's Feet (C1L):** X ~ 12-15%. Y ~ 43-46%. (Lateral to eye).
+- **Left Inf. Eyelid (E1L):** X ~ 16-18%. Y ~ 49-51%.
 
 **PANEL 2 (Center 33.3-66.6% x): Anterior / Frontal**
 - View: Direct Frontal.
@@ -44,23 +44,23 @@ The visual map consists of 3 panels showing EXTREME CLOSE-UP HEADSHOTS (Neck Up)
 - Orientation: MIRROR VIEW.
   - **Patient's RIGHT side is on Image LEFT (X: 33-50%).**
   - **Patient's LEFT side is on Image RIGHT (X: 50-66%).**
-- **Glabella:** Procerus (X=50). Right Corrugator (X=46-47). Left Corrugator (X=53-54).
-- **Frontalis:** Right sites (X=42-46). Left sites (X=54-58).
-- **Bunny Lines:** Right (X=47-48). Left (X=52-53).
+- **Glabella:** Procerus (X=50). Right Corrugator (X=45-47). Left Corrugator (X=53-55).
+- **Frontalis:** Right sites (X=38-46). Left sites (X=54-62).
+- **Bunny Lines:** Right (X=46-47). Left (X=53-54).
 
 **PANEL 3 (Right 66.6-100% x): Patient's RIGHT Profile**
 - View: Right Oblique (Patient turns head left).
 - Content: Shows Patient's Right Eye and Right Crows Feet.
 - Orientation: Nose towards Left edge (66%). Ear towards Right edge (100%).
-- **Right Crow's Feet (C1R):** X ~ 82-84%. Y ~ 43-45%. (Lateral to eye, slightly medial from edge).
-- **Right Inf. Eyelid (E1R):** X ~ 78-80%. Y ~ 49-51%.
+- **Right Crow's Feet (C1R):** X ~ 85-88%. Y ~ 43-46%. (Lateral to eye).
+- **Right Inf. Eyelid (E1R):** X ~ 81-83%. Y ~ 49-51%.
 
 **Y-AXIS MAPPING (Neck-Up Framing):**
-- Hairline/Upper Forehead: y=18-22%
+- Hairline/Upper Forehead: y=15-20%
 - Mid-Forehead: y=25-30%
-- Glabella (Brows): y=36-40%
+- Glabella (Brows): y=35-40%
 - Eye Level (Lateral Canthus): y=44-46%
-- Infraorbital/Bunny Lines: y=50-53%
+- Infraorbital/Bunny Lines: y=50-55%
 
 RESPONSE FORMAT: Return a single JSON object.
 {
@@ -117,8 +117,8 @@ export const SAMPLE_ANALYSIS_FEMALE = {
   },
   step4: {
     dosingRows: [
-      { region: "Glabella", onaDose: 20, aboDose25: 50, aboDose30: 60, daxDose: "40U", notes: "Standard." },
-      { region: "Bunny Lines", onaDose: 4, aboDose25: 10, aboDose30: 12, daxDose: "Off-Label", notes: "Lateral nasal." },
+      { region: "Glabella", onaDose: 18, aboDose25: 45, aboDose30: 54, daxDose: "30U", notes: "Standard." },
+      { region: "Bunny Lines", onaDose: 6, aboDose25: 15, aboDose30: 18, daxDose: "Off-Label", notes: "Lateral nasal." },
       { region: "Forehead", onaDose: 12, aboDose25: 30, aboDose30: 36, daxDose: "Off-Label", notes: "Conservative." },
       { region: "Crow's Feet", onaDose: 12, aboDose25: 30, aboDose30: 36, daxDose: "Off-Label", notes: "Standard." }
     ],
@@ -127,26 +127,30 @@ export const SAMPLE_ANALYSIS_FEMALE = {
   },
   sites: [
     // --- CENTER PANEL (33-66%) ---
-    { id: "f-g1-c", label: "G1", region: "Glabella", muscle: "Procerus", doseOna: 4, rationale: "Center.", x: 50, y: 38 },
-    { id: "f-g2r-c", label: "G2R", region: "Glabella", muscle: "Corrugator", doseOna: 4, rationale: "Patient Right (Medial).", x: 47, y: 36 },
-    { id: "f-g2l-c", label: "G2L", region: "Glabella", muscle: "Corrugator", doseOna: 4, rationale: "Patient Left (Medial).", x: 53, y: 36 },
+    // Glabella (Total 18U)
+    { id: "f-g1-c", label: "G1", region: "Glabella", muscle: "Procerus", doseOna: 6, rationale: "Center.", x: 50, y: 38 },
+    { id: "f-g2r-c", label: "G2R", region: "Glabella", muscle: "Corrugator", doseOna: 6, rationale: "Patient Right (Medial).", x: 46, y: 37 },
+    { id: "f-g2l-c", label: "G2L", region: "Glabella", muscle: "Corrugator", doseOna: 6, rationale: "Patient Left (Medial).", x: 54, y: 37 },
     
-    // Frontalis (Forehead ~22-30% Y) - Standard Omega Pattern
-    { id: "f-f1r-c", label: "F1R", region: "Forehead", muscle: "Frontalis", doseOna: 2, rationale: "Patient Right (Mid).", x: 45, y: 28 },
-    { id: "f-f2l-c", label: "F2L", region: "Forehead", muscle: "Frontalis", doseOna: 2, rationale: "Patient Left (Mid).", x: 55, y: 28 },
-    { id: "f-f3r-c", label: "F3R", region: "Forehead", muscle: "Frontalis", doseOna: 2, rationale: "Patient Right (High).", x: 42, y: 20 },
-    { id: "f-f4l-c", label: "F4L", region: "Forehead", muscle: "Frontalis", doseOna: 2, rationale: "Patient Left (High).", x: 58, y: 20 },
+    // Frontalis (Total 12U)
+    { id: "f-f1r-c", label: "F1R", region: "Forehead", muscle: "Frontalis", doseOna: 3, rationale: "Patient Right (Mid).", x: 44, y: 28 },
+    { id: "f-f2l-c", label: "F2L", region: "Forehead", muscle: "Frontalis", doseOna: 3, rationale: "Patient Left (Mid).", x: 56, y: 28 },
+    { id: "f-f3r-c", label: "F3R", region: "Forehead", muscle: "Frontalis", doseOna: 3, rationale: "Patient Right (High).", x: 40, y: 20 },
+    { id: "f-f4l-c", label: "F4L", region: "Forehead", muscle: "Frontalis", doseOna: 3, rationale: "Patient Left (High).", x: 60, y: 20 },
 
-    // Bunny Lines (Nose ~52% Y)
-    { id: "f-b1r-c", label: "B1R", region: "Bunny Lines", muscle: "Nasalis", doseOna: 2, rationale: "Patient Right.", x: 47, y: 52 },
-    { id: "f-b1l-c", label: "B1L", region: "Bunny Lines", muscle: "Nasalis", doseOna: 2, rationale: "Patient Left.", x: 53, y: 52 },
+    // Bunny Lines (Total 6U)
+    { id: "f-b1r-c", label: "B1R", region: "Bunny Lines", muscle: "Nasalis", doseOna: 3, rationale: "Patient Right.", x: 47, y: 52 },
+    { id: "f-b1l-c", label: "B1L", region: "Bunny Lines", muscle: "Nasalis", doseOna: 3, rationale: "Patient Left.", x: 53, y: 52 },
     
     // --- OBLIQUE PANELS ---
-    { id: "f-c1l-l", label: "C1L", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 2, rationale: "Patient Left Lateral.", x: 17, y: 44 },
-    { id: "f-e1l-l", label: "E1L", region: "Lower Eyelid", muscle: "Inf. Orbicularis", doseOna: 1, rationale: "Patient Left Inferior.", x: 21, y: 50 },
+    // Periocular (Total 12U)
+    // Left Oblique Panel (0-33%) - Looking at patient's left side
+    { id: "f-c1l-l", label: "C1L", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 4, rationale: "Patient Left Lateral.", x: 14, y: 45 },
+    { id: "f-e1l-l", label: "E1L", region: "Lower Eyelid", muscle: "Inf. Orbicularis", doseOna: 2, rationale: "Patient Left Inferior.", x: 18, y: 50 },
 
-    { id: "f-c1r-r", label: "C1R", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 2, rationale: "Patient Right Lateral.", x: 83, y: 44 },
-    { id: "f-e1r-r", label: "E1R", region: "Lower Eyelid", muscle: "Inf. Orbicularis", doseOna: 1, rationale: "Patient Right Inferior.", x: 79, y: 50 }
+    // Right Oblique Panel (66-100%) - Looking at patient's right side
+    { id: "f-c1r-r", label: "C1R", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 4, rationale: "Patient Right Lateral.", x: 86, y: 45 },
+    { id: "f-e1r-r", label: "E1R", region: "Lower Eyelid", muscle: "Inf. Orbicularis", doseOna: 2, rationale: "Patient Right Inferior.", x: 82, y: 50 }
   ],
   dangerZones: [{ id: "fd1", region: "Periocular", risk: "Levator palpebrae risk." }],
   safetyWarnings: ["Focus on brow symmetry."],
@@ -180,32 +184,34 @@ export const SAMPLE_ANALYSIS_MALE = {
   },
   step4: {
     dosingRows: [
-      { region: "Glabella", onaDose: 30, aboDose25: 75, aboDose30: 90, daxDose: "40U+", notes: "Male dose." },
+      { region: "Glabella", onaDose: 24, aboDose25: 60, aboDose30: 72, daxDose: "40U+", notes: "Male dose." },
       { region: "Bunny Lines", onaDose: 6, aboDose25: 15, aboDose30: 18, daxDose: "Off-Label", notes: "3U/side." },
-      { region: "Forehead", onaDose: 20, aboDose25: 50, aboDose30: 60, daxDose: "Off-Label", notes: "Heavy frontalis." }
+      { region: "Forehead", onaDose: 16, aboDose25: 40, aboDose30: 48, daxDose: "Off-Label", notes: "Heavy frontalis." }
     ],
     dosingAssumptions: ["Male dosing correction (+50% glabella)."],
     aimsDisclaimer: "Clinical judgment mandatory."
   },
   sites: [
     // --- CENTER PANEL (33-66%) ---
+    // Glabella (Total 24U)
     { id: "m-g1-c", label: "G1", region: "Glabella", muscle: "Procerus", doseOna: 8, rationale: "Male dose.", x: 50, y: 40 },
-    { id: "m-g2r-c", label: "G2R", region: "Glabella", muscle: "Corrugator", doseOna: 7, rationale: "Pt Right.", x: 47, y: 38 },
-    { id: "m-g2l-c", label: "G2L", region: "Glabella", muscle: "Corrugator", doseOna: 7, rationale: "Pt Left.", x: 53, y: 38 },
+    { id: "m-g2r-c", label: "G2R", region: "Glabella", muscle: "Corrugator", doseOna: 8, rationale: "Pt Right.", x: 46, y: 38 },
+    { id: "m-g2l-c", label: "G2L", region: "Glabella", muscle: "Corrugator", doseOna: 8, rationale: "Pt Left.", x: 54, y: 38 },
     
-    // Frontalis (Male - Straighter/Lower/Broader)
-    { id: "m-f1r-c", label: "F1R", region: "Forehead", muscle: "Frontalis", doseOna: 3, rationale: "Pt Right Lat.", x: 40, y: 26 },
-    { id: "m-f2r-c", label: "F2R", region: "Forehead", muscle: "Frontalis", doseOna: 3, rationale: "Pt Right Med.", x: 46, y: 26 },
-    { id: "m-f3l-c", label: "F3L", region: "Forehead", muscle: "Frontalis", doseOna: 3, rationale: "Pt Left Med.", x: 54, y: 26 },
-    { id: "m-f4l-c", label: "F4L", region: "Forehead", muscle: "Frontalis", doseOna: 3, rationale: "Pt Left Lat.", x: 60, y: 26 },
+    // Frontalis (Total 16U)
+    { id: "m-f1r-c", label: "F1R", region: "Forehead", muscle: "Frontalis", doseOna: 4, rationale: "Pt Right Lat.", x: 38, y: 26 },
+    { id: "m-f2r-c", label: "F2R", region: "Forehead", muscle: "Frontalis", doseOna: 4, rationale: "Pt Right Med.", x: 44, y: 26 },
+    { id: "m-f3l-c", label: "F3L", region: "Forehead", muscle: "Frontalis", doseOna: 4, rationale: "Pt Left Med.", x: 56, y: 26 },
+    { id: "m-f4l-c", label: "F4L", region: "Forehead", muscle: "Frontalis", doseOna: 4, rationale: "Pt Left Lat.", x: 62, y: 26 },
 
-    // Bunny Lines
+    // Bunny Lines (Total 6U)
     { id: "m-b1r-c", label: "B1R", region: "Bunny Lines", muscle: "Nasalis", doseOna: 3, rationale: "Pt Right.", x: 47, y: 53 },
     { id: "m-b1l-c", label: "B1L", region: "Bunny Lines", muscle: "Nasalis", doseOna: 3, rationale: "Pt Left.", x: 53, y: 53 },
     
     // --- OBLIQUE PANELS ---
-    { id: "m-c1l-l", label: "C1L", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 3, rationale: "Pt Left.", x: 17, y: 45 },
-    { id: "m-c1r-r", label: "C1R", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 3, rationale: "Pt Right.", x: 83, y: 45 }
+    // Crows (Total 10U)
+    { id: "m-c1l-l", label: "C1L", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 5, rationale: "Pt Left.", x: 14, y: 46 },
+    { id: "m-c1r-r", label: "C1R", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 5, rationale: "Pt Right.", x: 86, y: 46 }
   ],
   dangerZones: [{ id: "md1", region: "Supraorbital", risk: "Avoid feminizing arch." }],
   safetyWarnings: ["Higher glabella doses needed."],

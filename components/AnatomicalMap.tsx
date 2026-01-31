@@ -1,6 +1,7 @@
 
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useState } from 'react';
 import { InjectionSite } from '../types';
+import { TRIPTYCH_ANATOMY } from '../services/assets';
 
 interface AnatomicalMapProps {
   treatmentMapImageUrl: string | null;
@@ -13,10 +14,15 @@ interface AnatomicalMapProps {
 
 const AnatomicalMap = forwardRef<HTMLDivElement, AnatomicalMapProps>(({ 
   treatmentMapImageUrl,
+  anatomicalOverlayUrl,
   isGenerating,
+  isGeneratingAnatomy,
   sites = [],
   assessmentNarrative
 }, ref) => {
+  const [muscleOpacity, setMuscleOpacity] = useState(0);
+  const [showWireframe, setShowWireframe] = useState(false);
+
   return (
     <div className="space-y-6">
       <div ref={ref} className="relative w-full aspect-[16/9] bg-gray-50 rounded-[3rem] border border-gray-100 overflow-hidden shadow-lg flex items-center justify-center select-none group">
@@ -33,6 +39,35 @@ const AnatomicalMap = forwardRef<HTMLDivElement, AnatomicalMapProps>(({
               alt="Baseline Tryptych"
               className="w-full h-full object-cover"
             />
+            
+            {anatomicalOverlayUrl && (
+              <img
+                src={anatomicalOverlayUrl}
+                alt="Anatomical Overlay"
+                className="absolute inset-0 w-full h-full object-cover pointer-events-none transition-opacity duration-300"
+                style={{ opacity: muscleOpacity }}
+              />
+            )}
+
+            {showWireframe && (
+              <svg 
+                className="absolute inset-0 w-full h-full pointer-events-none z-10" 
+                viewBox="0 0 100 100" 
+                preserveAspectRatio="none"
+              >
+                 {Object.values(TRIPTYCH_ANATOMY).flat().map((muscle, idx) => (
+                    <path 
+                      key={idx} 
+                      d={muscle.path} 
+                      fill={muscle.fill || 'none'} 
+                      fillOpacity={muscle.fillOpacity || 0} 
+                      stroke={muscle.stroke || '#cc7e6d'} 
+                      strokeWidth={muscle.strokeWidth || 0.1}
+                      className="mix-blend-multiply"
+                    />
+                  ))}
+              </svg>
+            )}
             
             <div className="absolute inset-0 pointer-events-none flex">
               <div className="h-full w-1/3 border-r border-white/10"></div>
@@ -56,6 +91,44 @@ const AnatomicalMap = forwardRef<HTMLDivElement, AnatomicalMapProps>(({
                 </div>
               </div>
             ))}
+
+              {/* Enhanced Map Controls */}
+              <div className="no-print absolute top-4 right-4 z-40 flex items-center gap-3 pointer-events-auto">
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setShowWireframe(!showWireframe); }}
+                  className={`p-3 rounded-2xl backdrop-blur-md transition-all shadow-lg border cursor-pointer hover:scale-105 active:scale-95 flex items-center justify-center ${showWireframe ? 'bg-[#cc7e6d] text-white border-[#cc7e6d]' : 'bg-white/80 text-gray-500 border-white/40'}`}
+                  title="Toggle Wireframe Guide"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
+                  </svg>
+                </button>
+
+                <div className="px-4 py-2 bg-white/80 backdrop-blur-md rounded-2xl flex items-center gap-3 shadow-lg border border-white/40 pointer-events-auto">
+                  <span className="text-[9px] font-black uppercase text-gray-400 tracking-wider">Muscle Layer</span>
+                  <div className="h-4 border-l border-gray-300 mx-1"></div>
+                  {isGeneratingAnatomy ? (
+                    <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-500 rounded-full animate-spin"></div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        <input
+                            type="range"
+                            min="0"
+                            max="1"
+                            step="0.01"
+                            value={muscleOpacity}
+                            onChange={(e) => { e.stopPropagation(); setMuscleOpacity(parseFloat(e.target.value)); }}
+                            className="w-24 cursor-pointer accent-[#cc7e6d]"
+                            disabled={isGeneratingAnatomy || !anatomicalOverlayUrl}
+                        />
+                    </div>
+                  )}
+                </div>
+              </div>
               
               <div className="absolute bottom-4 left-0 w-full flex px-8 pointer-events-none opacity-40">
                 <span className="w-1/3 text-[9px] font-black uppercase text-gray-600 tracking-widest text-center">Left Oblique</span>
