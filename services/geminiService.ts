@@ -268,13 +268,24 @@ export const generateSimulationCaseVisual = async (
   findings: string[]
 ): Promise<string> => {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const prompt = `Hyper-realistic clinical medical photography of a patient. Frontal view only.
-    Patient Profile: ${caseDescription}
-    Clinical Presentation to Visualize: ${findings.join(', ')}.
-    Specifics: Ensure the left eyebrow is visibly elevated/arched (Spock brow) relative to the right.
-    Lighting: Flat, even medical studio lighting.
-    Background: Solid neutral gray.
-    Framing: Standard medical headshot. Face centered. Eyes positioned at approximately 50% vertical height. Include top of forehead to chin.`;
+    // Recalibrated prompt for strict alignment
+    const prompt = `Hyper-realistic clinical medical photography of a 38-year-old male patient. Frontal view only. 4:3 Aspect Ratio.
+    
+    PATHOLOGY: **"Spock Brow" Asymmetry**.
+    - The Patient's LEFT Eyebrow (appears on the RIGHT side of the image) is arched excessively high in a sharp peak.
+    - The Patient's RIGHT Eyebrow (appears on the LEFT side of the image) is flat and heavy.
+    
+    FRAMING GUIDELINES (CRITICAL):
+    - Headshot format.
+    - Face perfectly centered.
+    - **Eyes positioned at exactly 50% vertical height.**
+    - Hairline at ~15% vertical height.
+    - Chin at ~85% vertical height.
+    
+    STYLE:
+    - Medical reference photography.
+    - Even, flat lighting (no dramatic shadows).
+    - Neutral solid gray background.`;
 
     const response = await ai.models.generateContent({
         model: 'gemini-3-pro-image-preview',

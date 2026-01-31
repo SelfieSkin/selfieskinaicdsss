@@ -4,8 +4,9 @@ import { SimCase, SimInjectionPoint, SimZone } from '../types';
 import { generateSimulationCaseVisual } from '../services/geminiService';
 
 // --- CASE DATA DEFINITION (Level 1) ---
-// Coordinates updated for 4:3 Aspect Ratio (100% Width x 100% Height)
-// Assuming eyes are roughly at 50% height.
+// Coordinates Recalibrated for "Eyes at 50% Height" Rule.
+// Aspect Ratio 4:3.
+// Y-Axis Key: Hairline ~15%, Forehead 20-40%, Brows ~45%, Eyes 50%.
 const LEVEL_1_CASE: SimCase = {
   id: 'lvl1_spock',
   title: "Asymmetric Brow Elevation (Spock Brow)",
@@ -23,9 +24,10 @@ const LEVEL_1_CASE: SimCase = {
       id: 'target_left_lat_front',
       name: 'Left Lateral Frontalis',
       type: 'target',
-      // High Lateral Forehead (Patient Left / Image Right)
-      // X: 60-85%, Y: 25-40%
-      poly: "60,25 85,25 80,40 60,35", 
+      // TARGET: High Lateral Forehead (Patient Left / Image Right)
+      // Must be ABOVE the Spock brow to drop it.
+      // X: 60-90% (Lateral), Y: 20-35% (High Forehead)
+      poly: "60,20 90,20 85,35 60,35", 
       scoreImpact: 40,
       feedback: "Correct identification of hyperactive lateral fibers."
     },
@@ -33,9 +35,10 @@ const LEVEL_1_CASE: SimCase = {
       id: 'avoid_right_lat_front',
       name: 'Right Lateral Frontalis',
       type: 'avoid',
-      // High Lateral Forehead (Patient Right / Image Left)
-      // X: 15-40%, Y: 25-40%
-      poly: "15,25 40,25 40,35 20,40", 
+      // AVOID: High Lateral Forehead (Patient Right / Image Left)
+      // Treating this would drop the already flat brow.
+      // X: 10-40%, Y: 20-35%
+      poly: "10,20 40,20 40,35 15,35", 
       scoreImpact: -15,
       feedback: "Unnecessary treatment of normal side may cause asymmetry."
     },
@@ -43,8 +46,10 @@ const LEVEL_1_CASE: SimCase = {
       id: 'avoid_central_front',
       name: 'Central Frontalis',
       type: 'avoid',
-      // Center Forehead
-      poly: "40,20 60,20 60,40 40,40",
+      // AVOID: Center Forehead (Patient Center)
+      // Risk of heavy brows if overtreated.
+      // X: 40-60%, Y: 20-38%
+      poly: "40,20 60,20 60,38 40,38",
       scoreImpact: -20,
       feedback: "Risk of brow heaviness due to central overtreatment."
     },
@@ -52,8 +57,9 @@ const LEVEL_1_CASE: SimCase = {
       id: 'avoid_low_zone',
       name: 'Orbital Rim / Low Frontalis',
       type: 'avoid',
-      // Area immediately above brows/eyes
-      poly: "10,42 90,42 90,55 10,55",
+      // DANGER ZONE: Immediate supraorbital region.
+      // Y: 40-55% (Brows & Lids)
+      poly: "0,40 100,40 100,55 0,55",
       scoreImpact: -30,
       feedback: "CRITICAL SAFETY: Injection too close to orbital rim. High Ptosis Risk."
     }
