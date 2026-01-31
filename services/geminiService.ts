@@ -21,7 +21,10 @@ export const analyzePatientInput = async (
   2. ACTIVELY SCREEN FOR ASYMMETRY: Look for unilateral brow elevation ("Spock Brow"), ptosis, or uneven static lines. 
   3. If "Spock Brow" is detected, classify it and recommend lateral frontalis injection sites to correct it.
   4. Map injection sites across the Left Profile, Anterior, and Right Profile panels of the clinical tryptych. 
-  5. GENERATE NARRATIVE: Create a concise "assessmentNarrative" summarizing findings and plan in a professional clinical voice.
+  5. APPLY GENDER-SPECIFIC PROTOCOLS:
+     - IF MALE PRESENTING: Increase Glabella and Frontalis dosage estimates by 50-100% to account for hypertrophic muscle mass. Ensure brow injection pattern maintains a horizontal, masculine brow position (do not arch).
+     - IF FEMALE PRESENTING: Use standard dosing. Plan injections to preserve or create a subtle lateral brow arch.
+  6. GENERATE NARRATIVE: Create a concise "assessmentNarrative" summarizing findings and plan in a professional clinical voice.
   Output the result as structured JSON.`;
 
   const response = await ai.models.generateContent({
@@ -148,12 +151,16 @@ export const generatePostTreatmentVisual = async (
     },
   }] : [];
 
+  const browGoal = analysis.gender === PatientGender.MALE 
+    ? "Flat, horizontal masculine brow position. Avoid lateral arching." 
+    : "Soft, lifted feminine arch. Open eye aperture.";
+
   let prompt = `Using the provided baseline image, generate a simulated OUTCOME tryptych.
   CRITICAL: MAINTAIN IDENTICAL TIGHT HEADSHOT FRAMING (NECK UP). Do not zoom out.
   Patient identity and framing must be IDENTICAL. 
   Show smooth, relaxed skin in: ${analysis.step3.regionalPlans.map(p => p.region).join(', ')}.
   **CORRECTION GOAL:** Visually correct any asymmetries (like Spock Brow) identified in the baseline. Ensure symmetric, balanced brow height and relaxation of hyperactive zones.
-  Brow position goal: ${analysis.gender === PatientGender.MALE ? "Flat masculine" : "Soft feminine arch"}.`;
+  **AESTHETIC GOAL:** ${browGoal}`;
 
   const response = await ai.models.generateContent({
     model: 'gemini-3-pro-image-preview',
@@ -211,9 +218,29 @@ export const generateAnatomicalOverlayVisual = async (
 export const generateAestheticVisual = async (
   prompt: string,
   size: ImageSize
-): Promise<string> => {
+): Promise<{ image: string; reasoning: string }> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  const response = await ai.models.generateContent({
+
+  // 1. Generate Reasoning & Interpretation (Text Model)
+  const reasoningPrompt = `You are an expert Medical Illustrator and Anatomist. 
+  The user has requested the following visual: "${prompt}".
+  
+  Briefly explain your decision-making process for creating this image to a clinician. 
+  Cover:
+  1. **Anatomical Focus:** What structures are prioritized and why?
+  2. **Visualization Strategy:** Why did you choose this angle, transparency, or style?
+  3. **Clinical Relevance:** How does this visualization aid in aesthetic decision making?
+  
+  Keep the response concise (approx. 50-75 words), professional, and written in the first person ("I chose to highlight...").`;
+
+  const textResponse = await ai.models.generateContent({
+    model: 'gemini-3-pro-preview',
+    contents: { parts: [{ text: reasoningPrompt }] }
+  });
+  const reasoning = textResponse.text || "Illustration generated based on standard anatomical protocols.";
+
+  // 2. Generate Image (Image Model)
+  const imageResponse = await ai.models.generateContent({
     model: 'gemini-3-pro-image-preview',
     contents: { parts: [{ text: `Medical illustration: ${prompt}` }] },
     config: {
@@ -223,8 +250,15 @@ export const generateAestheticVisual = async (
       }
     },
   });
-  for (const part of response.candidates[0].content.parts) {
-    if (part.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
+
+  let image = "";
+  for (const part of imageResponse.candidates[0].content.parts) {
+    if (part.inlineData) {
+        image = `data:image/png;base64,${part.inlineData.data}`;
+        break;
+    }
   }
-  throw new Error("Visual generation failed.");
+
+  if (!image) throw new Error("Visual generation failed.");
+  return { image, reasoning };
 };

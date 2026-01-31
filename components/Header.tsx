@@ -40,7 +40,9 @@ const Header: React.FC<HeaderProps> = ({ onOpenGuide }) => {
         </div>
       </div>
       <div className="text-center pt-4 pb-6">
-        <p className="text-sm italic" style={{ color: BRAND_CORAL }}>Application create for and by Jason Walker.</p>
+        <p className="text-sm italic" style={{ color: BRAND_CORAL }}>
+          SelfieSkin AI-CDSS for Aesthetic Medicine was created for and by Jason Walker. This application is only meant for simulation and play, therefore should not be used for actual patient interaction.
+        </p>
       </div>
     </header>
   );

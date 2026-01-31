@@ -28,6 +28,17 @@ You must actively screen for and classify:
 - **Brow Asymmetry:** Identify resting height differences or dynamic recruitment variance.
 - **Compensatory Recruitment:** E.g., Eyebrow elevation during eye closure.
 
+**GENDER-SPECIFIC DOSING & AESTHETICS:**
+1. **Male Patients (Male Presenting):**
+   - **Hypertrophic Musculature:** Assume significantly stronger muscle mass in Glabella and Frontalis. Increase basal dosage guidelines by **1.5x - 2x** compared to female standard.
+   - **Brow Aesthetics:** Goal is to maintain a **Horizontal / Flat** brow position. Avoid creating a lateral arch (feminization). Keep frontalis injections lower (but safe) to suppress medial brow elevation if needed.
+   - **Glabella:** Often requires multi-point deep injection with higher units (e.g., 20-30U Ona Total) to combat strong frowning.
+   
+2. **Female Patients (Female Presenting):**
+   - **Standard Musculature:** Use standard titration.
+   - **Brow Aesthetics:** Goal is to **preserve or enhance the Lateral Arch**. Avoid over-treating the lateral frontalis to prevent lateral brow drop.
+   - **Glabella:** Focus on relaxing the frown without widening the inter-brow distance excessively.
+
 **CRITICAL RULE FOR TRYPTYCH COORDINATES (16:9 Aspect Ratio):**
 The visual map consists of 3 panels showing EXTREME CLOSE-UP HEADSHOTS (Neck Up). Coordinates are percentage-based (X: 0-100, Y: 0-100).
 
@@ -177,20 +188,20 @@ export const SAMPLE_ANALYSIS_MALE = {
   },
   step3: {
     regionalPlans: [
-      { region: "Glabella", muscle: "Procerus + Corrugator", points: 5, reasoning: "U-pattern heavy dose." },
+      { region: "Glabella", muscle: "Procerus + Corrugator", points: 5, reasoning: "U-pattern heavy dose (20U+)." },
       { region: "Bunny Lines", muscle: "Nasalis", points: 2, reasoning: "Treating lateral bridge." },
-      { region: "Forehead", muscle: "Frontalis", points: 6, reasoning: "Broad microdroplet spread." }
+      { region: "Forehead", muscle: "Frontalis", points: 6, reasoning: "Broad spread, avoiding lateral peaks." }
     ],
-    safetyFlags: ["Maintain masculine brow"],
-    conservativeAdjustments: "Avoid peaked lateral arch."
+    safetyFlags: ["Maintain masculine brow", "Check for lid heaviness"],
+    conservativeAdjustments: "Avoid peaked lateral arch to prevent feminization."
   },
   step4: {
     dosingRows: [
-      { region: "Glabella", onaDose: 24, aboDose25: 60, aboDose30: 72, daxDose: "40U+", notes: "Male dose." },
+      { region: "Glabella", onaDose: 24, aboDose25: 60, aboDose30: 72, daxDose: "40U+", notes: "Male Hypertrophic Dose." },
       { region: "Bunny Lines", onaDose: 6, aboDose25: 15, aboDose30: 18, daxDose: "Off-Label", notes: "3U/side." },
-      { region: "Forehead", onaDose: 16, aboDose25: 40, aboDose30: 48, daxDose: "Off-Label", notes: "Heavy frontalis." }
+      { region: "Forehead", onaDose: 16, aboDose25: 40, aboDose30: 48, daxDose: "Off-Label", notes: "Heavy frontalis load." }
     ],
-    dosingAssumptions: ["Male dosing correction (+50% glabella)."],
+    dosingAssumptions: ["Male dosing correction (+50-100% glabella).", "Horizontal brow goal."],
     aimsDisclaimer: "Clinical judgment mandatory."
   },
   sites: [
