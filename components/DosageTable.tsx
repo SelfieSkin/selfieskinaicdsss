@@ -1,14 +1,21 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { AnalysisResult, ToxinBrand } from '../types';
 
 interface DosageTableProps {
   result: AnalysisResult;
   selectedBrand: ToxinBrand;
+  patientId: string;
   onUpdateSiteDose: (siteId: string, doseInBrandUnits: number) => void;
+  onUpdateClinicalNote: (note: string) => void;
+  onUpdateSignature: (sig: string) => void;
 }
 
-const DosageTable: React.FC<DosageTableProps> = ({ result, selectedBrand, onUpdateSiteDose }) => {
+const DosageTable: React.FC<DosageTableProps> = ({ result, selectedBrand, patientId, onUpdateSiteDose, onUpdateClinicalNote, onUpdateSignature }) => {
+  const [rationale, setRationale] = useState("");
+  const [clinicalNote, setClinicalNote] = useState("");
+  const [signature, setSignature] = useState("");
+
   const isDysport = selectedBrand === ToxinBrand.DYSPORT;
   const isDaxxify = selectedBrand === ToxinBrand.DAXXIFY;
   
@@ -19,8 +26,38 @@ const DosageTable: React.FC<DosageTableProps> = ({ result, selectedBrand, onUpda
   const totalRecOna = result.sites.reduce((sum, s) => sum + s.doseOna, 0);
   const totalActOna = result.sites.reduce((sum, s) => sum + (s.actualDoseOna ?? s.doseOna), 0);
 
+  // Auto-generate clinical note when inputs change
+  useEffect(() => {
+    const deviations = result.sites.filter(s => s.actualDoseOna !== undefined && s.actualDoseOna !== s.doseOna);
+    const hasModifications = deviations.length > 0;
+    
+    let noteBuilder = `Patient ID: ${patientId}. `;
+    noteBuilder += `${result.assessmentNarrative} `;
+    
+    if (hasModifications) {
+        noteBuilder += `\n\nPLAN MODIFICATIONS: Total dosage adjusted from ${totalRecOna * conversionFactor}U to ${totalActOna * conversionFactor}U (${brandLabel}). `;
+        noteBuilder += `Specific adjustments: ${deviations.map(d => `${d.label} (${(d.actualDoseOna||0) * conversionFactor}U)`).join(', ')}. `;
+    } else {
+        noteBuilder += `\n\nPLAN: Standard AI-recommended protocol followed (${totalRecOna * conversionFactor}U ${brandLabel}). `;
+    }
+
+    if (rationale) {
+        noteBuilder += `\n\nRATIONALE: ${rationale}`;
+    }
+
+    setClinicalNote(noteBuilder);
+    onUpdateClinicalNote(noteBuilder);
+  }, [result, rationale, patientId, totalRecOna, totalActOna, brandLabel, conversionFactor]);
+
+  // Handle signature updates
+  const handleSignatureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      setSignature(e.target.value);
+      onUpdateSignature(e.target.value);
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Dosage Table */}
       <div className="overflow-hidden bg-white border border-gray-100 rounded-[2rem] shadow-sm">
         <table className="min-w-full">
           <thead>
@@ -56,8 +93,7 @@ const DosageTable: React.FC<DosageTableProps> = ({ result, selectedBrand, onUpda
                   </td>
                   <td className="px-6 py-5">
                     <div className="flex items-center gap-3">
-                      {/* New Interactive Stepper */}
-                      <div className="flex items-center bg-white border border-gray-200 rounded-xl p-1 no-print w-fit">
+                      <div className="flex items-center bg-white border border-gray-200 rounded-xl p-1 no-print w-fit shadow-sm">
                         <button 
                           onClick={() => handleDoseChange(actualBrandUnits - 1)}
                           className="w-7 h-7 flex items-center justify-center text-lg font-bold text-gray-400 bg-gray-50 rounded-lg hover:bg-gray-200 transition-colors active:bg-gray-300 disabled:opacity-50"
@@ -70,7 +106,7 @@ const DosageTable: React.FC<DosageTableProps> = ({ result, selectedBrand, onUpda
                           value={actualBrandUnits}
                           onChange={(e) => handleDoseChange(parseFloat(e.target.value) || 0)}
                           className="w-16 text-center text-sm font-black text-gray-900 bg-transparent outline-none border-none focus:ring-0 p-0"
-                          step="0.5" // Allow manual entry of fractions
+                          step="0.5"
                         />
                         <button 
                            onClick={() => handleDoseChange(actualBrandUnits + 1)}
@@ -114,12 +150,42 @@ const DosageTable: React.FC<DosageTableProps> = ({ result, selectedBrand, onUpda
           </tbody>
         </table>
       </div>
-      <div className="flex items-start gap-4 p-6 bg-gray-50/50 rounded-2xl border border-gray-100">
-        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-0.5">[Clinical Note]</span>
-        <p className="text-[10px] text-gray-400 italic font-medium leading-relaxed">
-          Pharmacological Note: Ratios are fixed at 1:1 for Xeomin/Botox, 1:3 for Dysport, and 1:2 for Daxxify based on consensus clinical publications.
-          Deviations from AI recommendations should be clinically justified in the treatment notes.
-        </p>
+
+      {/* Rationale and Notes Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="space-y-4">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Clinical Rationale for Adjustments</label>
+              <textarea 
+                  value={rationale}
+                  onChange={(e) => setRationale(e.target.value)}
+                  placeholder="Enter clinical reasoning for any dose modifications here..."
+                  className="w-full h-40 bg-white border border-gray-200 rounded-2xl p-4 text-sm font-medium focus:ring-4 focus:ring-[#cc7e6d]/10 outline-none transition-all shadow-sm"
+              />
+          </div>
+          <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Auto-Generated Clinical Note</label>
+                  <span className="text-[9px] font-bold text-[#cc7e6d] bg-[#cc7e6d]/10 px-2 py-0.5 rounded-full">LIVE PREVIEW</span>
+              </div>
+              <div className="w-full h-40 bg-gray-50 border border-gray-100 rounded-2xl p-4 text-xs font-mono text-gray-600 overflow-y-auto leading-relaxed whitespace-pre-wrap">
+                  {clinicalNote}
+              </div>
+          </div>
+      </div>
+
+      {/* Signature Line */}
+      <div className="pt-8 border-t border-gray-100 flex justify-end">
+          <div className="w-full md:w-1/3 space-y-2">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Clinician Signature</label>
+              <input 
+                  type="text" 
+                  value={signature}
+                  onChange={handleSignatureChange}
+                  placeholder="Sign with Full Name, Credential"
+                  className="w-full bg-transparent border-b-2 border-gray-300 py-2 text-lg font-handwriting font-bold text-gray-800 focus:border-[#cc7e6d] outline-none transition-colors placeholder-gray-300"
+                  style={{ fontFamily: 'cursive' }} 
+              />
+          </div>
       </div>
     </div>
   );

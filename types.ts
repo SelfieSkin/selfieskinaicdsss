@@ -72,6 +72,7 @@ export interface Step4Data {
 
 export interface AnalysisResult {
   gender: PatientGender;
+  assessmentNarrative: string; // New field for clinical narrative
   step2: Step2Data;
   step3: Step3Data;
   step4: Step4Data;

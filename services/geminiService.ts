@@ -21,6 +21,7 @@ export const analyzePatientInput = async (
   2. ACTIVELY SCREEN FOR ASYMMETRY: Look for unilateral brow elevation ("Spock Brow"), ptosis, or uneven static lines. 
   3. If "Spock Brow" is detected, classify it and recommend lateral frontalis injection sites to correct it.
   4. Map injection sites across the Left Oblique, Anterior, and Right Oblique panels of the clinical tryptych. 
+  5. GENERATE NARRATIVE: Create a concise "assessmentNarrative" summarizing findings and plan in a professional clinical voice.
   Output the result as structured JSON.`;
 
   const response = await ai.models.generateContent({
@@ -56,6 +57,34 @@ export const analyzePatientInput = async (
     throw new Error("Clinical data processing error.");
   }
 };
+
+export const generateProtocolVisual = async (
+  narrative: string,
+  gender: PatientGender,
+  size: ImageSize = '1K'
+): Promise<string> => {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const prompt = `Medical illustration of facial anatomy showing the recommended injection protocol. 
+    Context: ${narrative}
+    Gender: ${gender}
+    Style: Professional medical line art with color highlights for injection zones. 
+    Focus on Upper Face. Clean white background.`;
+
+    const response = await ai.models.generateContent({
+        model: 'gemini-3-pro-image-preview',
+        contents: { parts: [{ text: prompt }] },
+        config: {
+            imageConfig: { aspectRatio: "16:9", imageSize: size }
+        },
+    });
+
+    for (const part of response.candidates[0].content.parts) {
+        if (part.inlineData) {
+            return `data:image/png;base64,${part.inlineData.data}`;
+        }
+    }
+    throw new Error("Protocol visual generation failed.");
+}
 
 export const generateTreatmentMapVisual = async (
   analysis: AnalysisResult | { gender: PatientGender, step2: any },
@@ -188,7 +217,10 @@ export const generateAestheticVisual = async (
     model: 'gemini-3-pro-image-preview',
     contents: { parts: [{ text: `Medical illustration: ${prompt}` }] },
     config: {
-      imageConfig: { aspectRatio: "1:1", imageSize: size }
+      imageConfig: {
+        aspectRatio: "1:1",
+        imageSize: size
+      }
     },
   });
   for (const part of response.candidates[0].content.parts) {

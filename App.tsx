@@ -15,7 +15,8 @@ import {
   generateAestheticVisual, 
   generatePostTreatmentVisual, 
   generateTreatmentMapVisual, 
-  generateAnatomicalOverlayVisual
+  generateAnatomicalOverlayVisual,
+  generateProtocolVisual
 } from './services/geminiService';
 import { AnalysisResult, ToxinBrand, TreatmentSession, PatientGender, ImageSize, FeedbackData } from './types';
 import { SAMPLE_ANALYSIS_FEMALE, SAMPLE_ANALYSIS_MALE } from './constants';
@@ -86,9 +87,15 @@ const App: React.FC = () => {
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  
   const [treatmentMapImageUrl, setTreatmentMapImageUrl] = useState<string | null>(null);
   const [anatomicalOverlayUrl, setAnatomicalOverlayUrl] = useState<string | null>(null);
   const [postTreatmentImageUrl, setPostTreatmentImageUrl] = useState<string | null>(null);
+  const [protocolImageUrl, setProtocolImageUrl] = useState<string | null>(null);
+
+  const [clinicalNote, setClinicalNote] = useState("");
+  const [signature, setSignature] = useState("");
+
   const [isDemoCase, setIsDemoCase] = useState(false);
   
   const [visualPrompt, setVisualPrompt] = useState('');
@@ -98,7 +105,6 @@ const App: React.FC = () => {
   const [activeUseCase, setActiveUseCase] = useState<string | null>(null);
 
   const [sliderPos, setSliderPos] = useState(50);
-  const [salineMl, setSalineMl] = useState(2.5); 
 
   const [history, setHistory] = useState<TreatmentSession[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -120,6 +126,7 @@ const App: React.FC = () => {
       setTreatmentMapImageUrl(null);
       setAnatomicalOverlayUrl(null);
       setPostTreatmentImageUrl(null);
+      setProtocolImageUrl(null);
       setIsDemoCase(false);
     }
   };
@@ -129,6 +136,7 @@ const App: React.FC = () => {
     setTreatmentMapImageUrl(null);
     setAnatomicalOverlayUrl(null);
     setPostTreatmentImageUrl(null);
+    setProtocolImageUrl(null);
     setError(null);
     setMediaFile(null);
     setIsDemoCase(true);
@@ -155,10 +163,15 @@ const App: React.FC = () => {
         setIsGeneratingMap(false);
         setIsGeneratingAnatomy(false);
 
-        setLoadingStage("Simulating Professional Outcome...");
+        // Generate Protocol Image parallel to Post Visual
+        setLoadingStage("Simulating Outcomes & Protocol...");
         setIsGeneratingPostTreatmentVisual(true);
-        const postTreatmentUrl = await generatePostTreatmentVisual(freshSample, imageUrl, '2K');
-        setPostTreatmentImageUrl(postTreatmentUrl);
+        const [postUrl, protoUrl] = await Promise.all([
+            generatePostTreatmentVisual(freshSample, imageUrl, '2K'),
+            generateProtocolVisual(freshSample.assessmentNarrative, selectedGender, '2K')
+        ]);
+        setPostTreatmentImageUrl(postUrl);
+        setProtocolImageUrl(protoUrl);
 
     } catch (err: any) {
         setError("Clinical generation failed. Check API key. " + err.message);
@@ -185,6 +198,7 @@ const App: React.FC = () => {
     setTreatmentMapImageUrl(null);
     setAnatomicalOverlayUrl(null);
     setPostTreatmentImageUrl(null);
+    setProtocolImageUrl(null);
     setError(null);
     setIsAnalyzing(true);
 
@@ -218,8 +232,12 @@ const App: React.FC = () => {
         // 3. Project Outcome based on Visual & Analysis
         setLoadingStage("Projecting Clinical Outcome...");
         setIsGeneratingPostTreatmentVisual(true);
-        const postTreatmentUrl = await generatePostTreatmentVisual(analysis, imageUrl, '2K');
-        setPostTreatmentImageUrl(postTreatmentUrl);
+        const [postUrl, protoUrl] = await Promise.all([
+             generatePostTreatmentVisual(analysis, imageUrl, '2K'),
+             generateProtocolVisual(analysis.assessmentNarrative, selectedGender, '2K')
+        ]);
+        setPostTreatmentImageUrl(postUrl);
+        setProtocolImageUrl(protoUrl);
 
     } catch (err: any) {
         setError("Assessment generation failed: " + err.message);
@@ -270,7 +288,7 @@ const App: React.FC = () => {
       const dataUrl = await toPng(mapRef.current, { 
         quality: 0.95, 
         backgroundColor: 'white',
-        fontEmbedCSS: '' // Fix for CORS errors with Google Fonts
+        fontEmbedCSS: '' 
       });
       setIsReportOpen(true);
     } catch (error) {
@@ -324,7 +342,7 @@ const App: React.FC = () => {
               <div className="flex-1 space-y-10 w-full">
                 <div className="flex items-center justify-between flex-wrap gap-4">
                    <div>
-                     <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Step 1: Clinical Intake</span>
+                     <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Clinical Intake</span>
                      <h2 className="text-2xl font-black text-gray-800 uppercase tracking-tight">Anatomical Baseline</h2>
                    </div>
                    <button onClick={handleLoadSample} className="text-[10px] font-black text-[#cc7e6d] border border-[#cc7e6d]/40 px-6 py-2.5 rounded-full hover:bg-[#cc7e6d] hover:text-white transition-all tracking-widest uppercase shadow-sm">
@@ -378,9 +396,10 @@ const App: React.FC = () => {
                   <>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 lg:gap-32">
                       <div className="space-y-16">
+                        {/* Section 1: Treatment Assessment Map */}
                         <div className="space-y-8">
                           <div className="flex justify-between items-end border-b border-gray-50 pb-4">
-                            <h3 className="text-[12px] font-black text-gray-400 uppercase tracking-[0.4em]">Step 3A: Treatment Assessment Map</h3>
+                            <h3 className="text-[12px] font-black text-gray-400 uppercase tracking-[0.4em]">Treatment Assessment Map</h3>
                             <div className="flex gap-4 items-center">
                                <span className="text-[9px] font-black text-[#cc7e6d] uppercase tracking-widest opacity-60">High-Fidelity Clinical Asset</span>
                             </div>
@@ -392,9 +411,11 @@ const App: React.FC = () => {
                              treatmentMapImageUrl={treatmentMapImageUrl}
                              anatomicalOverlayUrl={anatomicalOverlayUrl}
                              sites={result.sites}
+                             assessmentNarrative={result.assessmentNarrative}
                           />
                         </div>
 
+                         {/* Section 3: Interactive Outcome */}
                         {postTreatmentImageUrl && (
                           <div className="space-y-8 animate-in fade-in duration-500">
                             <div className="flex justify-between items-end border-b border-gray-50 pb-4">
@@ -414,50 +435,70 @@ const App: React.FC = () => {
                               <div className="absolute top-6 left-6 bg-black/40 backdrop-blur-md text-[10px] font-black text-white px-4 py-2 rounded-full uppercase tracking-widest border border-white/20">Baseline Map</div>
                               <div className="absolute top-6 right-6 bg-green-500/80 backdrop-blur-md text-[10px] font-black text-white px-4 py-2 rounded-full uppercase tracking-widest shadow-lg">Projected Outcome</div>
                             </div>
-                            <p className="text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pixel-Aligned Comparison Simulation</p>
+                            <p className="text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest px-12 leading-relaxed">
+                                Disclaimer: Simulated outcome projection for educational purposes only. Individual results vary based on metabolic rate, muscle mass, and adherence to aftercare. Optimal correction not guaranteed.
+                            </p>
                           </div>
                         )}
 
+                        {/* Section 4: Injection Plan Logic */}
                         <div className="space-y-8">
-                          <h3 className="text-[12px] font-black text-gray-400 uppercase tracking-[0.4em] border-b border-gray-50 pb-4">Step 3B: Injection Plan Logic</h3>
+                          <h3 className="text-[12px] font-black text-gray-400 uppercase tracking-[0.4em] border-b border-gray-50 pb-4">Injection Plan Logic</h3>
                           <InjectionPlanTable sites={result.sites} />
                         </div>
                       </div>
 
                       <div className="space-y-20">
+                        {/* Section 2: Clinical Reasonings */}
                         <div className="space-y-10">
-                          <h3 className="text-[12px] font-black text-gray-400 uppercase tracking-[0.4em]">Step 2: Clinical Reasonings</h3>
-                          <div className="p-10 bg-gray-50/50 rounded-[3rem] border-l-[8px] border-[#cc7e6d] shadow-sm">
-                            <h4 className="text-[10px] font-black text-gray-400 mb-3 uppercase tracking-widest">Morphology Classification</h4>
-                            <p className="text-3xl font-black text-gray-900 tracking-tighter leading-tight">{result.step2?.glabellarPattern || "Unclassified"} Pattern</p>
-                          </div>
+                          <h3 className="text-[12px] font-black text-gray-400 uppercase tracking-[0.4em]">Clinical Reasonings</h3>
+                          
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                               <h5 className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Skin Texture</h5>
-                               <p className="text-xs font-bold text-gray-700 leading-snug">{result.step2?.restingTone}</p>
-                            </div>
-                            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                               <h5 className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Dynamics</h5>
-                               <ul className="space-y-2">
-                                  <li className="text-[10px] text-gray-600"><strong className="text-gray-900">Frontalis:</strong> {result.step2?.maxContraction?.frontalis}</li>
-                                  <li className="text-[10px] text-gray-600"><strong className="text-gray-900">Glabella:</strong> {result.step2?.maxContraction?.glabella}</li>
-                               </ul>
-                            </div>
+                              <div className="p-8 bg-gray-50/50 rounded-[2.5rem] border-l-[8px] border-[#cc7e6d] shadow-sm flex flex-col justify-center">
+                                <h4 className="text-[10px] font-black text-gray-400 mb-2 uppercase tracking-widest">Morphology Classification</h4>
+                                <p className="text-2xl font-black text-gray-900 tracking-tighter leading-tight">{result.step2?.glabellarPattern || "Unclassified"} Pattern</p>
+                              </div>
+                              <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col justify-center">
+                                <h5 className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Skin Texture</h5>
+                                <p className="text-sm font-bold text-gray-700 leading-snug">{result.step2?.restingTone}</p>
+                              </div>
                           </div>
+                          
+                          {/* Protocol Visual */}
+                          {protocolImageUrl && (
+                              <div className="border border-gray-100 rounded-[2.5rem] p-2 bg-white shadow-sm">
+                                  <div className="rounded-[2rem] overflow-hidden border border-gray-50 relative group">
+                                      <img src={protocolImageUrl} alt="Protocol Illustration" className="w-full h-auto" />
+                                      <div className="absolute bottom-4 left-4 bg-white/80 backdrop-blur-md px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest text-gray-800">
+                                          Suggested Protocol
+                                      </div>
+                                  </div>
+                              </div>
+                          )}
+
+                          <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
+                               <h5 className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-3">Dynamics Assessment</h5>
+                               <ul className="space-y-3">
+                                  <li className="text-[11px] text-gray-600 border-b border-gray-50 pb-2"><strong className="text-gray-900 block mb-1">Frontalis</strong> {result.step2?.maxContraction?.frontalis}</li>
+                                  <li className="text-[11px] text-gray-600 border-b border-gray-50 pb-2"><strong className="text-gray-900 block mb-1">Glabella</strong> {result.step2?.maxContraction?.glabella}</li>
+                                  <li className="text-[11px] text-gray-600"><strong className="text-gray-900 block mb-1">Orbicularis</strong> {result.step2?.maxContraction?.orbicularis}</li>
+                               </ul>
+                           </div>
                         </div>
 
+                        {/* Section 5: Precision Execution */}
                         <div className="space-y-10">
                            <div className="flex justify-between items-center mb-6">
-                               <h3 className="text-[12px] font-black text-gray-400 uppercase tracking-[0.4em]">Step 4: Precision Execution</h3>
-                               <div className="flex items-center gap-4 bg-gray-50 p-3 rounded-2xl border border-gray-100">
-                                  <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Saline Dilution:</span>
-                                  <div className="flex items-center gap-2">
-                                     <input type="range" min="1" max="4" step="0.1" value={salineMl} onChange={(e) => setSalineMl(parseFloat(e.target.value))} className="w-20" />
-                                     <span className="text-xs font-black text-gray-800">{salineMl} mL</span>
-                                  </div>
-                               </div>
+                               <h3 className="text-[12px] font-black text-gray-400 uppercase tracking-[0.4em]">Precision Execution</h3>
                            </div>
-                           <DosageTable result={result} selectedBrand={selectedBrand} onUpdateSiteDose={updateSiteDose} />
+                           <DosageTable 
+                                result={result} 
+                                selectedBrand={selectedBrand} 
+                                patientId={patientId}
+                                onUpdateSiteDose={updateSiteDose}
+                                onUpdateClinicalNote={setClinicalNote}
+                                onUpdateSignature={setSignature}
+                           />
                         </div>
                       </div>
                     </div>
@@ -475,6 +516,7 @@ const App: React.FC = () => {
           </div>
         )}
 
+        {/* ... (Visualizer, Knowledge, History tabs kept same) ... */}
         {activeTab === 'visualizer' && (
           <div className="space-y-12 animate-in fade-in duration-700">
             <div className="bg-white p-14 rounded-[4rem] shadow-2xl border border-gray-50">
@@ -529,7 +571,15 @@ const App: React.FC = () => {
         {activeTab === 'history' && <TreatmentHistory sessions={history} />}
       </main>
       <UserGuideModal isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
-      <ClinicalReportModal isOpen={isReportOpen} onClose={() => setIsReportOpen(false)} reportMarkdown={result?.clinicalReport || ""} mapImageDataUrl={treatmentMapImageUrl} />
+      <ClinicalReportModal 
+        isOpen={isReportOpen} 
+        onClose={() => setIsReportOpen(false)} 
+        reportMarkdown={result?.clinicalReport || ""} 
+        mapImageDataUrl={treatmentMapImageUrl} 
+        protocolImageUrl={protocolImageUrl}
+        clinicalNote={clinicalNote}
+        signature={signature}
+      />
       {result && <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} data={{ patientId, brand: selectedBrand, result }} onSave={handleFeedbackSubmit} />}
     </div>
   );
