@@ -11,61 +11,18 @@ import ClinicalReportModal from './components/ClinicalReportModal';
 import FeedbackModal from './components/FeedbackModal';
 import InjectionPlanTable from './components/InjectionPlanTable';
 import ComparativeDosing from './components/ComparativeDosing';
+import SimulationEngine from './components/SimulationEngine'; // New Import
 import { 
   analyzePatientInput, 
-  generateAestheticVisual, 
   generatePostTreatmentVisual, 
   generateTreatmentMapVisual, 
   generateAnatomicalOverlayVisual,
   generateProtocolVisual
 } from './services/geminiService';
-import { AnalysisResult, ToxinBrand, TreatmentSession, PatientGender, ImageSize, FeedbackData } from './types';
+import { AnalysisResult, ToxinBrand, TreatmentSession, PatientGender, FeedbackData } from './types';
 import { SAMPLE_ANALYSIS_FEMALE, SAMPLE_ANALYSIS_MALE } from './constants';
 
 type Tab = 'assessment' | 'visualizer' | 'knowledge' | 'history';
-
-const useCases = [
-  {
-    id: 'muscle_isolation',
-    name: "Muscle Isolation",
-    icon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
-    prePrompt: "Detailed medical illustration of the procerus muscle in isolation on a female face, showing fiber direction.",
-    treatmentPrompt: "Highlighting the procerus muscle origin and insertion points.",
-    postPrompt: "Visual of relaxed procerus muscle fibers.",
-  },
-  {
-    id: 'muscle_group',
-    name: "Muscle Interaction",
-    icon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 7v10M16 7v10M8 12h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
-    prePrompt: "Anatomical diagram showing the relationship between procerus and corrugator supercilii muscles, highlighting opposing vectors.",
-    treatmentPrompt: "Strategic injection points to balance medial and lateral forces in the glabella.",
-    postPrompt: "Illustration of balanced muscle interaction post-treatment.",
-  },
-  {
-    id: 'risk_zone',
-    name: "Frontalis & Brow Risk",
-    icon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
-    prePrompt: "Lateral view of frontalis muscle showing its role as the sole brow elevator. Highlight the 'danger zone' near the orbital rim.",
-    treatmentPrompt: "Correct placement of microdroplets high in the forehead to preserve brow height.",
-    postPrompt: "Result showing smoothed forehead with maintained brow position.",
-  },
-  {
-    id: 'vasculature',
-    name: "Vascular Safety",
-    icon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
-    prePrompt: "Detailed anatomy of the lateral canthal region showing the path of the angular artery and zygomaticofacial artery relative to orbicularis oculi.",
-    treatmentPrompt: "Injection mapping avoiding superficial vessels in the temple region.",
-    postPrompt: "Safe injection planes visualized relative to vasculature.",
-  },
-  {
-    id: 'nerve_anatomy',
-    name: "Nerve Pathways",
-    icon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
-    prePrompt: "Illustration of the supraorbital nerve emerging from the supraorbital notch, showing its deep branch path under the frontalis.",
-    treatmentPrompt: "Injection points designed to modulate frontalis without affecting nerve function.",
-    postPrompt: "Balanced brow elevation with nerve safety preserved.",
-  }
-];
 
 const dataUrlToBase64 = (dataUrl: string) => dataUrl.split(',')[1];
 
@@ -97,16 +54,6 @@ const App: React.FC = () => {
   const [clinicalNote, setClinicalNote] = useState("");
   const [signature, setSignature] = useState("");
 
-  const [isDemoCase, setIsDemoCase] = useState(false);
-  
-  const [visualPrompt, setVisualPrompt] = useState('');
-  const [visualSize, setVisualSize] = useState<ImageSize>('1K');
-  const [visualResult, setVisualResult] = useState<{pre: string | null, treatment: string | null, post: string | null, reasoning: string | null} | null>(null);
-  const [visualLoading, setVisualLoading] = useState(false);
-  const [activeUseCase, setActiveUseCase] = useState<string | null>(null);
-
-  const [sliderPos, setSliderPos] = useState(50);
-
   const [history, setHistory] = useState<TreatmentSession[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mapRef = useRef<HTMLDivElement>(null);
@@ -128,7 +75,6 @@ const App: React.FC = () => {
       setAnatomicalOverlayUrl(null);
       setPostTreatmentImageUrl(null);
       setProtocolImageUrl(null);
-      setIsDemoCase(false);
     }
   };
 
@@ -140,7 +86,6 @@ const App: React.FC = () => {
     setProtocolImageUrl(null);
     setError(null);
     setMediaFile(null);
-    setIsDemoCase(true);
     setIsAnalyzing(true);
 
     const isF = selectedGender === PatientGender.FEMALE;
@@ -250,36 +195,6 @@ const App: React.FC = () => {
     }
   };
 
-  const handleGenerateVisual = async () => {
-    if (!visualPrompt) return;
-    setVisualLoading(true);
-    setVisualResult(null);
-    setError(null);
-    try {
-      const { image, reasoning } = await generateAestheticVisual(visualPrompt, visualSize);
-      setVisualResult({ pre: image, treatment: null, post: null, reasoning });
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setVisualLoading(false);
-    }
-  };
-
-  const handleUseCaseClick = async (useCase: typeof useCases[0]) => {
-    setActiveUseCase(useCase.id);
-    setVisualLoading(true);
-    setVisualResult(null);
-    setError(null);
-    try {
-      const { image: preUrl, reasoning } = await generateAestheticVisual(useCase.prePrompt, visualSize);
-      setVisualResult({ pre: preUrl, treatment: null, post: null, reasoning });
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setVisualLoading(false);
-    }
-  };
-
   const handleOpenReport = async () => {
     if (!mapRef.current) return;
     setIsGeneratingReport(true);
@@ -330,7 +245,7 @@ const App: React.FC = () => {
           {['assessment', 'visualizer', 'knowledge', 'history'].map((t) => (
             <button key={t} onClick={() => setActiveTab(t as Tab)} 
                     className={`pb-6 text-[10px] md:text-[11px] font-black uppercase tracking-[0.3em] border-b-[3px] transition-all duration-300 whitespace-nowrap ${activeTab === t ? 'border-[#cc7e6d] text-gray-900' : 'border-transparent text-gray-300 hover:text-gray-500'}`}>
-              {t === 'visualizer' ? 'Visualizer' : t.charAt(0).toUpperCase() + t.slice(1)}
+              {t === 'visualizer' ? 'Clinical Simulator' : t.charAt(0).toUpperCase() + t.slice(1)}
             </button>
           ))}
         </nav>
@@ -486,71 +401,14 @@ const App: React.FC = () => {
           </div>
         )}
 
+        {/* REPLACED VISUALIZER WITH SIMULATION ENGINE */}
         {activeTab === 'visualizer' && (
-             <div className="space-y-12 animate-in fade-in duration-700">
-                <div className="text-center space-y-4">
-                    <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight">Aesthetic Simulator</h2>
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Generative Anatomy & Outcome Visualization</p>
+             <div className="space-y-12">
+                <div className="text-center space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                    <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight">Clinical Case Simulator</h2>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Interactive Decision Making Environment</p>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {useCases.map(uc => (
-                        <button 
-                            key={uc.id}
-                            onClick={() => handleUseCaseClick(uc)}
-                            className={`p-6 rounded-3xl border text-left transition-all group ${activeUseCase === uc.id ? 'bg-[#cc7e6d] border-[#cc7e6d] shadow-xl transform scale-105' : 'bg-white border-gray-100 hover:border-[#cc7e6d]/30 hover:shadow-lg'}`}
-                        >
-                            <div className={`w-10 h-10 mb-4 rounded-full flex items-center justify-center transition-colors ${activeUseCase === uc.id ? 'bg-white/20 text-white' : 'bg-gray-50 text-gray-400 group-hover:text-[#cc7e6d]'}`}>
-                                <uc.icon className="w-5 h-5" />
-                            </div>
-                            <h3 className={`font-black uppercase tracking-tight mb-2 ${activeUseCase === uc.id ? 'text-white' : 'text-gray-800'}`}>{uc.name}</h3>
-                            <p className={`text-[10px] font-medium leading-relaxed ${activeUseCase === uc.id ? 'text-white/80' : 'text-gray-400'}`}>{uc.prePrompt}</p>
-                        </button>
-                    ))}
-                </div>
-
-                <div className="bg-white p-2 rounded-2xl border border-gray-100 shadow-sm flex gap-2">
-                    <input 
-                        type="text" 
-                        value={visualPrompt}
-                        onChange={(e) => setVisualPrompt(e.target.value)}
-                        placeholder="Or describe a specific anatomical view (e.g., 'Lateral view of frontalis injection plane')..."
-                        className="flex-1 bg-transparent px-6 text-sm font-medium outline-none placeholder-gray-300"
-                    />
-                    <button 
-                        onClick={handleGenerateVisual}
-                        disabled={visualLoading || !visualPrompt}
-                        className="bg-gray-900 text-white px-8 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-700 transition-colors disabled:opacity-50"
-                    >
-                        Generate
-                    </button>
-                </div>
-
-                <div className="bg-gray-50 rounded-[3rem] border border-gray-100 overflow-hidden min-h-[400px] flex items-center justify-center relative">
-                    {visualLoading ? (
-                         <div className="flex flex-col items-center">
-                            <div className="w-12 h-12 border-4 border-gray-200 border-t-[#cc7e6d] rounded-full animate-spin mb-4"></div>
-                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Rendering Medical Illustration...</span>
-                         </div>
-                    ) : visualResult ? (
-                        <div className="w-full h-full p-8 flex flex-col items-center">
-                            <div className="relative w-full max-w-2xl aspect-square bg-white rounded-3xl shadow-xl overflow-hidden mb-8">
-                                <img src={visualResult.pre || ''} alt="Generated Anatomy" className="w-full h-full object-contain" />
-                            </div>
-                            {visualResult.reasoning && (
-                                <div className="max-w-2xl text-center space-y-2">
-                                    <span className="text-[10px] font-black text-[#cc7e6d] uppercase tracking-widest">Illustrator's Note</span>
-                                    <p className="text-sm text-gray-600 font-medium italic leading-relaxed">"{visualResult.reasoning}"</p>
-                                </div>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="text-center opacity-30">
-                            <span className="text-6xl mb-4 block">🎨</span>
-                            <span className="text-xs font-black uppercase tracking-widest">Select a case or describe a view</span>
-                        </div>
-                    )}
-                </div>
+                <SimulationEngine />
              </div>
         )}
 

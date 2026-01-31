@@ -262,3 +262,32 @@ export const generateAestheticVisual = async (
   if (!image) throw new Error("Visual generation failed.");
   return { image, reasoning };
 };
+
+export const generateSimulationCaseVisual = async (
+  caseDescription: string,
+  findings: string[]
+): Promise<string> => {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const prompt = `Hyper-realistic clinical medical photography of a patient. Frontal view only.
+    Patient Profile: ${caseDescription}
+    Clinical Presentation to Visualize: ${findings.join(', ')}.
+    Specifics: Ensure the left eyebrow is visibly elevated/arched (Spock brow) relative to the right.
+    Lighting: Flat, even medical studio lighting.
+    Background: Solid neutral gray.
+    Framing: Standard medical headshot. Face centered. Eyes positioned at approximately 50% vertical height. Include top of forehead to chin.`;
+
+    const response = await ai.models.generateContent({
+        model: 'gemini-3-pro-image-preview',
+        contents: { parts: [{ text: prompt }] },
+        config: {
+            imageConfig: { aspectRatio: "4:3", imageSize: "1K" }
+        },
+    });
+
+    for (const part of response.candidates[0].content.parts) {
+        if (part.inlineData) {
+            return `data:image/png;base64,${part.inlineData.data}`;
+        }
+    }
+    throw new Error("Simulation visual generation failed.");
+}

@@ -106,3 +106,35 @@ export interface TreatmentSession {
   analysis: AnalysisResult;
   feedback: FeedbackData;
 }
+
+// --- SIMULATION TYPES ---
+
+export interface SimInjectionPoint {
+  id: string;
+  x: number;
+  y: number;
+}
+
+export interface SimZone {
+  id: string;
+  name: string;
+  type: 'target' | 'avoid' | 'neutral';
+  poly: string; // SVG polygon points or path
+  scoreImpact: number;
+  feedback: string;
+}
+
+export interface SimCase {
+  id: string;
+  title: string;
+  level: number;
+  patientDescription: string;
+  findings: {
+    static: string[];
+    dynamic: string[];
+    primary: string[];
+  };
+  zones: SimZone[];
+  idealPointCount: { min: number; max: number };
+  maxScore: number;
+}
