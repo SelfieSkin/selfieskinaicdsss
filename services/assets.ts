@@ -9,9 +9,9 @@ export interface MusclePath {
 }
 
 // Coordinate System: 0-100 X, 0-100 Y (16:9 Aspect Ratio Container)
-// Panel 1 (Left Oblique): 0-33.3 | Nose ~33, Ear ~5
+// Panel 1 (Left Profile): 0-33.3 | Ear ~5, Eye ~25, Nose ~33
 // Panel 2 (Anterior): 33.3-66.6 | Nose ~50
-// Panel 3 (Right Oblique): 66.6-100 | Nose ~66, Ear ~95
+// Panel 3 (Right Profile): 66.6-100 | Nose ~66, Eye ~75, Ear ~95
 
 export const TRIPTYCH_ANATOMY: Record<string, MusclePath[]> = {
     // --- PANEL 2: ANTERIOR (FRONTAL) 33-66% ---
@@ -88,36 +88,36 @@ export const TRIPTYCH_ANATOMY: Record<string, MusclePath[]> = {
         }
     ],
 
-    // --- PANEL 1: LEFT OBLIQUE (PATIENT LOOKING RIGHT) 0-33% ---
-    // Shows Patient's LEFT side. Nose at ~33. Ear at ~5.
-    left_oblique_muscles: [
+    // --- PANEL 1: LEFT PROFILE (PATIENT LOOKING RIGHT) 0-33% ---
+    // Shows Patient's LEFT side in PROFILE. Ear ~5, Eye ~25, Nose ~33.
+    left_profile_muscles: [
         {
-            name: "Frontalis (Lateral Left)",
-            path: "M 10,18 Q 20,15 28,18 L 29,30 Q 20,32 10,28 Z",
+            name: "Frontalis (Left Profile)",
+            path: "M 10,18 Q 20,12 28,16 L 28,32 Q 18,34 10,32 Z",
             fill: "#cc7e6d",
             fillOpacity: 0.1,
             stroke: "#cc7e6d",
             strokeWidth: 0.1
         },
         {
-            name: "Orbicularis Oculi (Lateral Left View)",
-            path: "M 22,42 A 5 4 0 1 1 22,50 L 20,46 Z",
+            name: "Orbicularis Oculi (Left Profile)",
+            path: "M 22,43 A 3 4 0 0 1 25,47 L 22,50 Z",
             fill: "#cc7e6d",
             fillOpacity: 0.15,
             stroke: "#cc7e6d",
             strokeWidth: 0.2
         },
         {
-            name: "Crows Feet Fan (Left)",
-            path: "M 17,44 L 12,42 M 17,46 L 11,46 M 17,48 L 12,50",
+            name: "Crows Feet Fan (Left Profile)",
+            path: "M 19,45 L 14,44 M 19,47 L 13,47 M 19,49 L 14,50",
             fill: "none",
             stroke: "#cc7e6d",
             strokeWidth: 0.3,
             fillOpacity: 0
         },
         {
-            name: "Zygomaticus Major (Left origin)",
-            path: "M 15,55 L 25,65 L 27,63 L 17,53 Z",
+            name: "Zygomaticus Major (Left Profile)",
+            path: "M 12,55 L 22,62 L 24,60 L 14,53 Z",
             fill: "#cc7e6d",
             fillOpacity: 0.1,
             stroke: "#cc7e6d",
@@ -125,36 +125,36 @@ export const TRIPTYCH_ANATOMY: Record<string, MusclePath[]> = {
         }
     ],
 
-    // --- PANEL 3: RIGHT OBLIQUE (PATIENT LOOKING LEFT) 66-100% ---
-    // Shows Patient's RIGHT side. Nose at ~66. Ear at ~95.
-    right_oblique_muscles: [
+    // --- PANEL 3: RIGHT PROFILE (PATIENT LOOKING LEFT) 66-100% ---
+    // Shows Patient's RIGHT side in PROFILE. Nose ~66, Eye ~75, Ear ~95.
+    right_profile_muscles: [
         {
-            name: "Frontalis (Lateral Right)",
-            path: "M 90,18 Q 80,15 72,18 L 71,30 Q 80,32 90,28 Z",
+            name: "Frontalis (Right Profile)",
+            path: "M 90,18 Q 80,12 72,16 L 72,32 Q 82,34 90,32 Z",
             fill: "#cc7e6d",
             fillOpacity: 0.1,
             stroke: "#cc7e6d",
             strokeWidth: 0.1
         },
         {
-            name: "Orbicularis Oculi (Lateral Right View)",
-            path: "M 78,42 A 5 4 0 1 0 78,50 L 80,46 Z",
+            name: "Orbicularis Oculi (Right Profile)",
+            path: "M 78,43 A 3 4 0 0 0 75,47 L 78,50 Z",
             fill: "#cc7e6d",
             fillOpacity: 0.15,
             stroke: "#cc7e6d",
             strokeWidth: 0.2
         },
         {
-            name: "Crows Feet Fan (Right)",
-            path: "M 83,44 L 88,42 M 83,46 L 89,46 M 83,48 L 88,50",
+            name: "Crows Feet Fan (Right Profile)",
+            path: "M 81,45 L 86,44 M 81,47 L 87,47 M 81,49 L 86,50",
             fill: "none",
             stroke: "#cc7e6d",
             strokeWidth: 0.3,
             fillOpacity: 0
         },
          {
-            name: "Zygomaticus Major (Right origin)",
-            path: "M 85,55 L 75,65 L 73,63 L 83,53 Z",
+            name: "Zygomaticus Major (Right Profile)",
+            path: "M 88,55 L 78,62 L 76,60 L 86,53 Z",
             fill: "#cc7e6d",
             fillOpacity: 0.1,
             stroke: "#cc7e6d",

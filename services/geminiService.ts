@@ -20,7 +20,7 @@ export const analyzePatientInput = async (
   1. Identify muscle recruitment patterns (Glabella pattern, Frontalis recruitment type).
   2. ACTIVELY SCREEN FOR ASYMMETRY: Look for unilateral brow elevation ("Spock Brow"), ptosis, or uneven static lines. 
   3. If "Spock Brow" is detected, classify it and recommend lateral frontalis injection sites to correct it.
-  4. Map injection sites across the Left Oblique, Anterior, and Right Oblique panels of the clinical tryptych. 
+  4. Map injection sites across the Left Profile, Anterior, and Right Profile panels of the clinical tryptych. 
   5. GENERATE NARRATIVE: Create a concise "assessmentNarrative" summarizing findings and plan in a professional clinical voice.
   Output the result as structured JSON.`;
 
@@ -104,15 +104,15 @@ export const generateTreatmentMapVisual = async (
   }
 
   let prompt = `Create a hyper-realistic, clinical-grade BASELINE anatomical tryptych (16:9).
-  Three panels: Left Oblique, Anterior, Right Oblique.
+  Three panels: Left Profile, Anterior, Right Profile.
   Patient: ${analysis.gender}. 
   ${conditionDescription}
   FRAMING: EXTREME CLOSE-UP HEADSHOTS ONLY (FROM CLAVICLE UP). DO NOT INCLUDE SHOULDERS, CHEST, OR TORSO.
   The face must be vertically centered and fill 80% of the frame to ensure accurate injection coordinate mapping.
   Orientation:
-  - Panel 1 (Left): Left Oblique view (Patient turns head 45 degrees to their right, exposing Left profile).
+  - Panel 1 (Left): Left Lateral Profile view (90 degrees, Patient facing Right).
   - Panel 2 (Center): Direct Anterior (Frontal) view.
-  - Panel 3 (Right): Right Oblique view (Patient turns head 45 degrees to their left, exposing Right profile).
+  - Panel 3 (Right): Right Lateral Profile view (90 degrees, Patient facing Left).
   Clean studio background, medical lighting. NO text or markers.`;
 
   const response = await ai.models.generateContent({
@@ -186,7 +186,7 @@ export const generateAnatomicalOverlayVisual = async (
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const prompt = `Medical 3D anatomical render of upper face muscles. 16:9 Tryptych format. 
   FRAMING: EXTREME CLOSE-UP HEADSHOTS ONLY (FROM NECK UP). MATCHING CLINICAL PHOTOGRAPHY FRAMING.
-  Panel 1: Left Oblique. Panel 2: Anterior. Panel 3: Right Oblique.
+  Panel 1: Left Lateral Profile (90 deg). Panel 2: Anterior. Panel 3: Right Lateral Profile (90 deg).
   Transparent/Black background. Clean, high-fidelity anatomy.`;
 
   const response = await ai.models.generateContent({

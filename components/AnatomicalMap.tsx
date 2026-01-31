@@ -131,9 +131,9 @@ const AnatomicalMap = forwardRef<HTMLDivElement, AnatomicalMapProps>(({
               </div>
               
               <div className="absolute bottom-4 left-0 w-full flex px-8 pointer-events-none opacity-40">
-                <span className="w-1/3 text-[9px] font-black uppercase text-gray-600 tracking-widest text-center">Left Oblique</span>
+                <span className="w-1/3 text-[9px] font-black uppercase text-gray-600 tracking-widest text-center">Left Profile</span>
                 <span className="w-1/3 text-[9px] font-black uppercase text-gray-600 tracking-widest text-center">Anterior Baseline</span>
-                <span className="w-1/3 text-[9px] font-black uppercase text-gray-600 tracking-widest text-center">Right Oblique</span>
+                <span className="w-1/3 text-[9px] font-black uppercase text-gray-600 tracking-widest text-center">Right Profile</span>
               </div>
           </>
         )}

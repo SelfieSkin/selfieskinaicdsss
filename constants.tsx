@@ -31,12 +31,12 @@ You must actively screen for and classify:
 **CRITICAL RULE FOR TRYPTYCH COORDINATES (16:9 Aspect Ratio):**
 The visual map consists of 3 panels showing EXTREME CLOSE-UP HEADSHOTS (Neck Up). Coordinates are percentage-based (X: 0-100, Y: 0-100).
 
-**PANEL 1 (Left 0-33.3% x): Patient's LEFT Profile**
-- View: Left Oblique (Patient turns head right).
-- Content: Shows Patient's Left Eye and Left Crows Feet.
+**PANEL 1 (Left 0-33.3% x): Patient's LEFT Profile (Lateral 90 deg)**
+- View: Left Profile (Patient faces Right).
+- Content: Left Temple, Left Crow's Feet, Left Cheek.
 - Orientation: Ear is towards Left edge (0%). Nose towards Right edge (33%).
-- **Left Crow's Feet (C1L):** X ~ 12-15%. Y ~ 43-46%. (Lateral to eye).
-- **Left Inf. Eyelid (E1L):** X ~ 16-18%. Y ~ 49-51%.
+- **Left Crow's Feet (C1L):** X ~ 18-20%. Y ~ 43-46%. (Posterior to eye/canthus).
+- **Left Inf. Eyelid (E1L):** X ~ 22-24%. Y ~ 49-51%.
 
 **PANEL 2 (Center 33.3-66.6% x): Anterior / Frontal**
 - View: Direct Frontal.
@@ -48,12 +48,12 @@ The visual map consists of 3 panels showing EXTREME CLOSE-UP HEADSHOTS (Neck Up)
 - **Frontalis:** Right sites (X=38-46). Left sites (X=54-62).
 - **Bunny Lines:** Right (X=46-47). Left (X=53-54).
 
-**PANEL 3 (Right 66.6-100% x): Patient's RIGHT Profile**
-- View: Right Oblique (Patient turns head left).
-- Content: Shows Patient's Right Eye and Right Crows Feet.
+**PANEL 3 (Right 66.6-100% x): Patient's RIGHT Profile (Lateral 90 deg)**
+- View: Right Profile (Patient faces Left).
+- Content: Right Temple, Right Crow's Feet, Right Cheek.
 - Orientation: Nose towards Left edge (66%). Ear towards Right edge (100%).
-- **Right Crow's Feet (C1R):** X ~ 85-88%. Y ~ 43-46%. (Lateral to eye).
-- **Right Inf. Eyelid (E1R):** X ~ 81-83%. Y ~ 49-51%.
+- **Right Crow's Feet (C1R):** X ~ 80-82%. Y ~ 43-46%. (Posterior to eye/canthus).
+- **Right Inf. Eyelid (E1R):** X ~ 76-78%. Y ~ 49-51%.
 
 **Y-AXIS MAPPING (Neck-Up Framing):**
 - Hairline/Upper Forehead: y=15-20%
@@ -142,15 +142,17 @@ export const SAMPLE_ANALYSIS_FEMALE = {
     { id: "f-b1r-c", label: "B1R", region: "Bunny Lines", muscle: "Nasalis", doseOna: 3, rationale: "Patient Right.", x: 47, y: 52 },
     { id: "f-b1l-c", label: "B1L", region: "Bunny Lines", muscle: "Nasalis", doseOna: 3, rationale: "Patient Left.", x: 53, y: 52 },
     
-    // --- OBLIQUE PANELS ---
+    // --- PROFILE PANELS ---
     // Periocular (Total 12U)
-    // Left Oblique Panel (0-33%) - Looking at patient's left side
-    { id: "f-c1l-l", label: "C1L", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 4, rationale: "Patient Left Lateral.", x: 14, y: 45 },
-    { id: "f-e1l-l", label: "E1L", region: "Lower Eyelid", muscle: "Inf. Orbicularis", doseOna: 2, rationale: "Patient Left Inferior.", x: 18, y: 50 },
+    // Left Profile Panel (0-33%) - Looking at patient's LEFT side (Facing Right)
+    // Nose is at ~33%, Ear at ~0%. Eye is ~25%. Crows Feet are posterior to eye (~20%).
+    { id: "f-c1l-l", label: "C1L", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 4, rationale: "Patient Left Lateral.", x: 19, y: 46 },
+    { id: "f-e1l-l", label: "E1L", region: "Lower Eyelid", muscle: "Inf. Orbicularis", doseOna: 2, rationale: "Patient Left Inferior.", x: 23, y: 50 },
 
-    // Right Oblique Panel (66-100%) - Looking at patient's right side
-    { id: "f-c1r-r", label: "C1R", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 4, rationale: "Patient Right Lateral.", x: 86, y: 45 },
-    { id: "f-e1r-r", label: "E1R", region: "Lower Eyelid", muscle: "Inf. Orbicularis", doseOna: 2, rationale: "Patient Right Inferior.", x: 82, y: 50 }
+    // Right Profile Panel (66-100%) - Looking at patient's RIGHT side (Facing Left)
+    // Nose is at ~66%, Ear at ~100%. Eye is ~75%. Crows Feet are posterior to eye (~80%).
+    { id: "f-c1r-r", label: "C1R", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 4, rationale: "Patient Right Lateral.", x: 81, y: 46 },
+    { id: "f-e1r-r", label: "E1R", region: "Lower Eyelid", muscle: "Inf. Orbicularis", doseOna: 2, rationale: "Patient Right Inferior.", x: 77, y: 50 }
   ],
   dangerZones: [{ id: "fd1", region: "Periocular", risk: "Levator palpebrae risk." }],
   safetyWarnings: ["Focus on brow symmetry."],
@@ -208,10 +210,10 @@ export const SAMPLE_ANALYSIS_MALE = {
     { id: "m-b1r-c", label: "B1R", region: "Bunny Lines", muscle: "Nasalis", doseOna: 3, rationale: "Pt Right.", x: 47, y: 53 },
     { id: "m-b1l-c", label: "B1L", region: "Bunny Lines", muscle: "Nasalis", doseOna: 3, rationale: "Pt Left.", x: 53, y: 53 },
     
-    // --- OBLIQUE PANELS ---
+    // --- PROFILE PANELS ---
     // Crows (Total 10U)
-    { id: "m-c1l-l", label: "C1L", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 5, rationale: "Pt Left.", x: 14, y: 46 },
-    { id: "m-c1r-r", label: "C1R", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 5, rationale: "Pt Right.", x: 86, y: 46 }
+    { id: "m-c1l-l", label: "C1L", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 5, rationale: "Pt Left.", x: 19, y: 46 },
+    { id: "m-c1r-r", label: "C1R", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 5, rationale: "Pt Right.", x: 81, y: 46 }
   ],
   dangerZones: [{ id: "md1", region: "Supraorbital", risk: "Avoid feminizing arch." }],
   safetyWarnings: ["Higher glabella doses needed."],
