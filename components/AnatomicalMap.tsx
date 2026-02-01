@@ -1,7 +1,7 @@
 
 import React, { forwardRef, useState } from 'react';
-import { InjectionSite } from '../types';
-import { TRIPTYCH_ANATOMY } from '../services/assets';
+import { InjectionSite, PatientGender } from '../types';
+import { FEMALE_ANATOMY, MALE_ANATOMY } from '../services/assets';
 
 interface AnatomicalMapProps {
   treatmentMapImageUrl: string | null;
@@ -10,6 +10,7 @@ interface AnatomicalMapProps {
   isGeneratingAnatomy: boolean;
   sites?: InjectionSite[];
   assessmentNarrative?: string;
+  gender?: PatientGender; // Added gender prop
 }
 
 const AnatomicalMap = forwardRef<HTMLDivElement, AnatomicalMapProps>(({ 
@@ -18,15 +19,17 @@ const AnatomicalMap = forwardRef<HTMLDivElement, AnatomicalMapProps>(({
   isGenerating,
   isGeneratingAnatomy,
   sites = [],
-  assessmentNarrative
+  assessmentNarrative,
+  gender = PatientGender.FEMALE // Default to Female
 }, ref) => {
   const [muscleOpacity, setMuscleOpacity] = useState(0);
   const [showWireframe, setShowWireframe] = useState(false);
 
+  // Select the appropriate vector anatomy based on gender prop
+  const activeAnatomy = gender === PatientGender.MALE ? MALE_ANATOMY : FEMALE_ANATOMY;
+
   const handleRecalibrate = (e: React.MouseEvent) => {
     e.stopPropagation();
-    // In a real app, this might trigger a re-computation. 
-    // Here we act as a UI reset to "clear" visual noise and realign perception.
     setMuscleOpacity(0);
     setShowWireframe(false);
     setTimeout(() => {
@@ -67,7 +70,7 @@ const AnatomicalMap = forwardRef<HTMLDivElement, AnatomicalMapProps>(({
                 viewBox="0 0 100 100" 
                 preserveAspectRatio="none"
               >
-                 {Object.values(TRIPTYCH_ANATOMY).flat().map((muscle, idx) => (
+                 {Object.values(activeAnatomy).flat().map((muscle, idx) => (
                     <path 
                       key={idx} 
                       d={muscle.path} 

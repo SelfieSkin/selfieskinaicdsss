@@ -200,14 +200,22 @@ export const generateAnatomicalOverlayVisual = async (
   size: ImageSize = '1K'
 ): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  const prompt = `Medical 3D anatomical render of upper face muscles. 16:9 Tryptych format. 
-  FRAMING: EXTREME CLOSE-UP HEADSHOTS ONLY (FROM NECK UP). MATCHING CLINICAL PHOTOGRAPHY FRAMING.
   
-  Panel 1: LEFT LATERAL PROFILE (90 deg). Showing side view of Temporalis and Orbicularis Oculi. Facing RIGHT.
-  Panel 2: Anterior Frontal View showing Frontalis, Glabella, and Nasalis.
-  Panel 3: RIGHT LATERAL PROFILE (90 deg). Showing side view of Temporalis and Orbicularis Oculi. Facing LEFT.
+  // Refined Prompt for Realism, Gender Specificity, and Neck Inclusion
+  const morphology = gender === PatientGender.MALE 
+    ? "Male morphology: Square jaw, broad forehead, hypertrophic musculature, thicker neck." 
+    : "Female morphology: Tapered jaw, arched brow, smooth forehead contour, slender neck.";
+
+  const prompt = `Hyper-realistic 3D anatomical render of facial and neck muscles (Subcutaneous View). 16:9 Tryptych format.
+  **MORPHOLOGY:** ${morphology}
+  **TEXTURE & SHADING:** Lifelike muscle striations, fascia sheen, realistic depth shading, and subsurface scattering. Clinical accuracy is paramount.
   
-  Transparent/Black background. Clean, high-fidelity anatomy.`;
+  **VIEW CONFIGURATION:**
+  - Panel 1: LEFT LATERAL PROFILE (90 deg). Facing RIGHT. Show Temporalis, Masseter, and lateral Platysma.
+  - Panel 2: ANTERIOR FRONTAL VIEW. Show Frontalis, Procerus/Corrugator, Orbicularis Oculi, Nasalis, and anterior Platysma bands extending to clavicle.
+  - Panel 3: RIGHT LATERAL PROFILE (90 deg). Facing LEFT. Show Temporalis, Masseter, and lateral Platysma.
+  
+  Background: Transparent/Black. High Contrast. NO skin layer, purely muscular/fascial layer.`;
 
   const response = await ai.models.generateContent({
     model: 'gemini-3-pro-image-preview',

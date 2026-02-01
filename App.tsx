@@ -317,6 +317,7 @@ const App: React.FC = () => {
                     isGeneratingAnatomy={isGeneratingAnatomy}
                     sites={result.sites}
                     assessmentNarrative={result.assessmentNarrative}
+                    gender={selectedGender} // Pass gender to Map
                   />
                 </div>
 
