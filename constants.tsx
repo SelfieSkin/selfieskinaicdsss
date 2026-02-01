@@ -43,7 +43,7 @@ You must actively screen for and classify:
 The visual map consists of 3 panels showing EXTREME CLOSE-UP HEADSHOTS (Neck Up). Coordinates are percentage-based (X: 0-100, Y: 0-100).
 
 **PANEL 1 (Left 0-33.3% x): Patient's LEFT Profile (Lateral 90 deg)**
-- View: Left Profile (Patient faces Right).
+- View: TRUE PROFILE (Patient faces Right).
 - Content: Left Temple, Left Crow's Feet, Left Cheek.
 - Orientation: Ear is towards Left edge (0%). Nose towards Right edge (33%).
 - **Left Crow's Feet (C1L):** X ~ 18-20%. Y ~ 43-46%. (Posterior to eye/canthus).
@@ -60,7 +60,7 @@ The visual map consists of 3 panels showing EXTREME CLOSE-UP HEADSHOTS (Neck Up)
 - **Bunny Lines:** Right (X=46-47). Left (X=53-54).
 
 **PANEL 3 (Right 66.6-100% x): Patient's RIGHT Profile (Lateral 90 deg)**
-- View: Right Profile (Patient faces Left).
+- View: TRUE PROFILE (Patient faces Left).
 - Content: Right Temple, Right Crow's Feet, Right Cheek.
 - Orientation: Nose towards Left edge (66%). Ear towards Right edge (100%).
 - **Right Crow's Feet (C1R):** X ~ 80-82%. Y ~ 43-46%. (Posterior to eye/canthus).
@@ -153,17 +153,16 @@ export const SAMPLE_ANALYSIS_FEMALE = {
     { id: "f-b1r-c", label: "B1R", region: "Bunny Lines", muscle: "Nasalis", doseOna: 3, rationale: "Patient Right.", x: 47, y: 52 },
     { id: "f-b1l-c", label: "B1L", region: "Bunny Lines", muscle: "Nasalis", doseOna: 3, rationale: "Patient Left.", x: 53, y: 52 },
     
-    // --- PROFILE PANELS ---
-    // Periocular (Total 12U)
+    // --- PROFILE PANELS (Recalibrated for 90 Degree Profile) ---
     // Left Profile Panel (0-33%) - Looking at patient's LEFT side (Facing Right)
-    // Nose is at ~33%, Ear at ~0%. Eye is ~25%. Crows Feet are posterior to eye (~20%).
-    { id: "f-c1l-l", label: "C1L", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 4, rationale: "Patient Left Lateral.", x: 19, y: 46 },
-    { id: "f-e1l-l", label: "E1L", region: "Lower Eyelid", muscle: "Inf. Orbicularis", doseOna: 2, rationale: "Patient Left Inferior.", x: 23, y: 50 },
+    // Eye is anterior (x ~ 28%), Ear is posterior (x ~ 5%)
+    { id: "f-c1l-l", label: "C1L", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 4, rationale: "Patient Left Lateral.", x: 22, y: 46 },
+    { id: "f-e1l-l", label: "E1L", region: "Lower Eyelid", muscle: "Inf. Orbicularis", doseOna: 2, rationale: "Patient Left Inferior.", x: 25, y: 50 },
 
     // Right Profile Panel (66-100%) - Looking at patient's RIGHT side (Facing Left)
-    // Nose is at ~66%, Ear at ~100%. Eye is ~75%. Crows Feet are posterior to eye (~80%).
-    { id: "f-c1r-r", label: "C1R", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 4, rationale: "Patient Right Lateral.", x: 81, y: 46 },
-    { id: "f-e1r-r", label: "E1R", region: "Lower Eyelid", muscle: "Inf. Orbicularis", doseOna: 2, rationale: "Patient Right Inferior.", x: 77, y: 50 }
+    // Eye is anterior (x ~ 72%), Ear is posterior (x ~ 95%)
+    { id: "f-c1r-r", label: "C1R", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 4, rationale: "Patient Right Lateral.", x: 78, y: 46 },
+    { id: "f-e1r-r", label: "E1R", region: "Lower Eyelid", muscle: "Inf. Orbicularis", doseOna: 2, rationale: "Patient Right Inferior.", x: 75, y: 50 }
   ],
   dangerZones: [{ id: "fd1", region: "Periocular", risk: "Levator palpebrae risk." }],
   safetyWarnings: ["Focus on brow symmetry."],
@@ -221,10 +220,11 @@ export const SAMPLE_ANALYSIS_MALE = {
     { id: "m-b1r-c", label: "B1R", region: "Bunny Lines", muscle: "Nasalis", doseOna: 3, rationale: "Pt Right.", x: 47, y: 53 },
     { id: "m-b1l-c", label: "B1L", region: "Bunny Lines", muscle: "Nasalis", doseOna: 3, rationale: "Pt Left.", x: 53, y: 53 },
     
-    // --- PROFILE PANELS ---
-    // Crows (Total 10U)
-    { id: "m-c1l-l", label: "C1L", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 5, rationale: "Pt Left.", x: 19, y: 46 },
-    { id: "m-c1r-r", label: "C1R", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 5, rationale: "Pt Right.", x: 81, y: 46 }
+    // --- PROFILE PANELS (Recalibrated for 90 Degree Profile) ---
+    // Left Profile: Eye ~ 28%, Ear ~ 5%. Crow's feet ~ 22%.
+    { id: "m-c1l-l", label: "C1L", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 5, rationale: "Pt Left.", x: 22, y: 46 },
+    // Right Profile: Eye ~ 72%, Ear ~ 95%. Crow's feet ~ 78%.
+    { id: "m-c1r-r", label: "C1R", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 5, rationale: "Pt Right.", x: 78, y: 46 }
   ],
   dangerZones: [{ id: "md1", region: "Supraorbital", risk: "Avoid feminizing arch." }],
   safetyWarnings: ["Higher glabella doses needed."],

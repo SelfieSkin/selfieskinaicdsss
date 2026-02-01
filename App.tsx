@@ -235,7 +235,9 @@ const App: React.FC = () => {
     setIsFeedbackOpen(false);
   };
   
-  const isLoading = isAnalyzing || isGeneratingMap || isGeneratingPostTreatmentVisual;
+  // PROGRESSIVE LOADING: We do NOT include isGeneratingPostTreatmentVisual in the global loader.
+  // This allows the Analysis + Map to show while the Outcome Visual generates in the background.
+  const isLoading = isAnalyzing || isGeneratingMap;
 
   return (
     <div className="min-h-screen bg-[#fcfcf9] pb-40">
@@ -316,6 +318,41 @@ const App: React.FC = () => {
                     sites={result.sites}
                     assessmentNarrative={result.assessmentNarrative}
                   />
+                </div>
+
+                {/* Outcome Projection - PROGRESSIVELY LOADED */}
+                <div className="space-y-6">
+                    <div className="flex justify-between items-end">
+                       <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight">Projected Clinical Outcome</h3>
+                       {isGeneratingPostTreatmentVisual && <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest animate-pulse">Running Simulation...</span>}
+                    </div>
+                    <div className="relative w-full aspect-[16/9] bg-gray-50 rounded-[3rem] border border-gray-100 overflow-hidden shadow-lg group">
+                        {isGeneratingPostTreatmentVisual ? (
+                             <div className="w-full h-full flex flex-col items-center justify-center">
+                                 <div className="w-12 h-12 border-4 border-gray-200 border-t-[#cc7e6d] rounded-full animate-spin mb-4"></div>
+                                 <p className="text-xs font-black text-gray-300 uppercase tracking-widest">Generating Tryptych Simulation...</p>
+                             </div>
+                        ) : postTreatmentImageUrl ? (
+                             <>
+                                <img 
+                                    src={postTreatmentImageUrl}
+                                    alt="Projected Outcome"
+                                    className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 pointer-events-none flex opacity-30">
+                                    <div className="h-full w-1/3 border-r border-white/50"></div>
+                                    <div className="h-full w-1/3 border-r border-white/50"></div>
+                                </div>
+                                <div className="absolute bottom-6 left-6 bg-white/80 backdrop-blur-md px-4 py-2 rounded-xl border border-white/40 shadow-sm">
+                                    <span className="text-[10px] font-black text-[#cc7e6d] uppercase tracking-widest">AI Simulation</span>
+                                </div>
+                             </>
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                                <span className="text-xs font-bold text-gray-300 uppercase">No Projection Available</span>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Step 2 & 3 Data Summary */}

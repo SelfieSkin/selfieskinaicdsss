@@ -111,17 +111,17 @@ export const generateTreatmentMapVisual = async (
   Patient: ${analysis.gender}. 
   ${conditionDescription}
   
-  PANEL CONFIGURATION (CRITICAL):
-  1. **LEFT PANEL (0-33%)**: LEFT PROFILE VIEW (90°).
-     - Show the patient's LEFT side (Left Ear, Left Temple, Left Cheek).
-     - Patient must be facing RIGHT towards the center panel.
+  PANEL CONFIGURATION (CRITICAL - TRUE PROFILE VIEWS):
+  1. **LEFT PANEL (0-33%)**: PATIENT LEFT LATERAL PROFILE (90°).
+     - Must show TRUE SIDE PROFILE of the patient's Left Face.
+     - Patient must face RIGHT (towards the center panel).
      
   2. **CENTER PANEL (33-66%)**: ANTERIOR VIEW (Frontal).
      - Direct eye contact. Symmetrical full face.
      
-  3. **RIGHT PANEL (66-100%)**: RIGHT PROFILE VIEW (90°).
-     - Show the patient's RIGHT side (Right Ear, Right Temple, Right Cheek).
-     - Patient must be facing LEFT towards the center panel.
+  3. **RIGHT PANEL (66-100%)**: PATIENT RIGHT LATERAL PROFILE (90°).
+     - Must show TRUE SIDE PROFILE of the patient's Right Face.
+     - Patient must face LEFT (towards the center panel).
 
   FRAMING: EXTREME CLOSE-UP HEADSHOTS ONLY (FROM NECK UP). 
   The eyes in all three panels must be aligned at approximately 50% vertical height.
@@ -202,9 +202,11 @@ export const generateAnatomicalOverlayVisual = async (
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const prompt = `Medical 3D anatomical render of upper face muscles. 16:9 Tryptych format. 
   FRAMING: EXTREME CLOSE-UP HEADSHOTS ONLY (FROM NECK UP). MATCHING CLINICAL PHOTOGRAPHY FRAMING.
-  Panel 1: Left Lateral Profile (90 deg) showing Temporalis and Orbicularis Oculi.
+  
+  Panel 1: LEFT LATERAL PROFILE (90 deg). Showing side view of Temporalis and Orbicularis Oculi. Facing RIGHT.
   Panel 2: Anterior Frontal View showing Frontalis, Glabella, and Nasalis.
-  Panel 3: Right Lateral Profile (90 deg) showing Temporalis and Orbicularis Oculi.
+  Panel 3: RIGHT LATERAL PROFILE (90 deg). Showing side view of Temporalis and Orbicularis Oculi. Facing LEFT.
+  
   Transparent/Black background. Clean, high-fidelity anatomy.`;
 
   const response = await ai.models.generateContent({

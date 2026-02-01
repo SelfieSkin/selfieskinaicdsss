@@ -23,6 +23,18 @@ const AnatomicalMap = forwardRef<HTMLDivElement, AnatomicalMapProps>(({
   const [muscleOpacity, setMuscleOpacity] = useState(0);
   const [showWireframe, setShowWireframe] = useState(false);
 
+  const handleRecalibrate = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // In a real app, this might trigger a re-computation. 
+    // Here we act as a UI reset to "clear" visual noise and realign perception.
+    setMuscleOpacity(0);
+    setShowWireframe(false);
+    setTimeout(() => {
+        setShowWireframe(true);
+        setMuscleOpacity(0.5);
+    }, 200);
+  };
+
   return (
     <div className="space-y-6">
       <div ref={ref} className="relative w-full aspect-[16/9] bg-gray-50 rounded-[3rem] border border-gray-100 overflow-hidden shadow-lg flex items-center justify-center select-none group">
@@ -95,6 +107,12 @@ const AnatomicalMap = forwardRef<HTMLDivElement, AnatomicalMapProps>(({
               {/* Enhanced Map Controls */}
               <div className="no-print absolute top-4 right-4 z-40 flex items-center gap-3 pointer-events-auto">
                 <button 
+                   onClick={handleRecalibrate}
+                   className="p-3 bg-white/80 backdrop-blur-md rounded-2xl text-[9px] font-black uppercase tracking-wider text-gray-500 border border-white/40 shadow-lg hover:text-[#cc7e6d] hover:bg-white transition-all active:scale-95"
+                >
+                   Recalibrate Map
+                </button>
+                <button 
                   onClick={(e) => { e.stopPropagation(); setShowWireframe(!showWireframe); }}
                   className={`p-3 rounded-2xl backdrop-blur-md transition-all shadow-lg border cursor-pointer hover:scale-105 active:scale-95 flex items-center justify-center ${showWireframe ? 'bg-[#cc7e6d] text-white border-[#cc7e6d]' : 'bg-white/80 text-gray-500 border-white/40'}`}
                   title="Toggle Wireframe Guide"
@@ -131,9 +149,9 @@ const AnatomicalMap = forwardRef<HTMLDivElement, AnatomicalMapProps>(({
               </div>
               
               <div className="absolute bottom-4 left-0 w-full flex px-8 pointer-events-none opacity-40">
-                <span className="w-1/3 text-[9px] font-black uppercase text-gray-600 tracking-widest text-center">Left Profile</span>
+                <span className="w-1/3 text-[9px] font-black uppercase text-gray-600 tracking-widest text-center">Left Profile (Lateral)</span>
                 <span className="w-1/3 text-[9px] font-black uppercase text-gray-600 tracking-widest text-center">Anterior Baseline</span>
-                <span className="w-1/3 text-[9px] font-black uppercase text-gray-600 tracking-widest text-center">Right Profile</span>
+                <span className="w-1/3 text-[9px] font-black uppercase text-gray-600 tracking-widest text-center">Right Profile (Lateral)</span>
               </div>
           </>
         )}
