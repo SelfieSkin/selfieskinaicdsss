@@ -12,12 +12,11 @@ import FeedbackModal from './components/FeedbackModal';
 import InjectionPlanTable from './components/InjectionPlanTable';
 import ComparativeDosing from './components/ComparativeDosing';
 import SimulationEngine from './components/SimulationEngine';
-import BeforeAfterSlider from './components/BeforeAfterSlider'; // New Import
+import BeforeAfterSlider from './components/BeforeAfterSlider';
 import { 
   analyzePatientInput, 
   generatePostTreatmentVisual, 
   generateTreatmentMapVisual, 
-  generateAnatomicalOverlayVisual,
   generateProtocolVisual
 } from './services/geminiService';
 import { AnalysisResult, ToxinBrand, TreatmentSession, PatientGender, FeedbackData } from './types';
@@ -32,7 +31,6 @@ const App: React.FC = () => {
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isGeneratingMap, setIsGeneratingMap] = useState(false);
-  const [isGeneratingAnatomy, setIsGeneratingAnatomy] = useState(false);
   const [isGeneratingPostTreatmentVisual, setIsGeneratingPostTreatmentVisual] = useState(false);
   const [loadingStage, setLoadingStage] = useState('');
   const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -48,7 +46,6 @@ const App: React.FC = () => {
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   
   const [treatmentMapImageUrl, setTreatmentMapImageUrl] = useState<string | null>(null);
-  const [anatomicalOverlayUrl, setAnatomicalOverlayUrl] = useState<string | null>(null);
   const [postTreatmentImageUrl, setPostTreatmentImageUrl] = useState<string | null>(null);
   const [protocolImageUrl, setProtocolImageUrl] = useState<string | null>(null);
 
@@ -73,7 +70,6 @@ const App: React.FC = () => {
       setResult(null);
       setError(null);
       setTreatmentMapImageUrl(null);
-      setAnatomicalOverlayUrl(null);
       setPostTreatmentImageUrl(null);
       setProtocolImageUrl(null);
     }
@@ -82,7 +78,6 @@ const App: React.FC = () => {
   const handleLoadSample = async () => {
     setResult(null);
     setTreatmentMapImageUrl(null);
-    setAnatomicalOverlayUrl(null);
     setPostTreatmentImageUrl(null);
     setProtocolImageUrl(null);
     setError(null);
@@ -100,15 +95,10 @@ const App: React.FC = () => {
     try {
         setLoadingStage("Generating Clinical Baseline...");
         setIsGeneratingMap(true);
-        setIsGeneratingAnatomy(true);
-        const [imageUrl, overlayUrl] = await Promise.all([
-          generateTreatmentMapVisual(freshSample, '2K'),
-          generateAnatomicalOverlayVisual(selectedGender, '2K')
-        ]);
+        // Only generate the photo map, anatomy is now an overlay
+        const imageUrl = await generateTreatmentMapVisual(freshSample, '2K');
         setTreatmentMapImageUrl(imageUrl);
-        setAnatomicalOverlayUrl(overlayUrl);
         setIsGeneratingMap(false);
-        setIsGeneratingAnatomy(false);
 
         // Generate Protocol Image parallel to Post Visual
         setLoadingStage("Simulating Outcomes & Protocol...");
@@ -125,7 +115,6 @@ const App: React.FC = () => {
     } finally {
         setIsAnalyzing(false);
         setIsGeneratingMap(false);
-        setIsGeneratingAnatomy(false);
         setIsGeneratingPostTreatmentVisual(false);
     }
   };
@@ -143,7 +132,6 @@ const App: React.FC = () => {
     if (!mediaFile || !patientId) return;
     setResult(null);
     setTreatmentMapImageUrl(null);
-    setAnatomicalOverlayUrl(null);
     setPostTreatmentImageUrl(null);
     setProtocolImageUrl(null);
     setError(null);
@@ -165,16 +153,10 @@ const App: React.FC = () => {
         // 2. Generate Patient-Specific Visuals using Analysis Data
         setLoadingStage("Establishing Baseline Tryptych...");
         setIsGeneratingMap(true);
-        setIsGeneratingAnatomy(true);
         
-        const [imageUrl, overlayUrl] = await Promise.all([
-          generateTreatmentMapVisual(analysis, '2K'),
-          generateAnatomicalOverlayVisual(selectedGender, '2K')
-        ]);
+        const imageUrl = await generateTreatmentMapVisual(analysis, '2K');
         setTreatmentMapImageUrl(imageUrl);
-        setAnatomicalOverlayUrl(overlayUrl);
         setIsGeneratingMap(false);
-        setIsGeneratingAnatomy(false);
 
         // 3. Project Outcome based on Visual & Analysis
         setLoadingStage("Projecting Clinical Outcome...");
@@ -191,7 +173,6 @@ const App: React.FC = () => {
     } finally {
         setIsAnalyzing(false);
         setIsGeneratingMap(false);
-        setIsGeneratingAnatomy(false);
         setIsGeneratingPostTreatmentVisual(false);
     }
   };
@@ -219,7 +200,7 @@ const App: React.FC = () => {
     setResult({ ...result, sites: newSites });
   };
 
-  // NEW: Handle Recalibration Drags
+  // Handle Recalibration Drags
   const handleSiteMove = (siteId: string, x: number, y: number) => {
     if (!result) return;
     const newSites = result.sites.map(s => s.id === siteId ? { ...s, x, y } : s);
@@ -318,13 +299,11 @@ const App: React.FC = () => {
                   <AnatomicalMap 
                     ref={mapRef}
                     treatmentMapImageUrl={treatmentMapImageUrl}
-                    anatomicalOverlayUrl={anatomicalOverlayUrl}
                     isGenerating={isGeneratingMap}
-                    isGeneratingAnatomy={isGeneratingAnatomy}
                     sites={result.sites}
                     assessmentNarrative={result.assessmentNarrative}
                     gender={selectedGender}
-                    onSiteMove={handleSiteMove} // Enable drag recalibration
+                    onSiteMove={handleSiteMove} 
                   />
                 </div>
 

@@ -5,28 +5,28 @@ import { FEMALE_ANATOMY, MALE_ANATOMY } from '../services/assets';
 
 interface AnatomicalMapProps {
   treatmentMapImageUrl: string | null;
-  anatomicalOverlayUrl: string | null;
   isGenerating: boolean;
-  isGeneratingAnatomy: boolean;
   sites?: InjectionSite[];
   assessmentNarrative?: string;
   gender?: PatientGender;
-  onSiteMove?: (id: string, x: number, y: number) => void; // New prop for saving positions
+  onSiteMove?: (id: string, x: number, y: number) => void;
 }
 
 const AnatomicalMap = forwardRef<HTMLDivElement, AnatomicalMapProps>(({ 
   treatmentMapImageUrl,
-  anatomicalOverlayUrl,
   isGenerating,
-  isGeneratingAnatomy,
   sites = [],
   assessmentNarrative,
   gender = PatientGender.FEMALE,
   onSiteMove
 }, ref) => {
-  const [activeView, setActiveView] = useState<'photo' | 'anatomy'>('photo');
+  const [showMuscles, setShowMuscles] = useState(false);
   const [isRecalibrating, setIsRecalibrating] = useState(false);
   const [draggingSiteId, setDraggingSiteId] = useState<string | null>(null);
+  
+  // New state for Anatomy Overlay Calibration (X, Y, Scale)
+  const [overlayConfig, setOverlayConfig] = useState({ x: 0, y: 0, scale: 1 });
+
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Sync internal ref with forwarded ref
@@ -82,26 +82,30 @@ const AnatomicalMap = forwardRef<HTMLDivElement, AnatomicalMapProps>(({
       <div className="flex justify-between items-end px-2 no-print">
          <div className="flex gap-4">
              <button 
-                onClick={() => setActiveView('photo')}
-                className={`text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-full transition-all border ${activeView === 'photo' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-400 border-gray-200 hover:border-gray-400'}`}
+                onClick={() => setShowMuscles(false)}
+                className={`text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-full transition-all border ${!showMuscles ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-400 border-gray-200 hover:border-gray-400'}`}
              >
                 Patient Photo
              </button>
              <button 
-                onClick={() => setActiveView('anatomy')}
-                disabled={!anatomicalOverlayUrl}
-                className={`text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-full transition-all border ${activeView === 'anatomy' ? 'bg-[#cc7e6d] text-white border-[#cc7e6d]' : 'bg-white text-gray-400 border-gray-200 hover:border-gray-400 disabled:opacity-50'}`}
+                onClick={() => setShowMuscles(true)}
+                disabled={isGenerating || !treatmentMapImageUrl}
+                className={`text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-full transition-all border ${showMuscles ? 'bg-[#cc7e6d] text-white border-[#cc7e6d]' : 'bg-white text-gray-400 border-gray-200 hover:border-gray-400 disabled:opacity-50'}`}
              >
-                {isGeneratingAnatomy ? 'Loading Anatomy...' : 'Muscle Layer'}
+                Muscle Layer
              </button>
          </div>
          <button 
-            onClick={() => setIsRecalibrating(!isRecalibrating)}
+            onClick={() => {
+                setIsRecalibrating(!isRecalibrating);
+                // Auto-show muscles when calibrating to help alignment
+                if (!isRecalibrating) setShowMuscles(true);
+            }}
             className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all shadow-sm ${isRecalibrating ? 'bg-green-100 border-green-200 text-green-700' : 'bg-white border-gray-200 text-gray-500 hover:text-gray-900'}`}
          >
             <span className={`w-2 h-2 rounded-full ${isRecalibrating ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`}></span>
             <span className="text-[10px] font-black uppercase tracking-widest">
-                {isRecalibrating ? 'Drag Points to Adjust' : 'Recalibrate Map'}
+                {isRecalibrating ? 'Drag Points & Map' : 'Recalibrate Map'}
             </span>
          </button>
       </div>
@@ -121,52 +125,116 @@ const AnatomicalMap = forwardRef<HTMLDivElement, AnatomicalMapProps>(({
         {!isGenerating && treatmentMapImageUrl && (
           <>
             {/* Base Image Layer */}
-            {activeView === 'photo' ? (
-                 <img 
-                   src={treatmentMapImageUrl}
-                   alt="Baseline Tryptych"
-                   className="w-full h-full object-cover pointer-events-none"
-                 />
-            ) : (
-                 // Anatomy View - Shows Generated 3D Muscle Render OR Fallback SVG
-                 <div className="w-full h-full relative bg-black">
-                     {anatomicalOverlayUrl ? (
-                         <img 
-                           src={anatomicalOverlayUrl} 
-                           alt="Anatomical Muscle Layer" 
-                           className="w-full h-full object-cover opacity-90"
-                         />
-                     ) : (
-                         <div className="w-full h-full bg-gray-900 flex items-center justify-center">
-                            <span className="text-gray-500 text-xs">Anatomy Model Unavailable</span>
-                         </div>
-                     )}
-                     {/* SVG Wireframe Overlay for extra clarity in Anatomy Mode */}
-                     <svg 
-                        className="absolute inset-0 w-full h-full pointer-events-none opacity-40 mix-blend-screen" 
-                        viewBox="0 0 100 100" 
-                        preserveAspectRatio="none"
-                      >
-                         {Object.values(activeAnatomy).flat().map((muscle, idx) => (
-                            <path 
-                              key={idx} 
-                              d={muscle.path} 
-                              fill="none" 
-                              stroke="#fff" 
-                              strokeWidth={0.1}
+            <img 
+               src={treatmentMapImageUrl}
+               alt="Baseline Tryptych"
+               className="w-full h-full object-cover pointer-events-none absolute inset-0"
+            />
+
+            {/* Calibration Controls (Visible Only When Recalibrating) */}
+            {isRecalibrating && (
+                <div className="absolute top-4 left-4 z-40 bg-white/95 backdrop-blur-md shadow-xl border border-gray-200 rounded-2xl p-4 w-64 animate-in fade-in slide-in-from-top-2" onClick={e => e.stopPropagation()}>
+                    <div className="flex justify-between items-center mb-4">
+                        <div className="flex items-center gap-2">
+                           <div className="w-2 h-2 rounded-full bg-[#cc7e6d]"></div>
+                           <h5 className="text-[10px] font-black uppercase tracking-widest text-gray-800">Anatomy Alignment</h5>
+                        </div>
+                        <button onClick={() => setOverlayConfig({x:0, y:0, scale:1})} className="text-[9px] text-gray-400 font-bold hover:text-[#cc7e6d] transition-colors">RESET</button>
+                    </div>
+                    
+                    <div className="space-y-4">
+                        {/* Scale */}
+                        <div className="space-y-1">
+                            <div className="flex justify-between text-[9px] font-bold text-gray-400 uppercase tracking-wider">
+                                <span>Zoom / Scale</span>
+                                <span>{overlayConfig.scale.toFixed(2)}x</span>
+                            </div>
+                            <input 
+                              type="range" min="0.8" max="1.2" step="0.01" 
+                              value={overlayConfig.scale} 
+                              onChange={(e) => setOverlayConfig(p => ({...p, scale: parseFloat(e.target.value)}))} 
+                              className="w-full h-1.5 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-[#cc7e6d] hover:bg-gray-200 transition-colors"
                             />
-                          ))}
-                      </svg>
-                 </div>
+                        </div>
+
+                        {/* X Axis */}
+                        <div className="space-y-1">
+                             <div className="flex justify-between text-[9px] font-bold text-gray-400 uppercase tracking-wider">
+                                <span>Horizontal Shift</span>
+                                <span>{overlayConfig.x > 0 ? '+' : ''}{overlayConfig.x}%</span>
+                            </div>
+                            <input 
+                              type="range" min="-10" max="10" step="0.5" 
+                              value={overlayConfig.x} 
+                              onChange={(e) => setOverlayConfig(p => ({...p, x: parseFloat(e.target.value)}))} 
+                              className="w-full h-1.5 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-[#cc7e6d] hover:bg-gray-200 transition-colors"
+                            />
+                        </div>
+
+                         {/* Y Axis */}
+                         <div className="space-y-1">
+                             <div className="flex justify-between text-[9px] font-bold text-gray-400 uppercase tracking-wider">
+                                <span>Vertical Shift</span>
+                                <span>{overlayConfig.y > 0 ? '+' : ''}{overlayConfig.y}%</span>
+                            </div>
+                            <input 
+                              type="range" min="-10" max="10" step="0.5" 
+                              value={overlayConfig.y} 
+                              onChange={(e) => setOverlayConfig(p => ({...p, y: parseFloat(e.target.value)}))} 
+                              className="w-full h-1.5 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-[#cc7e6d] hover:bg-gray-200 transition-colors"
+                            />
+                        </div>
+                    </div>
+                    
+                    <div className="mt-4 pt-3 border-t border-gray-100">
+                        <p className="text-[9px] text-gray-400 font-medium italic text-center">
+                            Adjust to match muscle vectors with patient photo.
+                        </p>
+                    </div>
+                </div>
             )}
+
+            {/* SVG Anatomy Overlay (Visible when toggled) */}
+            <div className={`absolute inset-0 w-full h-full pointer-events-none transition-opacity duration-500 ${showMuscles ? 'opacity-100' : 'opacity-0'}`}>
+                {/* Darken background slightly to make muscles pop */}
+                <div className="absolute inset-0 bg-black/40 mix-blend-multiply"></div>
+                
+                {/* Transform Wrapper for Calibration */}
+                <div 
+                    className="absolute inset-0 w-full h-full"
+                    style={{
+                        transform: `translate(${overlayConfig.x}%, ${overlayConfig.y}%) scale(${overlayConfig.scale})`,
+                        transformOrigin: 'center center',
+                        transition: isRecalibrating ? 'none' : 'transform 0.3s ease-out'
+                    }}
+                >
+                    <svg 
+                       className="w-full h-full" 
+                       viewBox="0 0 100 100" 
+                       preserveAspectRatio="none"
+                     >
+                        {Object.values(activeAnatomy).flat().map((muscle, idx) => (
+                           <g key={idx}>
+                               <path 
+                                 d={muscle.path} 
+                                 fill={muscle.fill || "#cc7e6d"} 
+                                 fillOpacity={muscle.fillOpacity || 0.3}
+                                 stroke={muscle.stroke || "#fff"} 
+                                 strokeWidth={muscle.strokeWidth || 0.15}
+                               />
+                           </g>
+                         ))}
+                     </svg>
+                </div>
+            </div>
             
-            {/* Tryptych Dividers */}
+            {/* Tryptych Dividers (Fixed) */}
             <div className="absolute inset-0 pointer-events-none flex opacity-30">
               <div className="h-full w-1/3 border-r-2 border-white shadow-[2px_0_5px_rgba(0,0,0,0.1)]"></div>
               <div className="h-full w-1/3 border-r-2 border-white shadow-[2px_0_5px_rgba(0,0,0,0.1)]"></div>
             </div>
 
-            {/* Injection Points */}
+            {/* Injection Points (Draggable) */}
             {sites.map(site => (
               site.x && site.y &&
               <div 

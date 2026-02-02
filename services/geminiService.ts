@@ -45,8 +45,8 @@ export const analyzePatientInput = async (
     config: {
       systemInstruction: SYSTEM_INSTRUCTION,
       responseMimeType: "application/json",
-      // Retaining thinking budget for high-level anatomical deduction
-      thinkingConfig: { thinkingBudget: 4000 }
+      // Increased thinking budget for complex clinical reasoning
+      thinkingConfig: { thinkingBudget: 32768 }
     },
   });
 
@@ -59,6 +59,23 @@ export const analyzePatientInput = async (
     console.error("Parse error:", error);
     throw new Error("Clinical data processing error.");
   }
+};
+
+export const askClinicalQuestion = async (query: string): Promise<string> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-pro-preview',
+    contents: {
+      parts: [{ text: query }]
+    },
+    config: {
+      systemInstruction: SYSTEM_INSTRUCTION + "\n\nYou are acting as a Clinical Consultant. Answer queries with high-level medical accuracy, citing anatomical landmarks and safety protocols. Keep answers concise but comprehensive.",
+      thinkingConfig: { thinkingBudget: 32768 }
+    },
+  });
+
+  return response.text || "Unable to generate a response.";
 };
 
 export const generateProtocolVisual = async (
@@ -196,47 +213,6 @@ export const generatePostTreatmentVisual = async (
     }
   }
   throw new Error("Outcome simulation failed.");
-};
-
-export const generateAnatomicalOverlayVisual = async (
-  gender: PatientGender,
-  size: ImageSize = '1K'
-): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  
-  // Refined Prompt for Realism, Gender Specificity, and Neck Inclusion
-  const morphology = gender === PatientGender.MALE 
-    ? "Male morphology: Square jaw, broad forehead, hypertrophic musculature, thicker neck." 
-    : "Female morphology: Tapered jaw, arched brow, smooth forehead contour, slender neck.";
-
-  const prompt = `Hyper-realistic 3D anatomical render of facial and neck muscles (Subcutaneous View). 16:9 Tryptych format.
-  **MORPHOLOGY:** ${morphology}
-  **TEXTURE & SHADING:** Lifelike muscle striations, fascia sheen, realistic depth shading, and subsurface scattering. Clinical accuracy is paramount.
-  
-  **VIEW CONFIGURATION:**
-  - Panel 1: LEFT LATERAL PROFILE (90 deg). Facing RIGHT. Show Temporalis, Masseter, and lateral Platysma.
-  - Panel 2: ANTERIOR FRONTAL VIEW. Show Frontalis, Procerus/Corrugator, Orbicularis Oculi, Nasalis, and anterior Platysma bands extending to clavicle.
-  - Panel 3: RIGHT LATERAL PROFILE (90 deg). Facing LEFT. Show Temporalis, Masseter, and lateral Platysma.
-  
-  Background: Transparent/Black. High Contrast. NO skin layer, purely muscular/fascial layer.`;
-
-  const response = await ai.models.generateContent({
-    model: 'gemini-3-pro-image-preview',
-    contents: { parts: [{ text: prompt }] },
-    config: {
-      imageConfig: {
-        aspectRatio: "16:9",
-        imageSize: size,
-      },
-    },
-  });
-
-  for (const part of response.candidates[0].content.parts) {
-    if (part.inlineData) {
-      return `data:image/png;base64,${part.inlineData.data}`;
-    }
-  }
-  throw new Error("Anatomy render failed.");
 };
 
 export const generateAestheticVisual = async (
