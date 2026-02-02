@@ -113,6 +113,7 @@ export interface SimInjectionPoint {
   id: string;
   x: number;
   y: number;
+  hitType?: 'target' | 'avoid' | 'danger' | 'neutral';
 }
 
 export interface SimZone {

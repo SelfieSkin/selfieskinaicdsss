@@ -91,6 +91,25 @@ const SimulationEngine: React.FC = () => {
     }
   };
 
+  // Helper function to check if point is in polygon
+  const isPointInPoly = (p: {x: number, y: number}, polyString: string) => {
+    const vertices = polyString.split(' ').map(pair => {
+        const [vx, vy] = pair.split(',').map(Number);
+        return { x: vx, y: vy };
+    });
+    
+    let inside = false;
+    for (let i = 0, j = vertices.length - 1; i < vertices.length; j = i++) {
+        const xi = vertices[i].x, yi = vertices[i].y;
+        const xj = vertices[j].x, yj = vertices[j].y;
+        
+        const intersect = ((yi > p.y) !== (yj > p.y))
+            && (p.x < (xj - xi) * (p.y - yi) / (yj - yi) + xi);
+        if (intersect) inside = !inside;
+    }
+    return inside;
+  };
+
   const handleCanvasClick = (e: React.MouseEvent) => {
     if (gameState !== 'active') return;
     if (!containerRef.current) return;
@@ -99,11 +118,28 @@ const SimulationEngine: React.FC = () => {
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
 
+    // Determine immediate hit feedback
+    let hitType: 'target' | 'avoid' | 'danger' | 'neutral' = 'neutral';
+
+    for (const zone of LEVEL_1_CASE.zones) {
+        if (isPointInPoly({x, y}, zone.poly)) {
+            if (zone.type === 'target') {
+                hitType = 'target';
+                break; // Prioritize target matches
+            } else if (zone.scoreImpact <= -30) {
+                 hitType = 'danger';
+            } else if (zone.type === 'avoid') {
+                 hitType = 'avoid';
+            }
+        }
+    }
+
     // Add point
     const newPoint: SimInjectionPoint = {
       id: Date.now().toString(),
       x,
-      y
+      y,
+      hitType
     };
     setPoints([...points, newPoint]);
   };
@@ -120,34 +156,13 @@ const SimulationEngine: React.FC = () => {
     let hitDanger = false;
     const feedbackLog: string[] = [];
 
-    // Simple Point-in-Polygon algorithm
-    const isPointInPoly = (p: SimInjectionPoint, polyString: string) => {
-        const vertices = polyString.split(' ').map(pair => {
-            const [vx, vy] = pair.split(',').map(Number);
-            return { x: vx, y: vy };
-        });
-        
-        let inside = false;
-        for (let i = 0, j = vertices.length - 1; i < vertices.length; j = i++) {
-            const xi = vertices[i].x, yi = vertices[i].y;
-            const xj = vertices[j].x, yj = vertices[j].y;
-            
-            const intersect = ((yi > p.y) !== (yj > p.y))
-                && (p.x < (xj - xi) * (p.y - yi) / (yj - yi) + xi);
-            if (intersect) inside = !inside;
-        }
-        return inside;
-    };
-
     const zoneHits: Record<string, number> = {};
 
     points.forEach(p => {
-        let matchedZone = false;
         LEVEL_1_CASE.zones.forEach(z => {
             if (isPointInPoly(p, z.poly)) {
                 if (!zoneHits[z.id]) zoneHits[z.id] = 0;
                 zoneHits[z.id]++;
-                matchedZone = true;
             }
         });
     });
@@ -359,18 +374,47 @@ const SimulationEngine: React.FC = () => {
                  )}
 
                  {/* Rendering Points */}
-                 {points.map(p => (
-                    <div 
-                      key={p.id}
-                      onClick={(e) => removePoint(e, p.id)}
-                      className="absolute w-6 h-6 -translate-x-1/2 -translate-y-1/2 cursor-pointer z-20 transition-transform hover:scale-125"
-                      style={{ left: `${p.x}%`, top: `${p.y}%` }}
-                    >
-                        <div className="w-full h-full bg-[#cc7e6d] rounded-full border-2 border-white shadow-md flex items-center justify-center text-[8px] text-white font-bold">
-                            X
+                 {points.map(p => {
+                    let bgColor = 'bg-[#cc7e6d]';
+                    let icon = 'X';
+                    let label = null;
+
+                    if (p.hitType === 'target') {
+                        bgColor = 'bg-green-500';
+                        icon = '✓';
+                        label = 'TARGET';
+                    } else if (p.hitType === 'danger') {
+                        bgColor = 'bg-red-600 animate-pulse';
+                        icon = '!';
+                        label = 'DANGER';
+                    } else if (p.hitType === 'avoid') {
+                        bgColor = 'bg-orange-400';
+                        icon = '-';
+                        label = 'AVOID';
+                    }
+
+                    return (
+                        <div 
+                          key={p.id}
+                          onClick={(e) => removePoint(e, p.id)}
+                          className="absolute w-8 h-8 -translate-x-1/2 -translate-y-1/2 cursor-pointer z-20 transition-transform hover:scale-125 group/point"
+                          style={{ left: `${p.x}%`, top: `${p.y}%` }}
+                        >
+                            <div className={`w-full h-full rounded-full border-2 border-white shadow-md flex items-center justify-center text-[10px] text-white font-bold ${bgColor}`}>
+                                {icon}
+                            </div>
+                            
+                            {/* Immediate Feedback Label */}
+                            {label && (
+                                <div className={`absolute -top-6 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest whitespace-nowrap shadow-sm pointer-events-none
+                                    ${p.hitType === 'target' ? 'bg-green-100 text-green-800' : p.hitType === 'danger' ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-800'}
+                                `}>
+                                    {label}
+                                </div>
+                            )}
                         </div>
-                    </div>
-                 ))}
+                    );
+                 })}
                  
                  {/* Instructions Overlay if empty */}
                  {gameState === 'active' && points.length === 0 && (
