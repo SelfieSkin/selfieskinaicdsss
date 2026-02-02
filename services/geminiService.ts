@@ -111,17 +111,20 @@ export const generateTreatmentMapVisual = async (
   Patient: ${analysis.gender}. 
   ${conditionDescription}
   
-  PANEL CONFIGURATION (CRITICAL - TRUE PROFILE VIEWS):
+  PANEL CONFIGURATION (CRITICAL - RIGID ALIGNMENT):
   1. **LEFT PANEL (0-33%)**: PATIENT LEFT LATERAL PROFILE (90°).
-     - Must show TRUE SIDE PROFILE of the patient's Left Face.
-     - Patient must face RIGHT (towards the center panel).
+     - VIEW: Patient faces RIGHT.
+     - ZOOM: FILL THE PANEL WIDTH COMPLETELY.
+     - ALIGNMENT: Back of head/Ear MUST touch Left Edge (0%). Nose Tip MUST touch Right Edge (33%).
      
   2. **CENTER PANEL (33-66%)**: ANTERIOR VIEW (Frontal).
      - Direct eye contact. Symmetrical full face.
+     - ZOOM: FILL THE PANEL WIDTH. Ears touching edges (33% and 66%).
      
   3. **RIGHT PANEL (66-100%)**: PATIENT RIGHT LATERAL PROFILE (90°).
-     - Must show TRUE SIDE PROFILE of the patient's Right Face.
-     - Patient must face LEFT (towards the center panel).
+     - VIEW: Patient faces LEFT.
+     - ZOOM: FILL THE PANEL WIDTH COMPLETELY.
+     - ALIGNMENT: Nose Tip MUST touch Left Edge (66%). Back of head/Ear MUST touch Right Edge (100%).
 
   FRAMING: EXTREME CLOSE-UP HEADSHOTS ONLY (FROM NECK UP). 
   The eyes in all three panels must be aligned at approximately 50% vertical height.

@@ -268,7 +268,7 @@ const App: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-3">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Patient ID</label>
-                    <input type="text" placeholder="PX-000-000" value={patientId} onChange={(e) => setPatientId(e.target.value)} className="w-full border-gray-100 bg-gray-50 rounded-2xl px-6 py-4 text-sm font-bold focus:ring-4 focus:ring-[#cc7e6d]/10 outline-none transition-all"/>
+                    <input type="text" placeholder="PX-000-000" value={patientId} onChange={(e) => setPatientId(e.target.value)} className="w-full border-gray-100 bg-gray-50 rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-[#cc7e6d]/10 outline-none transition-all"/>
                   </div>
                   <div className="space-y-3">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Formula</label>
