@@ -11,7 +11,8 @@ import ClinicalReportModal from './components/ClinicalReportModal';
 import FeedbackModal from './components/FeedbackModal';
 import InjectionPlanTable from './components/InjectionPlanTable';
 import ComparativeDosing from './components/ComparativeDosing';
-import SimulationEngine from './components/SimulationEngine'; // New Import
+import SimulationEngine from './components/SimulationEngine';
+import BeforeAfterSlider from './components/BeforeAfterSlider'; // New Import
 import { 
   analyzePatientInput, 
   generatePostTreatmentVisual, 
@@ -218,6 +219,13 @@ const App: React.FC = () => {
     setResult({ ...result, sites: newSites });
   };
 
+  // NEW: Handle Recalibration Drags
+  const handleSiteMove = (siteId: string, x: number, y: number) => {
+    if (!result) return;
+    const newSites = result.sites.map(s => s.id === siteId ? { ...s, x, y } : s);
+    setResult({ ...result, sites: newSites });
+  };
+
   const handleFeedbackSubmit = (feedback: FeedbackData) => {
     if (!result || !patientId) return;
     const session: TreatmentSession = {
@@ -235,8 +243,6 @@ const App: React.FC = () => {
     setIsFeedbackOpen(false);
   };
   
-  // PROGRESSIVE LOADING: We do NOT include isGeneratingPostTreatmentVisual in the global loader.
-  // This allows the Analysis + Map to show while the Outcome Visual generates in the background.
   const isLoading = isAnalyzing || isGeneratingMap;
 
   return (
@@ -254,6 +260,7 @@ const App: React.FC = () => {
 
         {activeTab === 'assessment' && (
           <div className="space-y-12 animate-in fade-in duration-700">
+            {/* INTAKE PANEL */}
             <div className="bg-white p-10 md:p-14 rounded-[3rem] shadow-2xl border border-gray-50 flex flex-col xl:flex-row gap-14 items-center justify-between no-print">
               <div className="flex-1 space-y-10 w-full">
                 <div className="flex items-center justify-between flex-wrap gap-4">
@@ -305,9 +312,8 @@ const App: React.FC = () => {
 
             {!isLoading && result && (
               <div className="space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-700">
-                {/* Analysis Results Display */}
                 
-                {/* Tryptych Map */}
+                {/* 1. INTERACTIVE TRYPTYCH MAP */}
                 <div ref={mapRef}>
                   <AnatomicalMap 
                     ref={mapRef}
@@ -317,46 +323,30 @@ const App: React.FC = () => {
                     isGeneratingAnatomy={isGeneratingAnatomy}
                     sites={result.sites}
                     assessmentNarrative={result.assessmentNarrative}
-                    gender={selectedGender} // Pass gender to Map
+                    gender={selectedGender}
+                    onSiteMove={handleSiteMove} // Enable drag recalibration
                   />
                 </div>
 
-                {/* Outcome Projection - PROGRESSIVELY LOADED */}
+                {/* 2. PROJECTED OUTCOME CURTAIN SLIDER */}
                 <div className="space-y-6">
-                    <div className="flex justify-between items-end">
-                       <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight">Projected Clinical Outcome</h3>
-                       {isGeneratingPostTreatmentVisual && <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest animate-pulse">Running Simulation...</span>}
-                    </div>
-                    <div className="relative w-full aspect-[16/9] bg-gray-50 rounded-[3rem] border border-gray-100 overflow-hidden shadow-lg group">
-                        {isGeneratingPostTreatmentVisual ? (
-                             <div className="w-full h-full flex flex-col items-center justify-center">
-                                 <div className="w-12 h-12 border-4 border-gray-200 border-t-[#cc7e6d] rounded-full animate-spin mb-4"></div>
-                                 <p className="text-xs font-black text-gray-300 uppercase tracking-widest">Generating Tryptych Simulation...</p>
-                             </div>
-                        ) : postTreatmentImageUrl ? (
-                             <>
-                                <img 
-                                    src={postTreatmentImageUrl}
-                                    alt="Projected Outcome"
-                                    className="w-full h-full object-cover"
-                                />
-                                <div className="absolute inset-0 pointer-events-none flex opacity-30">
-                                    <div className="h-full w-1/3 border-r border-white/50"></div>
-                                    <div className="h-full w-1/3 border-r border-white/50"></div>
-                                </div>
-                                <div className="absolute bottom-6 left-6 bg-white/80 backdrop-blur-md px-4 py-2 rounded-xl border border-white/40 shadow-sm">
-                                    <span className="text-[10px] font-black text-[#cc7e6d] uppercase tracking-widest">AI Simulation</span>
-                                </div>
-                             </>
+                    <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight">Projected Clinical Outcome</h3>
+                    <div className="w-full">
+                        {treatmentMapImageUrl ? (
+                             <BeforeAfterSlider 
+                                beforeImage={treatmentMapImageUrl}
+                                afterImage={postTreatmentImageUrl || ''}
+                                isGenerating={isGeneratingPostTreatmentVisual}
+                             />
                         ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                                <span className="text-xs font-bold text-gray-300 uppercase">No Projection Available</span>
-                            </div>
+                             <div className="w-full aspect-[16/9] bg-gray-50 rounded-[3rem] border border-gray-100 flex items-center justify-center">
+                                 <span className="text-xs font-bold text-gray-300 uppercase">Analysis Pending</span>
+                             </div>
                         )}
                     </div>
                 </div>
 
-                {/* Step 2 & 3 Data Summary */}
+                {/* 3. CLINICAL DATA SUMMARY */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                    <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
                       <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6">Step 2: Dynamic Analysis</h3>
@@ -388,19 +378,17 @@ const App: React.FC = () => {
                    </div>
                 </div>
 
-                {/* Injection Plan Details */}
+                {/* 4. DETAILS & DOSING */}
                 <div className="space-y-4">
                     <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight">Injection Technique</h3>
                     <InjectionPlanTable sites={result.sites} />
                 </div>
 
-                {/* Comparative Dosing */}
                 <div className="space-y-4">
                     <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight">Dosing Intelligence</h3>
                     <ComparativeDosing data={result.step4} />
                 </div>
 
-                {/* Dosage Execution Table */}
                 <div className="space-y-4">
                    <div className="flex justify-between items-end">
                       <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight">Protocol Execution</h3>
@@ -418,7 +406,6 @@ const App: React.FC = () => {
                    />
                 </div>
 
-                {/* Action Buttons */}
                 <div className="flex justify-end gap-4 pt-8">
                    <button 
                      onClick={() => setIsFeedbackOpen(true)}
