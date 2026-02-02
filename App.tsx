@@ -17,7 +17,8 @@ import {
   analyzePatientInput, 
   generatePostTreatmentVisual, 
   generateTreatmentMapVisual, 
-  generateProtocolVisual
+  generateProtocolVisual,
+  generateAnatomicalLayerVisual
 } from './services/geminiService';
 import { AnalysisResult, ToxinBrand, TreatmentSession, PatientGender, FeedbackData } from './types';
 import { SAMPLE_ANALYSIS_FEMALE, SAMPLE_ANALYSIS_MALE } from './constants';
@@ -46,6 +47,7 @@ const App: React.FC = () => {
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   
   const [treatmentMapImageUrl, setTreatmentMapImageUrl] = useState<string | null>(null);
+  const [anatomicalLayerImageUrl, setAnatomicalLayerImageUrl] = useState<string | null>(null);
   const [postTreatmentImageUrl, setPostTreatmentImageUrl] = useState<string | null>(null);
   const [protocolImageUrl, setProtocolImageUrl] = useState<string | null>(null);
 
@@ -70,6 +72,7 @@ const App: React.FC = () => {
       setResult(null);
       setError(null);
       setTreatmentMapImageUrl(null);
+      setAnatomicalLayerImageUrl(null);
       setPostTreatmentImageUrl(null);
       setProtocolImageUrl(null);
     }
@@ -78,6 +81,7 @@ const App: React.FC = () => {
   const handleLoadSample = async () => {
     setResult(null);
     setTreatmentMapImageUrl(null);
+    setAnatomicalLayerImageUrl(null);
     setPostTreatmentImageUrl(null);
     setProtocolImageUrl(null);
     setError(null);
@@ -95,12 +99,19 @@ const App: React.FC = () => {
     try {
         setLoadingStage("Generating Clinical Baseline...");
         setIsGeneratingMap(true);
-        // Only generate the photo map, anatomy is now an overlay
+        
+        // 1. Generate Base Skin Image
         const imageUrl = await generateTreatmentMapVisual(freshSample, '2K');
         setTreatmentMapImageUrl(imageUrl);
+
+        // 2. Generate Anatomical Muscle Layer (based on skin image)
+        setLoadingStage("Constructing Anatomical Model...");
+        const anatomyUrl = await generateAnatomicalLayerVisual(imageUrl, '2K');
+        setAnatomicalLayerImageUrl(anatomyUrl);
+
         setIsGeneratingMap(false);
 
-        // Generate Protocol Image parallel to Post Visual
+        // 3. Generate Outcomes
         setLoadingStage("Simulating Outcomes & Protocol...");
         setIsGeneratingPostTreatmentVisual(true);
         const [postUrl, protoUrl] = await Promise.all([
@@ -132,6 +143,7 @@ const App: React.FC = () => {
     if (!mediaFile || !patientId) return;
     setResult(null);
     setTreatmentMapImageUrl(null);
+    setAnatomicalLayerImageUrl(null);
     setPostTreatmentImageUrl(null);
     setProtocolImageUrl(null);
     setError(null);
@@ -156,9 +168,15 @@ const App: React.FC = () => {
         
         const imageUrl = await generateTreatmentMapVisual(analysis, '2K');
         setTreatmentMapImageUrl(imageUrl);
+
+        // 3. Generate Anatomical Muscle Layer
+        setLoadingStage("Synthesizing Muscle Layer...");
+        const anatomyUrl = await generateAnatomicalLayerVisual(imageUrl, '2K');
+        setAnatomicalLayerImageUrl(anatomyUrl);
+        
         setIsGeneratingMap(false);
 
-        // 3. Project Outcome based on Visual & Analysis
+        // 4. Project Outcome based on Visual & Analysis
         setLoadingStage("Projecting Clinical Outcome...");
         setIsGeneratingPostTreatmentVisual(true);
         const [postUrl, protoUrl] = await Promise.all([
@@ -299,6 +317,7 @@ const App: React.FC = () => {
                   <AnatomicalMap 
                     ref={mapRef}
                     treatmentMapImageUrl={treatmentMapImageUrl}
+                    anatomicalLayerImageUrl={anatomicalLayerImageUrl}
                     isGenerating={isGeneratingMap}
                     sites={result.sites}
                     assessmentNarrative={result.assessmentNarrative}

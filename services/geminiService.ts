@@ -166,6 +166,48 @@ export const generateTreatmentMapVisual = async (
   throw new Error("Baseline tryptych generation failed.");
 };
 
+export const generateAnatomicalLayerVisual = async (
+  baseImageUrl: string,
+  size: ImageSize = '1K'
+): Promise<string> => {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    
+    // Using the base image as strict reference
+    const imagePart = {
+        inlineData: {
+            mimeType: 'image/png',
+            data: dataUrlToBase64(baseImageUrl)
+        }
+    };
+
+    const prompt = `Generate an exact anatomical muscle layer overlay for this specific image.
+    STRICT ALIGNMENT RULE: The output must match the input image's geometry, pose, and framing pixel-for-pixel. 
+    
+    VISUAL STYLE:
+    - Retain the exact head shape, eyes, nose, and mouth positions from the input.
+    - Remove the skin to reveal the underlying facial muscles (Frontalis, Orbicularis Oculi, Procerus, Corrugator, Nasalis).
+    - Style: High-quality medical illustration / biological rendering.
+    - Muscle Texture: Red striated muscle fiber.
+    - Background: Keep the original background or simple white/gray, but alignment is priority.
+    
+    Goal: This image will be overlaid on top of the original to show 'X-ray' anatomy.`;
+
+    const response = await ai.models.generateContent({
+        model: 'gemini-3-pro-image-preview',
+        contents: { parts: [imagePart, { text: prompt }] },
+        config: {
+            imageConfig: { aspectRatio: "16:9", imageSize: size }
+        },
+    });
+
+    for (const part of response.candidates[0].content.parts) {
+        if (part.inlineData) {
+            return `data:image/png;base64,${part.inlineData.data}`;
+        }
+    }
+    throw new Error("Anatomical layer generation failed.");
+};
+
 export const generatePostTreatmentVisual = async (
   analysis: AnalysisResult,
   baselineImageDataUrl: string | null,
