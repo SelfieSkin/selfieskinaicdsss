@@ -3,15 +3,13 @@ import React, { useState, useRef } from 'react';
 import { SimCase, SimInjectionPoint, SimZone } from '../types';
 import { generateSimulationCaseVisual } from '../services/geminiService';
 
-// --- CASE DATA DEFINITION (Level 1) ---
-// Coordinates Recalibrated for "Eyes at 50% Height" Rule.
-// Aspect Ratio 4:3.
-// Y-Axis Key: Hairline ~15%, Forehead 20-40%, Brows ~45%, Eyes 50%.
+// --- CASE DATA DEFINITION (Level 1 - Frontal) ---
 const LEVEL_1_CASE: SimCase = {
   id: 'lvl1_spock',
-  title: "Asymmetric Brow Elevation (Spock Brow)",
+  title: "Level 1: Asymmetric Brow Elevation",
   level: 1,
   patientDescription: "38-year-old male. Reports 'overly surprised' appearance on the left side. No prior treatment history.",
+  view: 'frontal',
   findings: {
     static: ["Left lateral brow elevation at rest", "Preserved central brow position"],
     dynamic: ["Dominant recruitment of left lateral frontalis", "Compensatory engagement during relaxation"],
@@ -25,8 +23,6 @@ const LEVEL_1_CASE: SimCase = {
       name: 'Left Lateral Frontalis',
       type: 'target',
       // TARGET: High Lateral Forehead (Patient Left / Image Right)
-      // Must be ABOVE the Spock brow to drop it.
-      // X: 60-90% (Lateral), Y: 20-35% (High Forehead)
       poly: "60,20 90,20 85,35 60,35", 
       scoreImpact: 40,
       feedback: "Correct identification of hyperactive lateral fibers."
@@ -35,9 +31,6 @@ const LEVEL_1_CASE: SimCase = {
       id: 'avoid_right_lat_front',
       name: 'Right Lateral Frontalis',
       type: 'avoid',
-      // AVOID: High Lateral Forehead (Patient Right / Image Left)
-      // Treating this would drop the already flat brow.
-      // X: 10-40%, Y: 20-35%
       poly: "10,20 40,20 40,35 15,35", 
       scoreImpact: -15,
       feedback: "Unnecessary treatment of normal side may cause asymmetry."
@@ -46,9 +39,6 @@ const LEVEL_1_CASE: SimCase = {
       id: 'avoid_central_front',
       name: 'Central Frontalis',
       type: 'avoid',
-      // AVOID: Center Forehead (Patient Center)
-      // Risk of heavy brows if overtreated.
-      // X: 40-60%, Y: 20-38%
       poly: "40,20 60,20 60,38 40,38",
       scoreImpact: -20,
       feedback: "Risk of brow heaviness due to central overtreatment."
@@ -57,8 +47,6 @@ const LEVEL_1_CASE: SimCase = {
       id: 'avoid_low_zone',
       name: 'Orbital Rim / Low Frontalis',
       type: 'avoid',
-      // DANGER ZONE: Immediate supraorbital region.
-      // Y: 40-55% (Brows & Lids)
       poly: "0,40 100,40 100,55 0,55",
       scoreImpact: -30,
       feedback: "CRITICAL SAFETY: Injection too close to orbital rim. High Ptosis Risk."
@@ -66,11 +54,82 @@ const LEVEL_1_CASE: SimCase = {
   ]
 };
 
+// --- CASE DATA DEFINITION (Level 2 - Profile) ---
+// Coordinates for Profile View (Patient Facing Right).
+// Ear ~15%, Eye ~65%.
+// Target: 1.5cm Temporal to Canthus (~15% width behind eye).
+const LEVEL_2_CASE: SimCase = {
+  id: 'lvl2_crows',
+  title: "Level 2: Lateral Canthal Rhytids",
+  level: 2,
+  patientDescription: "45-year-old female. Concerns about deep 'fan-like' lines around eyes when smiling. Desires natural softening.",
+  view: 'profile',
+  findings: {
+    static: ["Deep static rhytids extending to cheek", "Thin skin in periocular region"],
+    dynamic: ["Strong Orbicularis Oculi recruitment", "Involvement of zygomaticus (cheek) in smile"],
+    primary: ["Hyperactive Orbicularis Oculi (Lateral)", "Risk of lip drop if injected too low/medial"]
+  },
+  idealPointCount: { min: 3, max: 5 },
+  maxScore: 100,
+  zones: [
+    {
+      id: 'target_c1',
+      name: 'C1: Central Orbicularis',
+      type: 'target',
+      // 1.5cm Temporal to Canthus (X~50-55, Y~46)
+      poly: "48,43 56,43 56,49 48,49",
+      scoreImpact: 30,
+      feedback: "Excellent. 1.5cm temporal to canthus ensures safety."
+    },
+    {
+      id: 'target_c2',
+      name: 'C2: Superior Orbicularis',
+      type: 'target',
+      // Superior, angled 30 deg medially (X~50, Y~38)
+      poly: "45,35 53,35 53,41 45,41",
+      scoreImpact: 20,
+      feedback: "Good superior placement treating upward radiating lines."
+    },
+    {
+      id: 'target_c3',
+      name: 'C3: Inferior Orbicularis',
+      type: 'target',
+      // Inferior, angled 30 deg medially (X~50, Y~52)
+      poly: "45,51 53,51 53,58 45,58",
+      scoreImpact: 20,
+      feedback: "Correct inferior placement. Careful of zygomaticus."
+    },
+    {
+      id: 'danger_medial',
+      name: 'Orbital Rim / Medial Zone',
+      type: 'avoid',
+      // Anterior to canthus (X > 60)
+      poly: "60,35 75,35 75,60 60,60",
+      scoreImpact: -40,
+      feedback: "DANGER: Injection medial to orbital rim. High risk of Diplopia/Ptosis."
+    },
+    {
+      id: 'danger_inferior',
+      name: 'Zygomaticus Major Origin',
+      type: 'avoid',
+      // Low and medial (Cheek area)
+      poly: "50,62 70,62 70,75 50,75",
+      scoreImpact: -30,
+      feedback: "AVOID: Too low/medial. Risk of Zygomaticus/Lip Drop."
+    }
+  ]
+};
+
+const CASES = [LEVEL_1_CASE, LEVEL_2_CASE];
+
 const SimulationEngine: React.FC = () => {
+  const [currentLevelIdx, setCurrentLevelIdx] = useState(0);
   const [gameState, setGameState] = useState<'briefing' | 'loading' | 'active' | 'feedback'>('briefing');
   const [points, setPoints] = useState<SimInjectionPoint[]>([]);
   const [simulationImage, setSimulationImage] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const currentCase = CASES[currentLevelIdx];
 
   // --- ACTIONS ---
 
@@ -78,8 +137,9 @@ const SimulationEngine: React.FC = () => {
     setGameState('loading');
     try {
         const img = await generateSimulationCaseVisual(
-            LEVEL_1_CASE.patientDescription, 
-            LEVEL_1_CASE.findings.primary
+            currentCase.patientDescription, 
+            currentCase.findings.primary,
+            currentCase.view
         );
         setSimulationImage(img);
         setPoints([]);
@@ -89,6 +149,24 @@ const SimulationEngine: React.FC = () => {
         alert("Failed to generate clinical case. Please check API settings.");
         setGameState('briefing');
     }
+  };
+
+  const handleNextLevel = () => {
+      if (currentLevelIdx < CASES.length - 1) {
+          setCurrentLevelIdx(prev => prev + 1);
+          setGameState('briefing');
+          setSimulationImage(null);
+          setPoints([]);
+      }
+  };
+
+  const handlePrevLevel = () => {
+      if (currentLevelIdx > 0) {
+          setCurrentLevelIdx(prev => prev - 1);
+          setGameState('briefing');
+          setSimulationImage(null);
+          setPoints([]);
+      }
   };
 
   // Helper function to check if point is in polygon
@@ -121,7 +199,7 @@ const SimulationEngine: React.FC = () => {
     // Determine immediate hit feedback
     let hitType: 'target' | 'avoid' | 'danger' | 'neutral' = 'neutral';
 
-    for (const zone of LEVEL_1_CASE.zones) {
+    for (const zone of currentCase.zones) {
         if (isPointInPoly({x, y}, zone.poly)) {
             if (zone.type === 'target') {
                 hitType = 'target';
@@ -152,61 +230,51 @@ const SimulationEngine: React.FC = () => {
 
   const calculateScore = () => {
     let score = 0;
-    let hitTarget = false;
-    let hitDanger = false;
     const feedbackLog: string[] = [];
-
     const zoneHits: Record<string, number> = {};
 
     points.forEach(p => {
-        LEVEL_1_CASE.zones.forEach(z => {
+        currentCase.zones.forEach(z => {
             if (isPointInPoly(p, z.poly)) {
                 if (!zoneHits[z.id]) zoneHits[z.id] = 0;
                 zoneHits[z.id]++;
+                
+                // Add specific zone feedback if not already added
+                if (zoneHits[z.id] === 1) { // Log once per zone
+                    if (z.scoreImpact > 0) feedbackLog.push(`✅ ${z.feedback}`);
+                    else if (z.scoreImpact <= -30) feedbackLog.push(`⛔ ${z.feedback}`);
+                    else feedbackLog.push(`⚠️ ${z.feedback}`);
+                }
             }
         });
     });
 
-    // Scoring Logic based on Hits
-    // Target: Left Lat Frontalis
-    if (zoneHits['target_left_lat_front'] && zoneHits['target_left_lat_front'] >= 1) {
-        score += 40; // Indication Recognition + Placement
-        hitTarget = true;
-        feedbackLog.push("✅ Primary Indication Treated: Left Lateral Frontalis.");
-    } else {
-        feedbackLog.push("❌ Failed to treat primary indication (Left Lateral Frontalis).");
-    }
-
-    // Penalties
-    if (zoneHits['avoid_right_lat_front']) {
-        score -= 15;
-        feedbackLog.push("⚠️ Unnecessary treatment of normal right side.");
-    }
-    if (zoneHits['avoid_central_front']) {
-        score -= 20;
-        feedbackLog.push("⚠️ Central frontalis overtreatment risk.");
-    }
-    if (zoneHits['avoid_low_zone']) {
-        score -= 30;
-        hitDanger = true;
-        feedbackLog.push("⛔ CRITICAL: Injection in Ptosis Danger Zone.");
-    }
+    // Sum Score Impacts
+    Object.keys(zoneHits).forEach(zoneId => {
+        const zone = currentCase.zones.find(z => z.id === zoneId);
+        if (zone) {
+            score += zone.scoreImpact * zoneHits[zoneId];
+        }
+    });
 
     // Point Count Logic (Efficiency)
-    if (points.length >= LEVEL_1_CASE.idealPointCount.min && points.length <= LEVEL_1_CASE.idealPointCount.max) {
+    if (points.length >= currentCase.idealPointCount.min && points.length <= currentCase.idealPointCount.max) {
         score += 20; // Efficiency bonus
-    } else if (points.length > LEVEL_1_CASE.idealPointCount.max) {
+        feedbackLog.push(`✅ Optimal number of injection points used (${points.length}).`);
+    } else if (points.length > currentCase.idealPointCount.max) {
         score -= 10;
         feedbackLog.push("ℹ️ Over-injection: Too many sites selected.");
+    } else if (points.length < currentCase.idealPointCount.min) {
+        feedbackLog.push("ℹ️ Under-treatment: Insufficient coverage.");
     }
 
     // Base Participation
-    if (points.length > 0) score += 20;
+    if (points.length > 0) score += 10;
 
     // Cap Score
     score = Math.max(0, Math.min(100, score));
 
-    return { score, feedbackLog, hitDanger, hitTarget };
+    return { score, feedbackLog };
   };
 
   const results = gameState === 'feedback' ? calculateScore() : null;
@@ -217,10 +285,15 @@ const SimulationEngine: React.FC = () => {
       {/* HEADER */}
       <div className="flex justify-between items-end border-b border-gray-100 pb-4">
         <div>
-           <span className="text-[10px] font-black text-[#cc7e6d] uppercase tracking-widest block mb-1">
-             Simulator Level {LEVEL_1_CASE.level}
-           </span>
-           <h2 className="text-2xl font-black text-gray-800">{LEVEL_1_CASE.title}</h2>
+           <div className="flex items-center gap-2 mb-1">
+             <span className="text-[10px] font-black text-[#cc7e6d] uppercase tracking-widest">
+               Level {currentCase.level} / {CASES.length}
+             </span>
+             {currentLevelIdx > 0 && (
+                <button onClick={handlePrevLevel} className="text-[9px] text-gray-400 hover:text-gray-600 underline">Previous</button>
+             )}
+           </div>
+           <h2 className="text-2xl font-black text-gray-800">{currentCase.title}</h2>
         </div>
         <div className="text-right">
            <span className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest ${gameState === 'active' ? 'bg-green-100 text-green-700 animate-pulse' : 'bg-gray-100 text-gray-500'}`}>
@@ -238,25 +311,25 @@ const SimulationEngine: React.FC = () => {
                 <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-6">
                    <div>
                       <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-2">Patient Profile</h3>
-                      <p className="text-sm text-gray-600 leading-relaxed">{LEVEL_1_CASE.patientDescription}</p>
+                      <p className="text-sm text-gray-600 leading-relaxed">{currentCase.patientDescription}</p>
                    </div>
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                        <div className="bg-gray-50 p-4 rounded-2xl">
                            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Static Findings</h4>
                            <ul className="list-disc list-inside space-y-1">
-                               {LEVEL_1_CASE.findings.static.map((f, i) => <li key={i} className="text-xs font-bold text-gray-700">{f}</li>)}
+                               {currentCase.findings.static.map((f, i) => <li key={i} className="text-xs font-bold text-gray-700">{f}</li>)}
                            </ul>
                        </div>
                        <div className="bg-blue-50 p-4 rounded-2xl">
                            <h4 className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-2">Dynamic Findings</h4>
                            <ul className="list-disc list-inside space-y-1">
-                               {LEVEL_1_CASE.findings.dynamic.map((f, i) => <li key={i} className="text-xs font-bold text-blue-800">{f}</li>)}
+                               {currentCase.findings.dynamic.map((f, i) => <li key={i} className="text-xs font-bold text-blue-800">{f}</li>)}
                            </ul>
                        </div>
                    </div>
                    <div className="pt-4">
                        <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-2">Mission Objective</h3>
-                       <p className="text-xs text-gray-500 mb-6">Identify indications and place injection points to correct asymmetry while minimizing risk. Gamified scoring applies.</p>
+                       <p className="text-xs text-gray-500 mb-6">Identify indications and place injection points to correct rhytids while minimizing risk. {currentCase.view === 'profile' ? 'View is lateral profile.' : 'View is frontal.'}</p>
                        <button 
                          onClick={handleInitialize}
                          className="w-full py-4 bg-[#cc7e6d] text-white font-black uppercase tracking-[0.2em] rounded-2xl shadow-lg hover:bg-[#b86d5e] transition-all"
@@ -271,7 +344,7 @@ const SimulationEngine: React.FC = () => {
                  <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm h-full flex flex-col items-center justify-center text-center">
                      <div className="w-16 h-16 border-[6px] border-gray-100 border-t-[#cc7e6d] rounded-full animate-spin mb-6"></div>
                      <h3 className="text-sm font-black text-gray-800 uppercase tracking-widest">Generating Patient Simulation</h3>
-                     <p className="text-xs text-gray-400 mt-2">Creating medically realistic facial asymmetry...</p>
+                     <p className="text-xs text-gray-400 mt-2">Creating medically realistic {currentCase.view} facial anatomy...</p>
                  </div>
             )}
 
@@ -280,22 +353,22 @@ const SimulationEngine: React.FC = () => {
                    <div className="space-y-4">
                         <div className="bg-gray-50 p-4 rounded-2xl border-l-4 border-[#cc7e6d]">
                             <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Active Indications</h4>
-                            <p className="text-sm font-bold text-gray-800">{LEVEL_1_CASE.findings.primary[0]}</p>
+                            <p className="text-sm font-bold text-gray-800">{currentCase.findings.primary[0]}</p>
                         </div>
                         <div className="p-4 rounded-2xl border border-dashed border-gray-200 text-center">
                             <span className="text-4xl block mb-2">💉</span>
                             <p className="text-xs font-bold text-gray-500">Tap/Click on the face map to place injection points.</p>
-                            <p className="text-[10px] text-gray-400 mt-1">Target: Correct Asymmetry</p>
+                            <p className="text-[10px] text-gray-400 mt-1">Target: {currentCase.title}</p>
                         </div>
                    </div>
                    
                    <div className="space-y-3">
                         <div className="flex justify-between text-xs font-bold text-gray-400 uppercase tracking-wider">
                             <span>Syringes Used</span>
-                            <span>{points.length} / 5 Max</span>
+                            <span>{points.length} / {currentCase.idealPointCount.max} Max</span>
                         </div>
                         <div className="w-full bg-gray-100 rounded-full h-2">
-                            <div className="bg-[#cc7e6d] h-2 rounded-full transition-all duration-300" style={{ width: `${(points.length/5)*100}%`}}></div>
+                            <div className="bg-[#cc7e6d] h-2 rounded-full transition-all duration-300" style={{ width: `${(points.length/currentCase.idealPointCount.max)*100}%`}}></div>
                         </div>
                         <button 
                             onClick={() => setGameState('feedback')}
@@ -318,7 +391,7 @@ const SimulationEngine: React.FC = () => {
                         </span>
                     </div>
 
-                    <div className="space-y-3">
+                    <div className="space-y-3 max-h-40 overflow-y-auto custom-scrollbar">
                         <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Feedback Log</h4>
                         {results.feedbackLog.map((log, i) => (
                             <div key={i} className="text-xs font-medium text-gray-700 p-2 bg-gray-50 rounded-lg border border-gray-100">
@@ -327,12 +400,22 @@ const SimulationEngine: React.FC = () => {
                         ))}
                     </div>
 
-                    <button 
-                        onClick={() => { setPoints([]); setGameState('briefing'); }}
-                        className="w-full py-3 bg-gray-100 text-gray-500 font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-gray-200 transition-all text-xs"
-                    >
-                        Reset Simulator
-                    </button>
+                    <div className="flex gap-2">
+                        <button 
+                            onClick={() => { setPoints([]); setGameState('briefing'); }}
+                            className="flex-1 py-3 bg-gray-100 text-gray-500 font-black uppercase tracking-widest rounded-2xl hover:bg-gray-200 transition-all text-[10px]"
+                        >
+                            Retry Level
+                        </button>
+                        {currentLevelIdx < CASES.length - 1 && results.score >= 70 && (
+                            <button 
+                                onClick={handleNextLevel}
+                                className="flex-1 py-3 bg-[#cc7e6d] text-white font-black uppercase tracking-widest rounded-2xl hover:bg-[#b86d5e] transition-all text-[10px]"
+                            >
+                                Next Level
+                            </button>
+                        )}
+                    </div>
                 </div>
             )}
         </div>
@@ -360,7 +443,7 @@ const SimulationEngine: React.FC = () => {
                  {/* Hit Zones Overlay (Visible only in Feedback) */}
                  {gameState === 'feedback' && (
                      <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none">
-                         {LEVEL_1_CASE.zones.map(zone => (
+                         {currentCase.zones.map(zone => (
                              <polygon 
                                  key={zone.id}
                                  points={zone.poly}

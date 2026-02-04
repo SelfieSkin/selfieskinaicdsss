@@ -307,27 +307,43 @@ export const generateAestheticVisual = async (
 
 export const generateSimulationCaseVisual = async (
   caseDescription: string,
-  findings: string[]
+  findings: string[],
+  view: 'frontal' | 'profile' = 'frontal'
 ): Promise<string> => {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    // Recalibrated prompt for strict alignment
-    const prompt = `Hyper-realistic clinical medical photography of a 38-year-old male patient. Frontal view only. 4:3 Aspect Ratio.
     
-    PATHOLOGY: **"Spock Brow" Asymmetry**.
-    - The Patient's LEFT Eyebrow (appears on the RIGHT side of the image) is arched excessively high in a sharp peak.
-    - The Patient's RIGHT Eyebrow (appears on the LEFT side of the image) is flat and heavy.
+    let promptViewDetails = "";
+    if (view === 'profile') {
+        promptViewDetails = `
+        VIEW CONFIGURATION:
+        - **Lateral Profile View (90°)**.
+        - Patient facing **RIGHT**.
+        - Left side of face visible.
+        - FRAMING: Ear at Left Edge (~15%), Nose Tip at Right Edge (~85%).
+        - Eye/Canthus clearly visible at ~45% height.
+        `;
+    } else {
+        promptViewDetails = `
+        VIEW CONFIGURATION:
+        - **Frontal View only**.
+        - Face perfectly centered.
+        - Symmetrical lighting.
+        `;
+    }
+
+    const prompt = `Hyper-realistic clinical medical photography. 
+    Subject: ${caseDescription}. 4:3 Aspect Ratio.
+    
+    PATHOLOGY:
+    ${findings.join('\n')}
+    
+    ${promptViewDetails}
     
     FRAMING GUIDELINES (CRITICAL):
-    - Headshot format.
-    - Face perfectly centered.
+    - Headshot format (Neck up).
     - **Eyes positioned at exactly 50% vertical height.**
-    - Hairline at ~15% vertical height.
-    - Chin at ~85% vertical height.
-    
-    STYLE:
-    - Medical reference photography.
-    - Even, flat lighting (no dramatic shadows).
-    - Neutral solid gray background.`;
+    - Neutral solid gray background.
+    - No text, labels, or overlays.`;
 
     const response = await ai.models.generateContent({
         model: 'gemini-3-pro-image-preview',

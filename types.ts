@@ -130,6 +130,7 @@ export interface SimCase {
   title: string;
   level: number;
   patientDescription: string;
+  view: 'frontal' | 'profile';
   findings: {
     static: string[];
     dynamic: string[];

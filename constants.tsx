@@ -150,32 +150,18 @@ export const SAMPLE_ANALYSIS_FEMALE = {
     aimsDisclaimer: "Clinical decision support only."
   },
   sites: [
-    // --- CENTER PANEL (33-66.6%) ---
-    // Midline is X=50.
-    // Glabella (Total 18U)
     { id: "f-g1-c", label: "G1", region: "Glabella", muscle: "Procerus", doseOna: 6, rationale: "Center.", x: 50, y: 38 },
     { id: "f-g2r-c", label: "G2R", region: "Glabella", muscle: "Corrugator", doseOna: 6, rationale: "Patient Right (Medial).", x: 46.5, y: 37 },
     { id: "f-g2l-c", label: "G2L", region: "Glabella", muscle: "Corrugator", doseOna: 6, rationale: "Patient Left (Medial).", x: 53.5, y: 37 },
-    
-    // Frontalis (Total 12U)
-    // Patient Right is X < 50. Patient Left is X > 50.
     { id: "f-f1r-c", label: "F1R", region: "Forehead", muscle: "Frontalis", doseOna: 3, rationale: "Patient Right (Mid).", x: 43, y: 28 },
     { id: "f-f2l-c", label: "F2L", region: "Forehead", muscle: "Frontalis", doseOna: 3, rationale: "Patient Left (Mid).", x: 57, y: 28 },
     { id: "f-f3r-c", label: "F3R", region: "Forehead", muscle: "Frontalis", doseOna: 3, rationale: "Patient Right (High).", x: 39, y: 20 },
     { id: "f-f4l-c", label: "F4L", region: "Forehead", muscle: "Frontalis", doseOna: 3, rationale: "Patient Left (High).", x: 61, y: 20 },
-
-    // Bunny Lines (Total 6U)
     { id: "f-b1r-c", label: "B1R", region: "Bunny Lines", muscle: "Nasalis", doseOna: 3, rationale: "Patient Right.", x: 47.5, y: 53 },
     { id: "f-b1l-c", label: "B1L", region: "Bunny Lines", muscle: "Nasalis", doseOna: 3, rationale: "Patient Left.", x: 52.5, y: 53 },
-    
-    // --- PROFILE PANELS ---
-    // Left Profile Panel (0-33.3%) - Patient Facing Right. Nose at 33.3.
-    // C1L (Crow's Feet) is Posterior to Eye (closer to 0). E1L is Anterior (closer to 33).
     { id: "f-c1l-l", label: "C1L", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 4, rationale: "Central. 1.5cm temporal to canthus.", x: 22, y: 46 },
     { id: "f-c2l-l", label: "C2L", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 4, rationale: "Superior. 30° medial vector.", x: 20, y: 42 },
     { id: "f-c3l-l", label: "C3L", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 4, rationale: "Inferior. 30° medial vector.", x: 20, y: 50 },
-
-    // Right Profile Panel (66.6-100%) - Patient Facing Left. Nose at 66.6.
     { id: "f-c1r-r", label: "C1R", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 4, rationale: "Central. 1.5cm temporal to canthus.", x: 78, y: 46 },
     { id: "f-c2r-r", label: "C2R", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 4, rationale: "Superior. 30° medial vector.", x: 80, y: 42 },
     { id: "f-c3r-r", label: "C3R", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 4, rationale: "Inferior. 30° medial vector.", x: 80, y: 50 }
@@ -212,7 +198,7 @@ export const SAMPLE_ANALYSIS_MALE = {
   },
   step4: {
     dosingRows: [
-      { region: "Glabella", onaDose: 24, aboDose25: 60, aboDose30: 72, daxDose: "40U+", notes: "Male Hypertrophic Dose." },
+      { region: "Glabella", onaDose: 24, aboDose25: 60, aboDose20: 72, daxDose: "40U+", notes: "Male Hypertrophic Dose." },
       { region: "Bunny Lines", onaDose: 6, aboDose25: 15, aboDose30: 18, daxDose: "3U/side." },
       { region: "Forehead", onaDose: 16, aboDose25: 40, aboDose30: 48, daxDose: "Heavy frontalis load.", notes: "Conservative" }
     ],
@@ -220,26 +206,16 @@ export const SAMPLE_ANALYSIS_MALE = {
     aimsDisclaimer: "Clinical judgment mandatory."
   },
   sites: [
-    // --- CENTER PANEL (33-66.6%) ---
-    // Glabella (Total 24U)
     { id: "m-g1-c", label: "G1", region: "Glabella", muscle: "Procerus", doseOna: 8, rationale: "Male dose.", x: 50, y: 40 },
     { id: "m-g2r-c", label: "G2R", region: "Glabella", muscle: "Corrugator", doseOna: 8, rationale: "Pt Right.", x: 46, y: 38 },
     { id: "m-g2l-c", label: "G2L", region: "Glabella", muscle: "Corrugator", doseOna: 8, rationale: "Pt Left.", x: 54, y: 38 },
-    
-    // Frontalis (Total 16U)
     { id: "m-f1r-c", label: "F1R", region: "Forehead", muscle: "Frontalis", doseOna: 4, rationale: "Pt Right Lat.", x: 38, y: 26 },
     { id: "m-f2r-c", label: "F2R", region: "Forehead", muscle: "Frontalis", doseOna: 4, rationale: "Pt Right Med.", x: 44, y: 26 },
     { id: "m-f3l-c", label: "F3L", region: "Forehead", muscle: "Frontalis", doseOna: 4, rationale: "Pt Left Med.", x: 56, y: 26 },
     { id: "m-f4l-c", label: "F4L", region: "Forehead", muscle: "Frontalis", doseOna: 4, rationale: "Pt Left Lat.", x: 62, y: 26 },
-
-    // Bunny Lines (Total 6U)
     { id: "m-b1r-c", label: "B1R", region: "Bunny Lines", muscle: "Nasalis", doseOna: 3, rationale: "Pt Right.", x: 47, y: 53 },
     { id: "m-b1l-c", label: "B1L", region: "Bunny Lines", muscle: "Nasalis", doseOna: 3, rationale: "Pt Left.", x: 53, y: 53 },
-    
-    // --- PROFILE PANELS ---
-    // Left Profile: Eye ~ 28%, Crow's feet ~ 22% (Posterior)
     { id: "m-c1l-l", label: "C1L", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 5, rationale: "Central. 1.5cm temporal.", x: 22, y: 46 },
-    // Right Profile: Eye ~ 72%, Crow's feet ~ 78% (Posterior)
     { id: "m-c1r-r", label: "C1R", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 5, rationale: "Central. 1.5cm temporal.", x: 78, y: 46 }
   ],
   dangerZones: [{ id: "md1", region: "Supraorbital", risk: "Avoid feminizing arch." }],
@@ -277,6 +253,39 @@ export const KNOWLEDGE_BASE_DATA = {
             { title: "Lateral Crow's Feet", detail: "Smiling lines." },
             { title: "Inferior Eyelid Lines", detail: "Fine lines under eye (Inf. Orbicularis)." }
           ]
+        }
+      ]
+    },
+    {
+      area: 'Advanced Injection Pattern Variants',
+      color: 'border-[#cc7e6d]',
+      muscles: [
+        {
+            name: 'Glabella Variations',
+            description: 'Adapting to muscle mass and recruitment.',
+            indications: [
+                { title: "Wide Pattern", detail: "For lateral corrugator recruitment. Adds superficial lateral point." },
+                { title: "Strong Pattern", detail: "Male/Hypertrophic. High dose (up to 80U total) often required." },
+                { title: "Down Pull", detail: "Dominant Procerus/Depressor Supercilii. Focus medial dose." },
+                { title: "Cautious", detail: "Lower dose above mid-pupillary line to reduce ptosis risk." }
+            ]
+        },
+        {
+            name: 'Forehead Variations',
+            description: 'Managing brow height and shape.',
+            indications: [
+                { title: "Short Forehead", detail: "Reduced vertical space. Small doses high near hairline." },
+                { title: "Tall Forehead", detail: "Requires multiple rows. Leave lower 2cm clear." },
+                { title: "Lateral Lift", detail: "Leave lateral frontalis active to preserve brow arch." }
+            ]
+        },
+        {
+            name: "Crow's Feet Variants",
+            description: "Orbicularis Oculi tailoring.",
+            indications: [
+                { title: "Modified Inferior", detail: "For low rhytids. Angle anteroinferior to superoposterior." },
+                { title: "Pinched Look Prevention", detail: "Lower inferior dose to preserve cheek elevation (Zygomaticus)." }
+            ]
         }
       ]
     }
