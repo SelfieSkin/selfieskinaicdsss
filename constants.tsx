@@ -28,16 +28,28 @@ You must actively screen for and classify:
 - **Brow Asymmetry:** Identify resting height differences or dynamic recruitment variance.
 - **Compensatory Recruitment:** E.g., Eyebrow elevation during eye closure.
 
-**GENDER-SPECIFIC DOSING & AESTHETICS:**
+**INJECTION PROTOCOLS & MAPPING RULES:**
+
+**A. ORBICULARIS OCULI (CROW'S FEET) PROTOCOL:**
+Implement the standard **3-Point Injection Pattern**:
+1.  **Central Point (C1):** Located at the level of the lateral canthus. **CRITICAL SAFETY:** Must be placed **1.5 cm to 2.0 cm temporal** to the lateral canthus (just temporal to the lateral orbital rim) to avoid extraocular muscle involvement.
+2.  **Superior Point (C2):** Located 1.0-1.5 cm superior to C1. Angle placement ~30° medially toward the brow tail.
+3.  **Inferior Point (C3):** Located 1.0-1.5 cm inferior to C1. Angle placement ~30° medially toward the cheek.
+*Modified Pattern:* If rhytids are primarily inferior, shift the injection line to angle from anteroinferior to superoposterior.
+
+**B. GLABELLA PROTOCOL:**
+- Corrugators: Insert deep (intramuscular). 
+- Procerus: Insert deep (intramuscular).
+- Safety: Stay >1cm above the orbital rim to minimize lid ptosis risk.
+
+**C. GENDER-SPECIFIC DOSING & AESTHETICS:**
 1. **Male Patients (Male Presenting):**
    - **Hypertrophic Musculature:** Assume significantly stronger muscle mass in Glabella and Frontalis. Increase basal dosage guidelines by **1.5x - 2x** compared to female standard.
    - **Brow Aesthetics:** Goal is to maintain a **Horizontal / Flat** brow position. Avoid creating a lateral arch (feminization). Keep frontalis injections lower (but safe) to suppress medial brow elevation if needed.
-   - **Glabella:** Often requires multi-point deep injection with higher units (e.g., 20-30U Ona Total) to combat strong frowning.
    
 2. **Female Patients (Female Presenting):**
    - **Standard Musculature:** Use standard titration.
    - **Brow Aesthetics:** Goal is to **preserve or enhance the Lateral Arch**. Avoid over-treating the lateral frontalis to prevent lateral brow drop.
-   - **Glabella:** Focus on relaxing the frown without widening the inter-brow distance excessively.
 
 **CRITICAL RULE FOR TRYPTYCH COORDINATES (16:9 Aspect Ratio):**
 The visual map consists of 3 panels showing EXTREME CLOSE-UP HEADSHOTS (Neck Up). Coordinates are percentage-based (X: 0-100, Y: 0-100).
@@ -46,8 +58,9 @@ The visual map consists of 3 panels showing EXTREME CLOSE-UP HEADSHOTS (Neck Up)
 - View: TRUE PROFILE (Patient faces Right).
 - Content: Left Temple, Left Crow's Feet, Left Cheek.
 - Orientation: Ear is towards Left edge (0%). Nose towards Right edge (33%).
-- **Left Crow's Feet (C1L):** X ~ 22% (Posterior to eye). Y ~ 46%.
-- **Left Inf. Eyelid (E1L):** X ~ 26% (Anterior to C1L). Y ~ 50%.
+- **Left Crow's Feet (C1L - Central):** X ~ 22%. Y ~ 46%.
+- **Left Crow's Feet (C2L - Superior):** X ~ 20%. Y ~ 42%.
+- **Left Crow's Feet (C3L - Inferior):** X ~ 20%. Y ~ 50%.
 
 **PANEL 2 (Center 33.3-66.6% x): Anterior / Frontal**
 - View: Direct Frontal. Midline at X=50%.
@@ -62,8 +75,9 @@ The visual map consists of 3 panels showing EXTREME CLOSE-UP HEADSHOTS (Neck Up)
 - View: TRUE PROFILE (Patient faces Left).
 - Content: Right Temple, Right Crow's Feet, Right Cheek.
 - Orientation: Nose towards Left edge (66%). Ear towards Right edge (100%).
-- **Right Crow's Feet (C1R):** X ~ 78% (Posterior to eye). Y ~ 46%.
-- **Right Inf. Eyelid (E1R):** X ~ 74% (Anterior to C1R). Y ~ 50%.
+- **Right Crow's Feet (C1R - Central):** X ~ 78%. Y ~ 46%.
+- **Right Crow's Feet (C2R - Superior):** X ~ 80%. Y ~ 42%.
+- **Right Crow's Feet (C3R - Inferior):** X ~ 80%. Y ~ 50%.
 
 **Y-AXIS MAPPING (Neck-Up Framing):**
 - Hairline/Upper Forehead: y=15-20%
@@ -120,7 +134,7 @@ export const SAMPLE_ANALYSIS_FEMALE = {
       { region: "Glabella", muscle: "Procerus + Corrugator", points: 5, reasoning: "Medial dominance focus." },
       { region: "Bunny Lines", muscle: "Nasalis", points: 2, reasoning: "Targeting lateral bridge." },
       { region: "Forehead", muscle: "Frontalis", points: 6, reasoning: "High placement microdroplets." },
-      { region: "Crow's Feet", muscle: "Orbicularis", points: 6, reasoning: "3 pts per side." }
+      { region: "Crow's Feet", muscle: "Orbicularis", points: 6, reasoning: "Standard 3-point pattern." }
     ],
     safetyFlags: ["Avoid low frontalis"],
     conservativeAdjustments: "Reduced dose in central frontalis."
@@ -157,13 +171,14 @@ export const SAMPLE_ANALYSIS_FEMALE = {
     // --- PROFILE PANELS ---
     // Left Profile Panel (0-33.3%) - Patient Facing Right. Nose at 33.3.
     // C1L (Crow's Feet) is Posterior to Eye (closer to 0). E1L is Anterior (closer to 33).
-    { id: "f-c1l-l", label: "C1L", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 4, rationale: "Patient Left Lateral.", x: 22, y: 46 },
-    { id: "f-e1l-l", label: "E1L", region: "Lower Eyelid", muscle: "Inf. Orbicularis", doseOna: 2, rationale: "Patient Left Inferior.", x: 26, y: 50 },
+    { id: "f-c1l-l", label: "C1L", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 4, rationale: "Central. 1.5cm temporal to canthus.", x: 22, y: 46 },
+    { id: "f-c2l-l", label: "C2L", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 4, rationale: "Superior. 30° medial vector.", x: 20, y: 42 },
+    { id: "f-c3l-l", label: "C3L", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 4, rationale: "Inferior. 30° medial vector.", x: 20, y: 50 },
 
     // Right Profile Panel (66.6-100%) - Patient Facing Left. Nose at 66.6.
-    // C1R (Crow's Feet) is Posterior to Eye (closer to 100). E1R is Anterior (closer to 66).
-    { id: "f-c1r-r", label: "C1R", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 4, rationale: "Patient Right Lateral.", x: 78, y: 46 },
-    { id: "f-e1r-r", label: "E1R", region: "Lower Eyelid", muscle: "Inf. Orbicularis", doseOna: 2, rationale: "Patient Right Inferior.", x: 74, y: 50 }
+    { id: "f-c1r-r", label: "C1R", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 4, rationale: "Central. 1.5cm temporal to canthus.", x: 78, y: 46 },
+    { id: "f-c2r-r", label: "C2R", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 4, rationale: "Superior. 30° medial vector.", x: 80, y: 42 },
+    { id: "f-c3r-r", label: "C3R", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 4, rationale: "Inferior. 30° medial vector.", x: 80, y: 50 }
   ],
   dangerZones: [{ id: "fd1", region: "Periocular", risk: "Levator palpebrae risk." }],
   safetyWarnings: ["Focus on brow symmetry."],
@@ -198,8 +213,8 @@ export const SAMPLE_ANALYSIS_MALE = {
   step4: {
     dosingRows: [
       { region: "Glabella", onaDose: 24, aboDose25: 60, aboDose30: 72, daxDose: "40U+", notes: "Male Hypertrophic Dose." },
-      { region: "Bunny Lines", onaDose: 6, aboDose25: 15, aboDose30: 18, daxDose: "Off-Label", notes: "3U/side." },
-      { region: "Forehead", onaDose: 16, aboDose25: 40, aboDose30: 48, daxDose: "Off-Label", notes: "Heavy frontalis load." }
+      { region: "Bunny Lines", onaDose: 6, aboDose25: 15, aboDose30: 18, daxDose: "3U/side." },
+      { region: "Forehead", onaDose: 16, aboDose25: 40, aboDose30: 48, daxDose: "Heavy frontalis load.", notes: "Conservative" }
     ],
     dosingAssumptions: ["Male dosing correction (+50-100% glabella).", "Horizontal brow goal."],
     aimsDisclaimer: "Clinical judgment mandatory."
@@ -223,9 +238,9 @@ export const SAMPLE_ANALYSIS_MALE = {
     
     // --- PROFILE PANELS ---
     // Left Profile: Eye ~ 28%, Crow's feet ~ 22% (Posterior)
-    { id: "m-c1l-l", label: "C1L", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 5, rationale: "Pt Left.", x: 22, y: 46 },
+    { id: "m-c1l-l", label: "C1L", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 5, rationale: "Central. 1.5cm temporal.", x: 22, y: 46 },
     // Right Profile: Eye ~ 72%, Crow's feet ~ 78% (Posterior)
-    { id: "m-c1r-r", label: "C1R", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 5, rationale: "Pt Right.", x: 78, y: 46 }
+    { id: "m-c1r-r", label: "C1R", region: "Crow's Feet", muscle: "Orbicularis", doseOna: 5, rationale: "Central. 1.5cm temporal.", x: 78, y: 46 }
   ],
   dangerZones: [{ id: "md1", region: "Supraorbital", risk: "Avoid feminizing arch." }],
   safetyWarnings: ["Higher glabella doses needed."],
@@ -278,7 +293,7 @@ export const INJECTION_TECHNIQUES = {
   'Frontalis': { depth: 'Superficial Intradermal', angle: '15-30°', pearl: 'Stay high to preserve brow height.' },
   'Corrugator': { depth: 'Intramuscular', angle: '90°', pearl: 'Avoid orbital rim.' },
   'Procerus': { depth: 'Intramuscular', angle: '90°', pearl: 'Central muscle belly.' },
-  'Orbicularis': { depth: 'Superficial Intradermal', angle: '10-20°', pearl: 'Stay >1.5cm from lateral canthus.' },
+  'Orbicularis': { depth: 'Superficial Intradermal', angle: '15°', pearl: 'Inj. 1.5-2.0cm temporal to lateral canthus.' },
   'Nasalis': { depth: 'Superficial Intradermal', angle: '30°', pearl: 'Inject lateral nasal bridge.' },
   'Default': { depth: 'Standard', angle: '90°', pearl: 'Follow anatomy.' }
 };
