@@ -71,32 +71,47 @@ const UserGuideModal: React.FC<UserGuideModalProps> = ({ isOpen, onClose }) => {
                 </h3>
                 <div className="pl-11 space-y-6">
                     <p className="text-sm text-gray-600 leading-relaxed">
-                        The <strong>Aesthetic Case Simulator</strong> is a gamified environment for practicing injection strategy without patient risk. It uses Generative AI to create unique, medically realistic patient faces for every session.
+                        The <strong>Aesthetic Case Simulator</strong> provides a gamified environment for practicing injection strategy on generative patient cases.
                     </p>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Level 1 */}
                         <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
                             <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Level 1: Spock Brow</h4>
-                            <p className="text-xs text-gray-600 font-medium">
-                                <strong>Objective:</strong> Correct unilateral lateral brow elevation.
+                            <p className="text-xs text-gray-600 font-medium leading-relaxed">
+                                <strong>Objective:</strong> Correct unilateral lateral brow elevation (Frontal View).
                                 <br/><br/>
                                 <strong>Success Criteria:</strong>
-                                <br/>• Identify the hyperactive lateral frontalis.
-                                <br/>• Place 1-2 units high in the lateral forehead.
-                                <br/>• AVOID the "Danger Zone" (orbital rim) to prevent ptosis.
+                                <br/>• Target hyperactive lateral frontalis.
+                                <br/>• Place 1-2 units high (2cm above rim).
+                                <br/>• <span className="text-red-500">AVOID</span> medial brow drop zone.
                             </p>
                         </div>
+
+                        {/* Level 2 */}
                         <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Scoring Engine</h4>
-                            <p className="text-xs text-gray-600 font-medium">
-                                <strong>Real-Time Feedback:</strong>
-                                <br/>After submitting your plan, the simulator overlays a "Heat Map" showing:
-                                <br/><span className="text-green-600 font-bold">● Green Zones:</span> Correct Target.
-                                <br/><span className="text-red-500 font-bold">● Red Zones:</span> Risk of Ptosis/Drop.
+                            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Level 2: Crow's Feet</h4>
+                            <p className="text-xs text-gray-600 font-medium leading-relaxed">
+                                <strong>Objective:</strong> Treat lateral canthal rhytids (Profile View).
                                 <br/><br/>
-                                Score > 85 is considered "Clinically Sound".
+                                <strong>Success Criteria:</strong>
+                                <br/>• Apply 3-Point Pattern (Central, Sup, Inf).
+                                <br/>• <strong>Safety:</strong> 1.5cm temporal to canthus.
+                                <br/>• <span className="text-red-500">AVOID</span> Zygomaticus (Cheek Drop).
                             </p>
                         </div>
+                    </div>
+
+                    <div className="bg-green-50/50 p-4 rounded-2xl border border-green-100">
+                        <h4 className="text-[10px] font-black text-green-600 uppercase tracking-widest mb-2">Real-Time Scoring Engine</h4>
+                        <p className="text-xs text-gray-600 font-medium">
+                            After submitting your plan, the simulator overlays a "Heat Map" showing:
+                            <br/><span className="text-green-600 font-bold">● Green Zones:</span> Correct Target (Indication Resolved).
+                            <br/><span className="text-red-500 font-bold">● Red Zones:</span> Danger Zone (Ptosis/Diplopia Risk).
+                            <br/><span className="text-orange-400 font-bold">● Orange Zones:</span> Inefficient/Avoid (Asymmetry Risk).
+                            <br/><br/>
+                            Score > 85 is required for "Clinically Sound" certification.
+                        </p>
                     </div>
                 </div>
             </section>
